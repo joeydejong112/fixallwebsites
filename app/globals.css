@@ -1,0 +1,111 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 240 4% 6%;
+    --foreground: 270 8% 95%;
+    --card: 240 5% 9%;
+    --card-foreground: 270 8% 95%;
+    --popover: 240 5% 9%;
+    --popover-foreground: 270 8% 95%;
+    --primary: 160 60% 63%;
+    --primary-foreground: 240 4% 6%;
+    --secondary: 240 5% 12%;
+    --secondary-foreground: 270 8% 95%;
+    --muted: 240 5% 12%;
+    --muted-foreground: 270 8% 58%;
+    --accent: 160 60% 63%;
+    --accent-foreground: 240 4% 6%;
+    --destructive: 0 70% 70%;
+    --destructive-foreground: 240 4% 6%;
+    --border: 240 4% 15%;
+    --input: 240 4% 15%;
+    --ring: 160 60% 63%;
+    --radius: 0.75rem;
+
+    --page-bg: #0c0c14;
+    --card-bg: #131220;
+    --elevated-bg: #16152a;
+    --hover-bg: #1a1830;
+    --deep-inset: #0e0d1c;
+
+    --border-default: rgba(255,255,255,0.05);
+    --border-subtle: rgba(255,255,255,0.07);
+    --border-active: rgba(124,106,255,0.25);
+    --border-accent: rgba(124,106,255,0.18);
+
+    --text-primary: #eeeaf8;
+    --text-secondary: rgba(238,234,248,0.55);
+    --text-muted: rgba(238,234,248,0.38);
+    --text-disabled: rgba(238,234,248,0.22);
+
+    --purple: #7c6aff;
+    --purple-light: #a89dff;
+    --green: #6ee7b7;
+    --amber: #f59e0b;
+    --red: #f87171;
+    --blue: #60a5fa;
+
+    --navbar-height: 64px;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    background-color: var(--page-bg);
+    color: var(--text-primary);
+  }
+}
+
+@keyframes scan-beam {
+  0% { transform: translateY(0); }
+  50% { transform: translateY(80px); }
+  100% { transform: translateY(0); }
+}
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-5px); }
+}
+@keyframes spin-slow {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+@keyframes pulse-ring {
+  0% { r: 14; opacity: 0.6; }
+  100% { r: 22; opacity: 0; }
+}
+@keyframes pop-in {
+  from { transform: scale(0); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+@keyframes check-draw {
+  from { stroke-dashoffset: 20; }
+  to { stroke-dashoffset: 0; }
+}
+@keyframes bounce-x {
+  0%, 100% { transform: translateX(0); }
+  50% { transform: translateX(4px); }
+}
+@keyframes bar-in {
+  from { width: 0; }
+}
+@keyframes dash-in {
+  from { stroke-dashoffset: 226; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * { 
+    animation: none !important;
+    transition: none !important; 
+  }
+}
