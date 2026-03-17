@@ -16,6 +16,8 @@ import type * as monitoring from "../monitoring.js";
 import type * as scanMutations from "../scanMutations.js";
 import type * as scanQueries from "../scanQueries.js";
 import type * as scans from "../scans.js";
+import type * as sitemap from "../sitemap.js";
+import type * as sitemapGenerator from "../sitemapGenerator.js";
 import type * as users from "../users.js";
 import type * as watchedSites from "../watchedSites.js";
 
@@ -34,6 +36,8 @@ declare const fullApi: ApiFromModules<{
   scanMutations: typeof scanMutations;
   scanQueries: typeof scanQueries;
   scans: typeof scans;
+  sitemap: typeof sitemap;
+  sitemapGenerator: typeof sitemapGenerator;
   users: typeof users;
   watchedSites: typeof watchedSites;
 }>;

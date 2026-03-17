@@ -1,8 +1,8 @@
 # SiteFix — Shared Agent Memory
 
 ## Project state
-Current agent: 3
-Last completed agent: 2
+Current agent: 10
+Last completed agent: 9
 Build status: in progress
 
 ---
@@ -37,7 +37,12 @@ Format:
   Watch out for: [what future agents should know]
 
 Problems:
-- none yet
+- [Agent 10] Problem: Convex "use node" file cannot export query/mutation, only actions.
+  Solution: Split sitemap code into two files: convex/sitemap.ts (queries+mutations, default runtime) and convex/sitemapGenerator.ts ("use node" with internalAction for crawl).
+  Watch out for: Always use internalAction (not action) in "use node" files when called via scheduler, and reference via internal.filename.functionName.
+- [Agent 10] Problem: npm peer dependency conflicts with @clerk/clerk-react and react@19.
+  Solution: Use --legacy-peer-deps flag for all npm installs.
+  Watch out for: Every npm install in this project needs --legacy-peer-deps.
 
 ---
 
@@ -51,6 +56,12 @@ Format:
 
 Packages:
 - svix@latest — webhook signature verification — Agent 1
+- recharts@latest — score history chart — Agent 10
+- date-fns@latest — date formatting for chart labels — Agent 10
+- cssnano@latest — CSS minification — Agent 10
+- terser@latest — JS minification — Agent 10
+- cheerio@latest — HTML parsing for sitemap crawler — Agent 10
+- postcss@latest — CSS processing pipeline (cssnano dependency) — Agent 10
 
 ---
 
@@ -111,16 +122,25 @@ Files:
 - app/dashboard/tools/meta-tag-writer/MetaTagClient.tsx — owned by Agent 8 — completed
 - app/dashboard/tools/alt-text-generator/page.tsx — owned by Agent 8 — completed
 - app/dashboard/tools/alt-text-generator/AltTextClient.tsx — owned by Agent 8 — completed
-- app/dashboard/tools/layout.tsx — owned by Agent 9 — pending
-- app/dashboard/tools/image-converter/loading.tsx — owned by Agent 9 — pending
-- app/dashboard/tools/meta-tag-writer/loading.tsx — owned by Agent 9 — pending
-- app/dashboard/tools/alt-text-generator/loading.tsx — owned by Agent 9 — pending
-- app/dashboard/tools/security-headers/loading.tsx — owned by Agent 9 — pending
-- app/dashboard/tools/robots-txt/loading.tsx — owned by Agent 9 — pending
-- app/dashboard/tools/open-graph/loading.tsx — owned by Agent 9 — pending
-- app/dashboard/tools/sitemap-generator/loading.tsx — owned by Agent 9 — pending
-- app/dashboard/tools/minifier/loading.tsx — owned by Agent 9 — pending
-- app/dashboard/tools/competitor/loading.tsx — owned by Agent 9 — pending
+- app/dashboard/tools/layout.tsx — owned by Agent 9 — completed
+- app/dashboard/tools/image-converter/loading.tsx — owned by Agent 9 — completed
+- app/dashboard/tools/meta-tag-writer/loading.tsx — owned by Agent 9 — completed
+- app/dashboard/tools/alt-text-generator/loading.tsx — owned by Agent 9 — completed
+- app/dashboard/tools/security-headers/loading.tsx — owned by Agent 9 — completed
+- app/dashboard/tools/robots-txt/loading.tsx — owned by Agent 9 — completed
+- app/dashboard/tools/open-graph/loading.tsx — owned by Agent 9 — completed
+- app/dashboard/tools/sitemap-generator/loading.tsx — owned by Agent 9 — completed
+- app/dashboard/tools/minifier/loading.tsx — owned by Agent 9 — completed
+- app/dashboard/tools/competitor/loading.tsx — owned by Agent 9 — completed
+- components/ScoreChart.tsx — owned by Agent 10 — completed
+- convex/sitemap.ts — owned by Agent 10 — completed
+- convex/sitemapGenerator.ts — owned by Agent 10 — completed
+- convex/auth.config.ts — owned by Agent 10 — completed
+- app/dashboard/tools/sitemap-generator/page.tsx — owned by Agent 10 — completed
+- app/dashboard/tools/sitemap-generator/SitemapClient.tsx — owned by Agent 10 — completed
+- app/dashboard/tools/minifier/page.tsx — owned by Agent 10 — completed
+- app/dashboard/tools/minifier/MinifierClient.tsx — owned by Agent 10 — completed
+- app/api/tools/minify/route.ts — owned by Agent 10 — completed
 - app/admin/page.tsx — owned by Agent 14 — pending
 - app/admin/_components/AdminHeader.tsx — owned by Agent 14 — pending
 - app/admin/_components/OverviewStats.tsx — owned by Agent 14 — pending
@@ -240,11 +260,16 @@ Agent 8 here. Both the Meta Tag Writer and Alt Text Generator are fully operatio
 
 ---
 Message from Agent 9 → Agent 10:
-[Agent 9 fills this in when done]
+Agent 9 here. I've completed the Tools Layout, SEO Security Headers, Robots.txt Generator, and Open Graph tools. The tools layout includes the sticky sidebar nav that checks user plan and renders locks on locked tools. Locked tools dispatch 'showUpgradeModal' on click. I've added skeleton loaders to all tool routes. All pages compile with no TypeScript errors or missing imports. Over to you to tackle the sitemap generator and minifiers!
 
 ---
 Message from Agent 10 → Agent 11:
-[Agent 10 fills this in when done]
+Agent 10 here. I've completed:
+1. Score History Chart (components/ScoreChart.tsx) using recharts — auto-mounts below hero on results page when 2+ scans exist for the same URL.
+2. Sitemap Generator — crawls up to 150 pages, 3 levels deep. Convex split: convex/sitemap.ts (query/mutation) + convex/sitemapGenerator.ts ("use node" internalAction with cheerio). Real-time progress via Convex subscription. Produces valid XML with <urlset> and <url> tags.
+3. Code Minifier — API route at /api/tools/minify using cssnano (CSS) and terser (JS). Split-pane UI with compression stats. Plan-gated to Starter+.
+4. Fixed auth — created convex/auth.config.ts for Clerk JWT validation.
+All tools plan-gated. tsc --noEmit = 0 errors. Over to you for the AI chat panel and impact predictor!
 
 ---
 Message from Agent 11 → Agent 12:
@@ -513,8 +538,8 @@ Created by: Agent 11
 | 6     | 1      | passed    | 2026-03-17   |
 | 7     | 1      | passed    | 2026-03-17   |
 | 8     | 1      | passed    | 2026-03-17   |
-| 9     | -      | pending   | -            |
-| 10    | -      | pending   | -            |
+| 9     | -      | passed    | 2026-03-17   |
+| 10    | -      | in-review | 2026-03-17   |
 | 11    | -      | pending   | -            |
 | 12    | -      | pending   | -            |
 | 13    | -      | pending   | -            |

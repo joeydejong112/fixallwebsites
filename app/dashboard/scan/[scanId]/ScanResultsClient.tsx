@@ -6,6 +6,7 @@ import { Id } from "@/convex/_generated/dataModel";
 import { ScoreRing } from "@/components/ScoreRing";
 import { PillarCard } from "@/components/PillarCard";
 import { IssueCard } from "@/components/IssueCard";
+import { ScoreChart } from "@/components/ScoreChart";
 import { Loader2, ArrowLeft, Bell, BellOff, Share2, Download, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
@@ -237,10 +238,10 @@ export function ScanResultsClient({ scanId, clerkId }: { scanId: Id<"scans">; cl
             <button
               onClick={handleWatchToggle}
               className={cn(
-                "flex items-center gap-2 px-4 py-2 rounded-full font-['Outfit'] text-sm font-medium transition-colors border",
+                "flex items-center gap-2 px-4 py-2 rounded-[999px] font-['Outfit'] text-[14px] font-[500] transition-colors",
                 isWatched 
-                  ? "bg-[rgba(124,106,255,0.1)] text-[#a89dff] border-[rgba(124,106,255,0.2)] hover:bg-[rgba(124,106,255,0.15)]"
-                  : "bg-white/5 text-white/70 border-white/10 hover:bg-white/10 hover:text-white"
+                  ? "bg-[rgba(124,106,255,0.1)] text-[#a89dff] hover:bg-[rgba(124,106,255,0.15)]"
+                  : "bg-[rgba(255,255,255,0.05)] text-[rgba(238,234,248,0.7)] hover:bg-[rgba(255,255,255,0.1)] hover:text-[#eeeaf8]"
               )}
             >
               {isWatched ? <Bell size={16} /> : <BellOff size={16} />}
@@ -249,6 +250,8 @@ export function ScanResultsClient({ scanId, clerkId }: { scanId: Id<"scans">; cl
           </div>
         )}
       </div>
+
+      {scan.status === "complete" && <ScoreChart url={scan.url} userId={scan.userId} />}
 
       {scan.status === "complete" && scan.pillarScores && (
         <>

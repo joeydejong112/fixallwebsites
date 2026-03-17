@@ -68,3 +68,23 @@ export const getScanByPublicToken = query({
     return { scan, results };
   },
 });
+
+export const getScanHistory = query({
+  args: { userId: v.string(), url: v.string() },
+  handler: async (ctx, args) => {
+    // Get the latest up to 100 scans for user, then filter by URL, take 30
+    // Convex doesn't have multi-field index on userId+url yet, so filter in memory or via index
+    const scans = await ctx.db
+      .query("scans")
+      .withIndex("by_user_id", (q) => q.eq("userId", args.userId))
+      .order("desc")
+      .collect();
+      
+    const urlScans = scans
+      .filter((s) => s.url === args.url && s.status === "complete" && s.overallScore !== undefined)
+      .slice(0, 30)
+      .reverse();
+
+    return urlScans;
+  },
+});
