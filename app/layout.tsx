@@ -1,6 +1,8 @@
 import "./globals.css";
 import { Providers } from "./providers";
 
+import { Toaster } from "sonner";
+
 export const metadata = {
   title: "SiteFix",
   description: "Website health scanner",
@@ -18,6 +20,7 @@ export default function RootLayout({
       </head>
       <body>
         <Providers>{children}</Providers>
+        <Toaster theme="dark" richColors position="bottom-right" />
       </body>
     </html>
   );

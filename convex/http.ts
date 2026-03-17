@@ -26,11 +26,11 @@ http.route({
     };
 
     const wh = new Webhook(webhookSecret);
-    let evt: { type: string; data: { id: string; email_addresses?: { email_address: string }[] } };
+    let evt: { type: string; data: { id: string; email_addresses?: { email_address: string }[]; public_metadata?: Record<string, unknown> } };
 
     try {
-      evt = wh.verify(payloadString, svixHeaders) as { type: string; data: { id: string; email_addresses?: { email_address: string }[] } };
-    } catch (err) {
+      evt = wh.verify(payloadString, svixHeaders) as { type: string; data: { id: string; email_addresses?: { email_address: string }[]; public_metadata?: Record<string, unknown> } };
+    } catch (err: unknown) {
       return new Response("Error verifying webhook", {
         status: 400,
       });
@@ -52,6 +52,17 @@ http.route({
         clerkId: evt.data.id,
         email: email || "",
       });
+
+      // Handle plan change if tracked via Clerk public_metadata
+      if (evt.data.public_metadata?.plan) {
+        const planStr = evt.data.public_metadata.plan as string;
+        if (planStr === "free" || planStr === "starter" || planStr === "pro") {
+          await ctx.runMutation(internal.users.syncPlanFromWebhook, {
+            clerkId: evt.data.id,
+            plan: planStr,
+          });
+        }
+      }
     }
 
     if (eventType === "user.deleted") {

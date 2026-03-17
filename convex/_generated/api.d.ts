@@ -8,11 +8,14 @@
  * @module
  */
 
+import type * as crons from "../crons.js";
 import type * as http from "../http.js";
+import type * as monitoring from "../monitoring.js";
 import type * as scanMutations from "../scanMutations.js";
 import type * as scanQueries from "../scanQueries.js";
 import type * as scans from "../scans.js";
 import type * as users from "../users.js";
+import type * as watchedSites from "../watchedSites.js";
 
 import type {
   ApiFromModules,
@@ -21,11 +24,14 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  crons: typeof crons;
   http: typeof http;
+  monitoring: typeof monitoring;
   scanMutations: typeof scanMutations;
   scanQueries: typeof scanQueries;
   scans: typeof scans;
   users: typeof users;
+  watchedSites: typeof watchedSites;
 }>;
 
 /**

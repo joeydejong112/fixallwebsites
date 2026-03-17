@@ -105,3 +105,37 @@ export const resetMonthlyScanCounts = internalMutation({
     }
   },
 });
+
+export const syncPlanFromClerk = mutation({
+  args: {
+    clerkId: v.string(),
+    plan: v.union(v.literal("free"), v.literal("starter"), v.literal("pro")),
+  },
+  handler: async (ctx, args) => {
+    const existing = await ctx.db
+      .query("users")
+      .withIndex("by_clerk_id", (q) => q.eq("clerkId", args.clerkId))
+      .unique();
+
+    if (existing) {
+      await ctx.db.patch(existing._id, { plan: args.plan });
+    }
+  },
+});
+
+export const syncPlanFromWebhook = internalMutation({
+  args: {
+    clerkId: v.string(),
+    plan: v.union(v.literal("free"), v.literal("starter"), v.literal("pro")),
+  },
+  handler: async (ctx, args) => {
+    const existing = await ctx.db
+      .query("users")
+      .withIndex("by_clerk_id", (q) => q.eq("clerkId", args.clerkId))
+      .unique();
+
+    if (existing) {
+      await ctx.db.patch(existing._id, { plan: args.plan });
+    }
+  },
+});

@@ -6,10 +6,12 @@ import { Id } from "@/convex/_generated/dataModel";
 import { ScoreRing } from "@/components/ScoreRing";
 import { PillarCard } from "@/components/PillarCard";
 import { IssueCard } from "@/components/IssueCard";
-import { Loader2, ArrowLeft } from "lucide-react";
+import { Loader2, ArrowLeft, Bell, BellOff, Share2, Download, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
+import { useMutation } from "convex/react";
+import { toast } from "sonner";
 
 export function ScanResultsClient({ scanId, clerkId }: { scanId: Id<"scans">; clerkId: string }) {
   const router = useRouter();
@@ -17,8 +19,14 @@ export function ScanResultsClient({ scanId, clerkId }: { scanId: Id<"scans">; cl
 
   const data = useQuery(api.scanQueries.getScanResults, { scanId });
   const user = useQuery(api.users.getByClerkId, { clerkId });
+  const watchedSites = useQuery(api.watchedSites.getWatchedSites, { clerkId });
+  const toggleWatchSite = useMutation(api.watchedSites.toggleWatchSite);
+  const generatePublicLink = useMutation(api.scanMutations.generatePublicLink);
+  const revokePublicLink = useMutation(api.scanMutations.revokePublicLink);
+  const [isPdfLoading, setIsPdfLoading] = useState(false);
+  const [isSharing, setIsSharing] = useState(false);
 
-  if (data === undefined || user === undefined) {
+  if (data === undefined || user === undefined || watchedSites === undefined) {
     return (
       <div className="flex h-[50vh] items-center justify-center">
         <Loader2 className="animate-spin text-[#7c6aff]" size={32} />
@@ -47,6 +55,83 @@ export function ScanResultsClient({ scanId, clerkId }: { scanId: Id<"scans">; cl
 
   const handleUpgradeClick = () => {
     window.dispatchEvent(new CustomEvent("showUpgradeModal", { detail: { trigger: "blurred-issue" } }));
+  };
+
+  const isWatched = watchedSites?.some((s: { url: string }) => s.url === scan.url) || false;
+
+  const handleWatchToggle = async () => {
+    if (isFree) {
+      window.dispatchEvent(new CustomEvent("showUpgradeModal", { detail: { trigger: "watch-site" } }));
+      return;
+    }
+    
+    try {
+      const newStatus = await toggleWatchSite({
+        clerkId,
+        url: scan.url,
+        lastScore: scan.overallScore || 0,
+      });
+      if (newStatus) {
+        toast.success(`You are now watching ${scan.url}`);
+      } else {
+        toast.success(`Stopped watching ${scan.url}`);
+      }
+    } catch (err: unknown) {
+      const error = err as Error;
+      toast.error(error.message || "Failed to toggle watch status");
+    }
+  };
+
+  const handleShare = async () => {
+    setIsSharing(true);
+    try {
+      let token = scan.publicToken;
+      if (!token) {
+        token = await generatePublicLink({ scanId });
+      }
+      const reportUrl = `${window.location.origin}/report/${token}`;
+      await navigator.clipboard.writeText(reportUrl);
+      toast.success("Report link copied to clipboard!");
+    } catch (err: unknown) {
+      const error = err as Error;
+      toast.error(error.message || "Failed to generate share link");
+    } finally {
+      setIsSharing(false);
+    }
+  };
+
+  const handleRevokeShare = async () => {
+    try {
+      await revokePublicLink({ scanId });
+      toast.success("Share link revoked");
+    } catch (err: unknown) {
+      const error = err as Error;
+      toast.error(error.message || "Failed to revoke link");
+    }
+  };
+
+  const handlePdfDownload = async () => {
+    if (!isPro) {
+      window.dispatchEvent(new CustomEvent("showUpgradeModal", { detail: { trigger: "export-pdf" } }));
+      return;
+    }
+    setIsPdfLoading(true);
+    try {
+      const res = await fetch(`/api/export-pdf/${scanId}`);
+      if (!res.ok) throw new Error("PDF generation failed");
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `sitefix-report.pdf`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (err: unknown) {
+      const error = err as Error;
+      toast.error(error.message || "Failed to download PDF");
+    } finally {
+      setIsPdfLoading(false);
+    }
   };
 
   const filteredResults = activePillar 
@@ -85,6 +170,45 @@ export function ScanResultsClient({ scanId, clerkId }: { scanId: Id<"scans">; cl
             Scanned on {new Date(scan.createdAt).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute:'2-digit' })}
           </p>
 
+          {scan.status === "complete" && (
+            <div className="mt-4 flex flex-wrap items-center gap-2">
+              {/* Share button */}
+              <button
+                onClick={handleShare}
+                disabled={isSharing}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-[8px] bg-white/5 hover:bg-white/10 border border-white/10 text-white/70 hover:text-white text-[13px] font-['Outfit'] transition-colors disabled:opacity-50"
+              >
+                {isSharing ? <Loader2 size={13} className="animate-spin" /> : <Share2 size={13} />}
+                Share Report
+              </button>
+
+              {/* Revoke share link */}
+              {scan.publicToken && (
+                <button
+                  onClick={handleRevokeShare}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-[8px] bg-[rgba(248,113,113,0.08)] hover:bg-[rgba(248,113,113,0.12)] border border-[rgba(248,113,113,0.15)] text-[#f87171] text-[13px] font-['Outfit'] transition-colors"
+                >
+                  <X size={13} /> Revoke Link
+                </button>
+              )}
+
+              {/* PDF Download */}
+              <button
+                onClick={handlePdfDownload}
+                disabled={isPdfLoading}
+                className={cn(
+                  "flex items-center gap-1.5 px-3 py-1.5 rounded-[8px] text-[13px] font-['Outfit'] transition-colors disabled:opacity-50 border",
+                  isPro
+                    ? "bg-[rgba(124,106,255,0.1)] hover:bg-[rgba(124,106,255,0.15)] border-[rgba(124,106,255,0.2)] text-[#a89dff]"
+                    : "bg-white/5 hover:bg-white/10 border-white/10 text-white/50"
+                )}
+              >
+                {isPdfLoading ? <Loader2 size={13} className="animate-spin" /> : <Download size={13} />}
+                {isPro ? "Download PDF" : "PDF (Pro)"}
+              </button>
+            </div>
+          )}
+
           {scan.status === "scanning" && (
             <div className="mt-6 flex items-center gap-2 text-[#a89dff] bg-[rgba(124,106,255,0.1)] px-4 py-2 rounded-full font-['Outfit'] text-sm">
               <Loader2 size={16} className="animate-spin" />
@@ -107,9 +231,21 @@ export function ScanResultsClient({ scanId, clerkId }: { scanId: Id<"scans">; cl
         {scan.status === "complete" && scan.overallScore !== undefined && (
           <div className="shrink-0 z-10 flex flex-col items-center animate-in fade-in zoom-in duration-500">
             <ScoreRing score={scan.overallScore} size={140} />
-            <span className="mt-4 font-['Outfit'] font-[500] text-[13px] tracking-wide uppercase text-white/40">
+            <span className="mt-4 font-['Outfit'] font-[500] text-[13px] tracking-wide uppercase text-white/40 mb-3">
               Overall Health
             </span>
+            <button
+              onClick={handleWatchToggle}
+              className={cn(
+                "flex items-center gap-2 px-4 py-2 rounded-full font-['Outfit'] text-sm font-medium transition-colors border",
+                isWatched 
+                  ? "bg-[rgba(124,106,255,0.1)] text-[#a89dff] border-[rgba(124,106,255,0.2)] hover:bg-[rgba(124,106,255,0.15)]"
+                  : "bg-white/5 text-white/70 border-white/10 hover:bg-white/10 hover:text-white"
+              )}
+            >
+              {isWatched ? <Bell size={16} /> : <BellOff size={16} />}
+              {isWatched ? "Watching Site" : "Watch Site"}
+            </button>
           </div>
         )}
       </div>

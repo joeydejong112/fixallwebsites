@@ -1,6 +1,7 @@
 import { v } from "convex/values";
 import { internalMutation, mutation } from "./_generated/server";
 import { internal } from "./_generated/api";
+import { customAlphabet } from "nanoid";
 
 // Helper to normalize URLs
 function normalizeUrl(url: string) {
@@ -105,5 +106,36 @@ export const saveScanResults = internalMutation({
       status: "complete",
       completedAt: Date.now(),
     });
+  },
+});
+
+const nanoid = customAlphabet("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789", 12);
+
+export const generatePublicLink = mutation({
+  args: { scanId: v.id("scans") },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Unauthenticated");
+
+    const scan = await ctx.db.get(args.scanId);
+    if (!scan || scan.userId !== identity.subject) throw new Error("Scan not found");
+
+    const token = nanoid();
+    await ctx.db.patch(args.scanId, { publicToken: token });
+    return token;
+  },
+});
+
+export const revokePublicLink = mutation({
+  args: { scanId: v.id("scans") },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Unauthenticated");
+
+    const scan = await ctx.db.get(args.scanId);
+    if (!scan || scan.userId !== identity.subject) throw new Error("Scan not found");
+
+    // Remove publicToken from the record
+    await ctx.db.patch(args.scanId, { publicToken: undefined });
   },
 });

@@ -94,6 +94,14 @@ Files:
 - app/dashboard/DashboardClient.tsx — owned by Agent 3 — completed
 - app/dashboard/scan/[scanId]/page.tsx — owned by Agent 3 — completed
 - app/dashboard/scan/[scanId]/ScanResultsClient.tsx — owned by Agent 3 — completed
+- app/dashboard/settings/page.tsx — owned by Agent 4 — completed
+- app/dashboard/settings/SettingsClient.tsx — owned by Agent 4 — completed
+- convex/watchedSites.ts — owned by Agent 5 — completed
+- convex/monitoring.ts — owned by Agent 5 — completed
+- convex/crons.ts — owned by Agent 5 — completed
+- app/report/[token]/page.tsx — owned by Agent 6 — completed
+- app/report/[token]/ShareableReport.tsx — owned by Agent 6 — completed
+- app/api/export-pdf/[scanId]/route.tsx — owned by Agent 6 — completed
 - app/dashboard/tools/layout.tsx — owned by Agent 9 — pending
 - app/dashboard/tools/image-converter/loading.tsx — owned by Agent 9 — pending
 - app/dashboard/tools/meta-tag-writer/loading.tsx — owned by Agent 9 — pending
@@ -203,15 +211,15 @@ Agent 3 here. I've completed the Results UI! The Dashboard now features a scan s
 
 ---
 Message from Agent 4 → Agent 5:
-[Agent 4 fills this in when done]
+Agent 4 here. I've completed the Settings & Billing page! The user can now view their current plan and click an external link to their Billing Portal. Clerk subscription webhooks sync their plan to the Convex users table in real time via the `syncPlanFromWebhook` mutation. The "Logo Upload" feature is properly plan-gated to Pro users only using a direct trigger for the `UpgradeModal`. Over to you to tackle the monitoring and cron jobs!
 
 ---
 Message from Agent 5 → Agent 6:
-[Agent 5 fills this in when done]
+Agent 5 here. Watch Site toggle is fully wired — the watch button on every scan results page checks plan (free → UpgradeModal, starter/pro → Convex mutation). The `watchedSites` table is populated by `toggleWatchSite`. Cron jobs in `crons.ts` run weekly scans via `monitoring.runWeeklyScans` (which calls `watchedSites.createBackendScan` for each active site) and a digest stub via `monitoring.sendWeeklyDigest`. Monthly scan count reset cron also registered here. Resend email sending is stubbed — Agent 14 owns the real email send logic. Over to you for PDF exports and public report sharing!
 
 ---
 Message from Agent 6 → Agent 7:
-[Agent 6 fills this in when done]
+Agent 6 here. PDF export and public report sharing are complete. Share button on results page generates a nanoid token, saves it to the `publicToken` field on the scan, and copies `/report/[token]` to the clipboard. Revoke button nullifies the token. `/report/[token]` is a public unauthenticated page that renders the full scan using `ShareableReport`. PDF download hits `/api/export-pdf/[scanId]` (internal route, Pro-gated), generates a real PDF via `@react-pdf/renderer` with score ring, pillar grid, and issue list. Non-Pro users see the UpgradeModal instead. Over to you for image conversion!
 
 ---
 Message from Agent 7 → Agent 8:
@@ -491,9 +499,9 @@ Created by: Agent 11
 | 1     | 1      | passed    | 2026-03-16   |
 | 2     | 1      | passed    | 2026-03-15   |
 | 3     | 1      | passed    | 2026-03-17   |
-| 4     | -      | pending   | -            |
-| 5     | -      | pending   | -            |
-| 6     | -      | pending   | -            |
+| 4     | 1      | passed    | 2026-03-17   |
+| 5     | 1      | passed    | 2026-03-17   |
+| 6     | 1      | passed    | 2026-03-17   |
 | 7     | -      | pending   | -            |
 | 8     | -      | pending   | -            |
 | 9     | -      | pending   | -            |
