@@ -6,7 +6,8 @@ let _client: ConvexHttpClient | null = null
 export function useConvex() {
   if (!_client) {
     const config = useRuntimeConfig()
-    _client = new ConvexHttpClient(config.public.convexUrl as string)
+    const url = (config.public.convexUrl as string).replace(/\/$/, '')
+    _client = new ConvexHttpClient(url)
   }
   return { client: _client, api }
 }
