@@ -15,9 +15,18 @@ export default defineNuxtConfig({
     },
   },
 
+  css: ['~/assets/css/main.css'],
+
   runtimeConfig: {
     public: {
       convexUrl: process.env.NUXT_PUBLIC_CONVEX_URL,
     },
+  },
+
+  clerk: {
+    signInUrl: '/sign-in',
+    signUpUrl: '/sign-up',
+    afterSignInUrl: '/dashboard',
+    afterSignUpUrl: '/dashboard',
   },
 })
