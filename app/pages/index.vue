@@ -63,46 +63,38 @@ const checks = [
             <span class="text-white/50 text-xs font-display tracking-wide">Live scanning · No install required</span>
           </div>
 
-          <h1 class="font-display font-bold leading-[1.05] mb-6" style="font-size: clamp(2.6rem, 5vw, 4.2rem)">
-            Your site's health,<br />
-            <em class="not-italic text-primary">revealed</em> in seconds.
+          <h1 class="font-display font-bold leading-[0.9] mb-8" style="font-size: clamp(3.6rem, 7.5vw, 6.2rem)">
+            Your site's<br />health,<br />
+            <em class="not-italic" style="color: #ec3586; font-size: 1.08em; letter-spacing: -0.02em">revealed.</em>
           </h1>
 
-          <p class="text-white/45 font-body leading-relaxed mb-10" style="font-size: clamp(1rem, 1.5vw, 1.15rem); max-width: 42ch">
+          <p class="text-white/40 font-body leading-relaxed mb-10" style="font-size: clamp(1rem, 1.4vw, 1.1rem); max-width: 44ch">
             Security vulnerabilities, performance bottlenecks, and SEO gaps —
             surfaced with actionable fixes, not just scores.
           </p>
 
-          <ScanInput size="lg" @scan="handleScan" />
+          <div>
+            <div class="flex items-center gap-2 mb-3">
+              <div class="w-0.5 h-4 bg-primary rounded-full" />
+              <span class="text-white/30 text-[10px] font-display uppercase tracking-[0.18em]">Target URL</span>
+            </div>
+            <ScanInput size="lg" @scan="handleScan" />
+          </div>
 
           <!-- Trust signals -->
-          <div class="mt-8 flex items-center gap-6">
-            <div class="flex items-center gap-2">
-              <svg class="w-4 h-4 text-success" fill="currentColor" viewBox="0 0 20 20">
-                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
-              </svg>
-              <span class="text-white/35 text-xs font-body">Free forever</span>
-            </div>
-            <div class="flex items-center gap-2">
-              <svg class="w-4 h-4 text-success" fill="currentColor" viewBox="0 0 20 20">
-                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
-              </svg>
-              <span class="text-white/35 text-xs font-body">Results in ~10 seconds</span>
-            </div>
-            <div class="flex items-center gap-2">
-              <svg class="w-4 h-4 text-success" fill="currentColor" viewBox="0 0 20 20">
-                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
-              </svg>
-              <span class="text-white/35 text-xs font-body">15+ checks</span>
+          <div class="mt-8 flex items-center gap-5 flex-wrap">
+            <div v-for="sig in ['Free forever', '~10s results', '15+ checks']" :key="sig" class="flex items-center gap-1.5">
+              <div class="w-1 h-1 rounded-full bg-success" />
+              <span class="text-white/30 text-xs font-body">{{ sig }}</span>
             </div>
           </div>
         </div>
 
         <!-- Right: radar visualisation -->
         <div class="hidden lg:flex items-center justify-center relative">
-          <div class="relative w-[480px] h-[480px]">
-            <!-- Outer glow -->
-            <div class="absolute inset-0 rounded-full" style="background: radial-gradient(circle, rgba(236,53,134,0.08) 0%, transparent 70%)" />
+          <div class="relative w-[560px] h-[560px]">
+            <!-- Outer glow — stronger -->
+            <div class="absolute inset-[-40px] rounded-full" style="background: radial-gradient(circle, rgba(236,53,134,0.13) 0%, rgba(108,92,231,0.05) 45%, transparent 70%)" />
 
             <!-- Animated radar SVG -->
             <svg viewBox="0 0 480 480" class="w-full h-full" xmlns="http://www.w3.org/2000/svg">
@@ -176,18 +168,18 @@ const checks = [
               </circle>
             </svg>
 
-            <!-- Floating score cards -->
-            <div class="absolute top-8 left-0 bg-dark-surface border border-dark-border rounded-xl px-4 py-3 shadow-elevation-lg">
-              <p class="text-[10px] font-display uppercase tracking-widest text-security mb-1">Security</p>
-              <p class="text-2xl font-display font-bold text-white">94</p>
+            <!-- Floating score cards — more dramatic -->
+            <div class="absolute top-6 left-[-16px] bg-dark-elevated border border-white/8 rounded-xl px-5 py-3.5 shadow-elevation-lg">
+              <p class="text-[9px] font-display uppercase tracking-[0.16em] text-security mb-2">Security</p>
+              <p class="text-4xl font-display font-bold text-white leading-none">94</p>
             </div>
-            <div class="absolute bottom-16 left-2 bg-dark-surface border border-dark-border rounded-xl px-4 py-3 shadow-elevation-lg">
-              <p class="text-[10px] font-display uppercase tracking-widest text-performance mb-1">Performance</p>
-              <p class="text-2xl font-display font-bold text-white">71</p>
+            <div class="absolute bottom-24 left-[-8px] bg-dark-elevated border border-white/8 rounded-xl px-5 py-3.5 shadow-elevation-lg">
+              <p class="text-[9px] font-display uppercase tracking-[0.16em] text-performance mb-2">Performance</p>
+              <p class="text-4xl font-display font-bold text-white leading-none">71</p>
             </div>
-            <div class="absolute bottom-6 right-4 bg-dark-surface border border-dark-border rounded-xl px-4 py-3 shadow-elevation-lg">
-              <p class="text-[10px] font-display uppercase tracking-widest text-seo mb-1">SEO</p>
-              <p class="text-2xl font-display font-bold text-white">88</p>
+            <div class="absolute bottom-6 right-[-8px] bg-dark-elevated border border-white/8 rounded-xl px-5 py-3.5 shadow-elevation-lg">
+              <p class="text-[9px] font-display uppercase tracking-[0.16em] text-seo mb-2">SEO</p>
+              <p class="text-4xl font-display font-bold text-white leading-none">88</p>
             </div>
           </div>
         </div>
@@ -200,34 +192,57 @@ const checks = [
       </div>
     </section>
 
+    <!-- ── Stats ticker ────────────────────────────────────────── -->
+    <div class="border-y border-dark-border bg-dark-surface/60 py-4 px-6 overflow-x-auto">
+      <div class="max-w-6xl mx-auto flex items-center gap-0">
+        <div
+          v-for="(stat, i) in [
+            { value: '15+', label: 'checks per scan' },
+            { value: '3', label: 'analysis pillars' },
+            { value: '~10s', label: 'average scan time' },
+            { value: 'Free', label: 'no card required' },
+          ]"
+          :key="i"
+          class="flex items-center gap-3 flex-shrink-0"
+        >
+          <span class="font-display font-bold text-white text-sm">{{ stat.value }}</span>
+          <span class="text-white/25 text-xs font-body">{{ stat.label }}</span>
+          <div v-if="i < 3" class="w-px h-3 bg-white/10 mx-5" />
+        </div>
+      </div>
+    </div>
+
     <!-- ── What we check ──────────────────────────────────────── -->
-    <section class="py-24 px-6 border-t border-dark-border">
+    <section class="py-24 px-6 border-b border-dark-border">
       <div class="max-w-6xl mx-auto">
         <div class="mb-16">
-          <p class="text-primary text-xs font-display uppercase tracking-widest mb-3">Coverage</p>
-          <h2 class="font-display font-bold text-white mb-4" style="font-size: clamp(2rem, 3vw, 2.8rem)">15+ checks across three pillars</h2>
-          <p class="text-white/40 font-body" style="max-width: 44ch">Every check maps to a real-world impact — vulnerability, user experience, or search ranking.</p>
+          <p class="text-primary text-[10px] font-display uppercase tracking-[0.18em] mb-4">Coverage</p>
+          <h2 class="font-display font-bold text-white mb-4" style="font-size: clamp(2.2rem, 3.5vw, 3rem)">15+ checks across three pillars</h2>
+          <p class="text-white/35 font-body" style="max-width: 44ch">Every check maps to a real-world impact — vulnerability, user experience, or search ranking.</p>
         </div>
 
-        <div class="grid md:grid-cols-3 gap-px bg-dark-border">
+        <!-- Horizontal strips — one per pillar -->
+        <div class="divide-y divide-dark-border">
           <div
             v-for="check in checks"
             :key="check.pillar"
-            class="bg-dark p-8 group hover:bg-dark-surface transition-colors duration-300"
+            class="flex items-start gap-8 md:gap-20 py-10 group hover:bg-dark-surface/40 transition-colors duration-300 -mx-4 px-4 rounded-lg"
           >
-            <div class="flex items-center gap-3 mb-6">
-              <div class="w-2 h-2 rounded-full flex-shrink-0" :style="{ background: check.color }" />
-              <h3 class="font-display font-semibold text-white text-lg">{{ check.label }}</h3>
+            <!-- Pillar name — left, large -->
+            <div class="flex-shrink-0 w-32 md:w-44">
+              <div class="w-2 h-2 rounded-full mb-3" :style="{ background: check.color }" />
+              <h3
+                class="font-display font-bold text-white leading-[1.05]"
+                style="font-size: clamp(1.4rem, 2.5vw, 2rem)"
+              >{{ check.label }}</h3>
             </div>
-            <ul class="space-y-3">
+            <!-- Check items — pill list -->
+            <ul class="flex flex-wrap gap-2 pt-1 flex-1">
               <li
                 v-for="item in check.items"
                 :key="item"
-                class="flex items-center gap-3 text-sm font-body text-white/50 group-hover:text-white/65 transition-colors"
-              >
-                <div class="w-1 h-1 rounded-full flex-shrink-0" :style="{ background: check.color, opacity: 0.5 }" />
-                {{ item }}
-              </li>
+                class="text-sm font-body text-white/40 px-3 py-1.5 border border-white/[0.07] rounded-full transition-colors group-hover:text-white/60 group-hover:border-white/[0.14]"
+              >{{ item }}</li>
             </ul>
           </div>
         </div>
@@ -238,8 +253,8 @@ const checks = [
     <section class="py-24 px-6">
       <div class="max-w-6xl mx-auto grid lg:grid-cols-2 gap-16 items-center">
         <div>
-          <p class="text-primary text-xs font-display uppercase tracking-widest mb-3">What you get</p>
-          <h2 class="font-display font-bold text-white mb-6" style="font-size: clamp(2rem, 3vw, 2.8rem)">
+          <p class="text-primary text-[10px] font-display uppercase tracking-[0.18em] mb-4">What you get</p>
+          <h2 class="font-display font-bold text-white mb-6" style="font-size: clamp(2.2rem, 3.5vw, 3rem); line-height: 1.05">
             Scores you can act on,<br />not just look at.
           </h2>
           <p class="text-white/45 font-body leading-relaxed mb-8" style="max-width: 42ch">

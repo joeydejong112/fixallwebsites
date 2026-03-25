@@ -151,23 +151,27 @@ const displayIssues = computed(() => {
       <!-- Results -->
       <div v-else-if="scan?.status === 'done'">
 
-        <!-- URL + back -->
-        <div class="flex items-start justify-between gap-4 mb-10">
-          <div>
-            <NuxtLink to="/dashboard" class="text-white/25 text-xs font-body hover:text-white/50 transition-colors mb-3 inline-flex items-center gap-1.5">
-              <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
-              </svg>
-              Dashboard
-            </NuxtLink>
-            <p class="text-white/30 text-xs font-body mb-1">Results for</p>
-            <h1 class="font-display font-bold text-white break-all" style="font-size: clamp(1.1rem, 2vw, 1.4rem)">{{ scan.url }}</h1>
-          </div>
-          <div class="text-right flex-shrink-0">
-            <p class="text-white/25 text-xs font-body mb-1">Overall</p>
-            <p class="font-display font-bold" :class="scoreColor(scan.overallScore)" style="font-size: 3rem; line-height: 1">
-              {{ scan.overallScore }}
-            </p>
+        <!-- URL + back + overall score -->
+        <div class="mb-12 pb-10 border-b border-dark-border">
+          <NuxtLink to="/dashboard" class="text-white/25 text-[10px] font-display uppercase tracking-[0.14em] hover:text-white/50 transition-colors mb-6 inline-flex items-center gap-1.5">
+            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+            </svg>
+            Dashboard
+          </NuxtLink>
+          <div class="flex items-end justify-between gap-6">
+            <div class="min-w-0">
+              <p class="text-white/25 text-xs font-body mb-2">Results for</p>
+              <h1 class="font-display font-bold text-white break-all" style="font-size: clamp(1rem, 2vw, 1.3rem); max-width: 52ch">{{ scan.url }}</h1>
+            </div>
+            <div class="text-right flex-shrink-0">
+              <p class="text-white/20 text-[9px] font-display uppercase tracking-[0.16em] mb-1">Overall</p>
+              <p
+                class="font-display font-bold leading-none"
+                :class="scoreColor(scan.overallScore)"
+                style="font-size: clamp(4rem, 8vw, 6rem)"
+              >{{ scan.overallScore }}</p>
+            </div>
           </div>
         </div>
 
@@ -178,11 +182,11 @@ const displayIssues = computed(() => {
             :key="p.key"
             class="bg-dark-surface border border-dark-border rounded-card p-5"
           >
-            <div class="flex items-center justify-between mb-4">
-              <span class="text-xs font-display uppercase tracking-widest" :style="{ color: p.color }">{{ p.label }}</span>
-              <span class="font-display font-bold text-2xl" :class="scoreColor(p.score)">{{ p.score ?? '—' }}</span>
+            <div class="flex items-center justify-between mb-5">
+              <span class="text-[9px] font-display uppercase tracking-[0.18em]" :style="{ color: p.color }">{{ p.label }}</span>
+              <span class="font-display font-bold leading-none" :class="scoreColor(p.score)" style="font-size: 2rem">{{ p.score ?? '—' }}</span>
             </div>
-            <div class="h-1.5 bg-white/[0.06] rounded-full overflow-hidden">
+            <div class="h-2 bg-white/[0.05] rounded-full overflow-hidden">
               <div
                 class="h-full rounded-full transition-all duration-700"
                 :style="{ width: (p.score ?? 0) + '%', background: barColor(p.score) }"
@@ -213,31 +217,28 @@ const displayIssues = computed(() => {
             <div
               v-for="(issue, i) in displayIssues"
               :key="i"
-              class="flex items-start gap-4 px-5 py-4 bg-dark-surface border border-dark-border rounded-xl hover:border-white/10 transition-colors"
+              class="flex items-start gap-5 px-5 py-4 bg-dark-surface rounded-xl hover:bg-dark-elevated transition-colors border border-transparent hover:border-white/[0.06]"
+              :class="{
+                'border-l-2 border-l-danger': issue.severity === 'critical',
+                'border-l-2 border-l-warning': issue.severity === 'warning',
+                'border-l-2 border-l-success': issue.severity === 'pass',
+              }"
             >
-              <div class="mt-1.5 flex-shrink-0">
-                <div class="w-2 h-2 rounded-full" :class="severityDot(issue.severity)" />
-              </div>
               <div class="flex-1 min-w-0">
-                <div class="flex items-center gap-3 flex-wrap mb-1">
-                  <p class="font-display font-medium text-white text-sm">{{ issue.title }}</p>
+                <div class="flex items-center gap-3 flex-wrap mb-1.5">
+                  <p class="font-display font-semibold text-white text-sm">{{ issue.title }}</p>
                   <span
-                    class="text-[10px] font-display uppercase tracking-wider px-2 py-0.5 rounded-full border"
+                    class="text-[9px] font-display uppercase tracking-[0.14em] px-2 py-0.5 rounded-full"
                     :class="{
-                      'text-danger border-danger/20 bg-danger/5': issue.severity === 'critical',
-                      'text-warning border-warning/20 bg-warning/5': issue.severity === 'warning',
-                      'text-success border-success/20 bg-success/5': issue.severity === 'pass',
+                      'text-danger bg-danger/8': issue.severity === 'critical',
+                      'text-warning bg-warning/8': issue.severity === 'warning',
+                      'text-success bg-success/8': issue.severity === 'pass',
                     }"
                   >{{ issue.severity }}</span>
                 </div>
-                <p class="text-white/40 text-xs font-body leading-relaxed">{{ issue.description }}</p>
+                <p class="text-white/38 text-xs font-body leading-relaxed">{{ issue.description }}</p>
               </div>
-              <div class="flex-shrink-0 ml-2">
-                <span
-                  class="text-[10px] font-display uppercase tracking-wider px-2 py-0.5 rounded text-white/25"
-                  :style="{ background: 'rgba(255,255,255,0.04)' }"
-                >{{ issue.pillar }}</span>
-              </div>
+              <span class="flex-shrink-0 text-[9px] font-display uppercase tracking-[0.14em] text-white/20 mt-0.5">{{ issue.pillar }}</span>
             </div>
 
             <div v-if="!displayIssues.length" class="text-center py-12 text-white/25 text-sm font-body">

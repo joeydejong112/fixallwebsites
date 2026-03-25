@@ -59,14 +59,18 @@ function relativeTime(ts: number) {
     <div class="max-w-5xl mx-auto px-6 pt-28 pb-20">
 
       <!-- Header -->
-      <div class="mb-10">
-        <h1 class="font-display font-bold text-white mb-1" style="font-size: clamp(1.6rem, 3vw, 2rem)">Dashboard</h1>
-        <p class="text-white/35 font-body text-sm">Scan history and results</p>
+      <div class="mb-12 pb-8 border-b border-dark-border">
+        <p class="text-primary text-[10px] font-display uppercase tracking-[0.18em] mb-3">Overview</p>
+        <h1 class="font-display font-bold text-white leading-none mb-2" style="font-size: clamp(2.8rem, 6vw, 4.5rem)">Dashboard</h1>
+        <p class="text-white/30 font-body text-sm">Your scan history and results</p>
       </div>
 
       <!-- Scan input -->
-      <div class="mb-12 p-6 bg-dark-surface border border-dark-border rounded-card">
-        <p class="text-white/50 text-xs font-display uppercase tracking-widest mb-4">New scan</p>
+      <div class="mb-12">
+        <div class="flex items-center gap-2 mb-3">
+          <div class="w-0.5 h-4 bg-primary rounded-full" />
+          <span class="text-white/30 text-[10px] font-display uppercase tracking-[0.18em]">New scan</span>
+        </div>
         <ScanInput @scan="handleScan" />
       </div>
 
@@ -120,28 +124,27 @@ function relativeTime(ts: number) {
             </div>
 
             <div class="flex items-center gap-6 flex-shrink-0 ml-4">
-              <div v-if="scan.status === 'done'" class="hidden sm:flex items-center gap-4">
+              <div v-if="scan.status === 'done'" class="hidden sm:flex items-center gap-5">
                 <div class="text-right">
-                  <p class="text-[10px] font-display uppercase tracking-wider text-security/60">Sec</p>
-                  <p class="font-display font-semibold text-sm" :class="scoreColor(scan.securityScore)">{{ scan.securityScore ?? '—' }}</p>
+                  <p class="text-[9px] font-display uppercase tracking-[0.14em] text-security/50 mb-1">Sec</p>
+                  <p class="font-display font-bold text-base leading-none" :class="scoreColor(scan.securityScore)">{{ scan.securityScore ?? '—' }}</p>
                 </div>
                 <div class="text-right">
-                  <p class="text-[10px] font-display uppercase tracking-wider text-performance/60">Perf</p>
-                  <p class="font-display font-semibold text-sm" :class="scoreColor(scan.performanceScore)">{{ scan.performanceScore ?? '—' }}</p>
+                  <p class="text-[9px] font-display uppercase tracking-[0.14em] text-performance/50 mb-1">Perf</p>
+                  <p class="font-display font-bold text-base leading-none" :class="scoreColor(scan.performanceScore)">{{ scan.performanceScore ?? '—' }}</p>
                 </div>
                 <div class="text-right">
-                  <p class="text-[10px] font-display uppercase tracking-wider text-seo/60">SEO</p>
-                  <p class="font-display font-semibold text-sm" :class="scoreColor(scan.seoScore)">{{ scan.seoScore ?? '—' }}</p>
+                  <p class="text-[9px] font-display uppercase tracking-[0.14em] text-seo/50 mb-1">SEO</p>
+                  <p class="font-display font-bold text-base leading-none" :class="scoreColor(scan.seoScore)">{{ scan.seoScore ?? '—' }}</p>
                 </div>
               </div>
-              <div class="text-right">
-                <p class="text-[10px] font-display uppercase tracking-wider text-white/20 mb-0.5">Score</p>
+              <div class="text-right w-12">
+                <p class="text-[9px] font-display uppercase tracking-[0.14em] text-white/20 mb-1">Score</p>
                 <p
-                  class="font-display font-bold text-xl"
-                  :class="scan.status === 'done' ? scoreColor(scan.overallScore) : 'text-white/20'"
-                >
-                  {{ scan.status === 'done' ? (scan.overallScore ?? '—') : '—' }}
-                </p>
+                  class="font-display font-bold leading-none"
+                  style="font-size: 1.6rem"
+                  :class="scan.status === 'done' ? scoreColor(scan.overallScore) : 'text-white/15'"
+                >{{ scan.status === 'done' ? (scan.overallScore ?? '—') : '—' }}</p>
               </div>
               <svg class="w-4 h-4 text-white/15 group-hover:text-white/40 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5l7 7-7 7" />
