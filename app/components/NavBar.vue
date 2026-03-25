@@ -11,14 +11,14 @@ const { isSignedIn } = useAuth()
       </NuxtLink>
 
       <div class="flex items-center gap-3">
-        <SignedIn>
+        <template v-if="isSignedIn">
           <NuxtLink to="/dashboard" class="btn-ghost text-sm">Dashboard</NuxtLink>
           <UserButton />
-        </SignedIn>
-        <SignedOut>
+        </template>
+        <template v-else>
           <NuxtLink to="/sign-in" class="btn-ghost text-sm">Sign in</NuxtLink>
           <NuxtLink to="/sign-up" class="btn-primary text-sm py-2">Get started free</NuxtLink>
-        </SignedOut>
+        </template>
       </div>
     </div>
   </nav>
