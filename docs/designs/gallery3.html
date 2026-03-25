@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ScanPulse — Mix: Arc Rings + Live Feed</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=DM+Sans:wght@300;400;500&display=swap');
+
+  body {
+    background: #030305;
+    font-family: 'Space Grotesk', sans-serif;
+    color: white;
+    padding: 60px 40px;
+  }
+
+  .gallery-header {
+    text-align: center;
+    margin-bottom: 60px;
+  }
+  .gallery-header h1 {
+    font-size: 3rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    margin-bottom: 10px;
+    background: linear-gradient(135deg, #fff 40%, rgba(255,255,255,0.3));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .gallery-header p { color: rgba(255,255,255,0.3); font-family: 'DM Sans', sans-serif; font-size: 0.95rem; }
+  .gallery-header .tag {
+    display: inline-block;
+    border: 1px solid rgba(236,53,134,0.3);
+    color: #ec3586;
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    padding: 4px 14px;
+    border-radius: 100px;
+    margin-bottom: 18px;
+  }
+
+  .single {
+    max-width: 1400px;
+    margin: 0 auto;
+    background: #0a0a0e;
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 16px;
+    overflow: hidden;
+  }
+
+  .concept-label {
+    padding: 16px 22px;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .concept-title { font-size: 14px; font-weight: 600; color: rgba(255,255,255,0.8); }
+  .concept-desc { font-size: 12px; color: rgba(255,255,255,0.3); font-family: 'DM Sans', sans-serif; margin-top: 2px; }
+  .tag-pill {
+    background: rgba(236,53,134,0.1);
+    border: 1px solid rgba(236,53,134,0.2);
+    color: #ec3586;
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    padding: 3px 10px;
+    border-radius: 100px;
+    font-weight: 600;
+    flex-shrink: 0;
+  }
+
+  .frame-wrap {
+    height: 700px;
+    overflow: hidden;
+    position: relative;
+  }
+  .frame-wrap iframe {
+    width: 1400px;
+    height: 1000px;
+    border: none;
+    transform: scale(0.78);
+    transform-origin: top left;
+    pointer-events: none;
+  }
+</style>
+</head>
+<body>
+
+<div class="gallery-header">
+  <div class="tag">Mixed Concept</div>
+  <h1>Arc Rings + Live Feed</h1>
+  <p>Spinning pillar arcs with overall score · live scan results streaming below</p>
+</div>
+
+<div class="single">
+  <div class="concept-label">
+    <div class="tag-pill">Mix 07 + 10</div>
+    <div>
+      <div class="concept-title">Arc Rings with Live Issue Feed</div>
+      <div class="concept-desc">Left: editorial headline · Center: three spinning pillar arcs with score hub · Right: live scan feed streaming upward</div>
+    </div>
+  </div>
+  <div class="frame-wrap">
+    <iframe srcdoc="
+<!DOCTYPE html><html><head><style>
+*{margin:0;padding:0;box-sizing:border-box}
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=DM+Sans:wght@300;400&display=swap');
+body{background:#07070a;font-family:'Space Grotesk',sans-serif;color:white;overflow:hidden;height:1000px}
+
+.hero{height:100%;display:grid;grid-template-columns:1fr 480px 380px;align-items:center;gap:0}
+
+/* ── LEFT PANEL ── */
+.left{padding:80px 60px 80px 100px;display:flex;flex-direction:column;justify-content:center;height:100%}
+.eyebrow{font-size:11px;letter-spacing:0.2em;text-transform:uppercase;color:#ec3586;margin-bottom:32px;display:flex;align-items:center;gap:12px}
+.eyebrow::before{content:'';display:block;width:28px;height:2px;background:#ec3586}
+h1{font-size:92px;font-weight:700;line-height:0.88;letter-spacing:-0.04em;margin-bottom:36px}
+h1 .accent{color:#ec3586}
+p{font-family:'DM Sans',sans-serif;font-size:17px;color:rgba(255,255,255,0.35);line-height:1.65;max-width:380px;margin-bottom:48px}
+.stats{display:flex;gap:44px;margin-bottom:48px}
+.stat-val{font-size:42px;font-weight:700;line-height:1;margin-bottom:6px}
+.stat-label{font-size:10px;color:rgba(255,255,255,0.28);letter-spacing:0.12em;text-transform:uppercase;font-family:'DM Sans',sans-serif}
+.btn{background:#ec3586;color:white;border:none;padding:18px 40px;border-radius:9px;font-family:'Space Grotesk',sans-serif;font-size:15px;font-weight:600;cursor:pointer;letter-spacing:0.02em}
+
+/* ── CENTER: RINGS ── */
+.rings-panel{display:flex;align-items:center;justify-content:center;height:100%;position:relative;border-left:1px solid rgba(255,255,255,0.04)}
+.rings-wrap{position:relative;width:380px;height:380px;flex-shrink:0}
+.arc{position:absolute;border-radius:50%;top:50%;left:50%;transform:translate(-50%,-50%)}
+
+/* Security arc — outer */
+.arc-sec{
+  width:360px;height:360px;
+  border:2px solid transparent;
+  border-top-color:#00d4aa;
+  border-right-color:rgba(0,212,170,0.15);
+  animation:spin-sec 5s linear infinite;
+}
+/* Perf arc — middle */
+.arc-perf{
+  width:276px;height:276px;
+  border:2px solid transparent;
+  border-top-color:#ffaa00;
+  border-right-color:rgba(255,170,0,0.15);
+  animation:spin-perf 7s linear infinite reverse;
+}
+/* SEO arc — inner */
+.arc-seo{
+  width:196px;height:196px;
+  border:2px solid transparent;
+  border-top-color:#6c5ce7;
+  border-right-color:rgba(108,92,231,0.15);
+  animation:spin-seo 9s linear infinite;
+}
+
+@keyframes spin-sec{from{transform:translate(-50%,-50%) rotate(0deg)}to{transform:translate(-50%,-50%) rotate(360deg)}}
+@keyframes spin-perf{from{transform:translate(-50%,-50%) rotate(40deg)}to{transform:translate(-50%,-50%) rotate(400deg)}}
+@keyframes spin-seo{from{transform:translate(-50%,-50%) rotate(-80deg)}to{transform:translate(-50%,-50%) rotate(280deg)}}
+
+/* Glowing dot on each arc tip */
+.dot{position:absolute;width:10px;height:10px;border-radius:50%;top:50%;left:50%}
+.dot-sec{background:#00d4aa;box-shadow:0 0 16px #00d4aa;animation:spin-sec 5s linear infinite;transform-origin:0 180px;margin-top:-5px;margin-left:-5px}
+.dot-perf{background:#ffaa00;box-shadow:0 0 16px #ffaa00;animation:spin-perf 7s linear infinite reverse;transform-origin:0 138px;margin-top:-5px;margin-left:-5px}
+.dot-seo{background:#6c5ce7;box-shadow:0 0 16px #6c5ce7;animation:spin-seo 9s linear infinite;transform-origin:0 98px;margin-top:-5px;margin-left:-5px}
+
+/* Track rings (static, faint) */
+.track{position:absolute;border-radius:50%;top:50%;left:50%;transform:translate(-50%,-50%);border:1px solid rgba(255,255,255,0.04)}
+.t1{width:360px;height:360px}
+.t2{width:276px;height:276px}
+.t3{width:196px;height:196px}
+
+/* Hub */
+.hub{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;z-index:4}
+.hub-score{font-size:72px;font-weight:700;line-height:0.85;letter-spacing:-0.04em;color:#ec3586}
+.hub-label{font-size:9px;letter-spacing:0.2em;text-transform:uppercase;color:rgba(255,255,255,0.25);margin-top:6px}
+
+/* Score labels around rings */
+.ring-label{position:absolute;font-size:11px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;display:flex;align-items:center;gap:6px}
+.rl-sec{top:8px;left:50%;transform:translateX(-50%);color:#00d4aa}
+.rl-perf{bottom:30px;right:20px;color:#ffaa00}
+.rl-seo{bottom:30px;left:20px;color:#6c5ce7}
+.rl-num{font-size:22px;font-weight:700;letter-spacing:-0.02em}
+
+/* ── RIGHT: FEED ── */
+.feed-panel{height:100%;border-left:1px solid rgba(255,255,255,0.04);display:flex;flex-direction:column;overflow:hidden;position:relative}
+.feed-header{padding:28px 28px 20px;flex-shrink:0;border-bottom:1px solid rgba(255,255,255,0.04)}
+.feed-title{font-size:10px;letter-spacing:0.18em;text-transform:uppercase;color:rgba(255,255,255,0.25);margin-bottom:8px}
+.live-badge{display:inline-flex;align-items:center;gap:6px;background:rgba(0,212,170,0.08);border:1px solid rgba(0,212,170,0.15);border-radius:100px;padding:3px 10px}
+.live-dot{width:5px;height:5px;border-radius:50%;background:#00d4aa;animation:pulse 1.5s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.3}}
+.live-text{font-size:9px;letter-spacing:0.14em;text-transform:uppercase;color:#00d4aa;font-weight:600}
+.feed-body{flex:1;overflow:hidden;position:relative}
+.feed-body::before{content:'';position:absolute;top:0;left:0;right:0;height:40px;background:linear-gradient(to bottom,#07070a,transparent);z-index:2;pointer-events:none}
+.feed-body::after{content:'';position:absolute;bottom:0;left:0;right:0;height:80px;background:linear-gradient(to top,#07070a,transparent);z-index:2;pointer-events:none}
+.feed-track{display:flex;flex-direction:column;gap:6px;padding:12px 20px;animation:feedScroll 22s linear infinite}
+@keyframes feedScroll{0%{transform:translateY(0)}100%{transform:translateY(-50%)}}
+.item{background:rgba(255,255,255,0.025);border-radius:8px;padding:11px 14px;display:flex;align-items:center;gap:10px;border-left:2px solid}
+.item-icon{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.item-content{flex:1;min-width:0}
+.item-title{font-size:12px;font-weight:500;color:rgba(255,255,255,0.7);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.item-row{display:flex;align-items:center;gap:6px;margin-top:2px}
+.item-pillar{font-size:8px;letter-spacing:0.14em;text-transform:uppercase;color:rgba(255,255,255,0.25)}
+.item-status{font-size:9px;font-weight:700;letter-spacing:0.08em}
+.item-url{font-size:9px;color:rgba(255,255,255,0.18);flex-shrink:0;font-family:'DM Sans',sans-serif}
+</style>
+<script>
+const checks=[
+  {title:'HTTPS enforced',pillar:'security',color:'#00d4aa',status:'PASS'},
+  {title:'HSTS header present',pillar:'security',color:'#00d4aa',status:'PASS'},
+  {title:'CSP header missing',pillar:'security',color:'#ff4757',status:'CRITICAL'},
+  {title:'X-Frame-Options set',pillar:'security',color:'#00d4aa',status:'PASS'},
+  {title:'X-Content-Type-Options',pillar:'security',color:'#ffaa00',status:'WARNING'},
+  {title:'TTFB 420ms',pillar:'performance',color:'#ffaa00',status:'WARNING'},
+  {title:'Gzip compression on',pillar:'performance',color:'#00d4aa',status:'PASS'},
+  {title:'Image dimensions missing',pillar:'performance',color:'#ff4757',status:'CRITICAL'},
+  {title:'Title tag present',pillar:'seo',color:'#00d4aa',status:'PASS'},
+  {title:'Meta description set',pillar:'seo',color:'#00d4aa',status:'PASS'},
+  {title:'Multiple H1 tags',pillar:'seo',color:'#ffaa00',status:'WARNING'},
+  {title:'No canonical URL',pillar:'seo',color:'#ff4757',status:'CRITICAL'},
+];
+const urls=['stripe.com','vercel.com','github.com','notion.so','linear.app','figma.com','shopify.com','airbnb.com'];
+window.addEventListener('load',()=>{
+  const track=document.querySelector('.feed-track');
+  const all=[...checks,...checks,...checks,...checks];
+  all.forEach(ch=>{
+    const d=document.createElement('div');
+    d.className='item';
+    d.style.borderLeftColor=ch.color;
+    d.innerHTML=`
+      <div class='item-icon' style='background:${ch.color}'></div>
+      <div class='item-content'>
+        <div class='item-title'>${ch.title}</div>
+        <div class='item-row'>
+          <span class='item-pillar'>${ch.pillar}</span>
+          <span class='item-status' style='color:${ch.color}'>${ch.status}</span>
+        </div>
+      </div>
+      <div class='item-url'>${urls[Math.floor(Math.random()*urls.length)]}</div>
+    `;
+    track.appendChild(d);
+  });
+});
+</script>
+</head><body>
+<div class='hero'>
+
+  <!-- LEFT: Headline -->
+  <div class='left'>
+    <div class='eyebrow'>ScanPulse — Website Health</div>
+    <h1>Your site's<br><span class='accent'>vital signs,</span><br>live.</h1>
+    <p>Security, performance, and SEO — scanned in seconds. Know exactly what needs fixing.</p>
+    <div class='stats'>
+      <div><div class='stat-val' style='color:#00d4aa'>5</div><div class='stat-label'>Security</div></div>
+      <div><div class='stat-val' style='color:#ffaa00'>3</div><div class='stat-label'>Performance</div></div>
+      <div><div class='stat-val' style='color:#6c5ce7'>4</div><div class='stat-label'>SEO checks</div></div>
+    </div>
+    <button class='btn'>Run free scan →</button>
+  </div>
+
+  <!-- CENTER: Arc Rings -->
+  <div class='rings-panel'>
+    <div class='rings-wrap'>
+      <div class='track t1'></div>
+      <div class='track t2'></div>
+      <div class='track t3'></div>
+
+      <div class='arc arc-sec'></div>
+      <div class='arc arc-perf'></div>
+      <div class='arc arc-seo'></div>
+
+      <div class='dot dot-sec'></div>
+      <div class='dot dot-perf'></div>
+      <div class='dot dot-seo'></div>
+
+      <div class='hub'>
+        <div class='hub-score'>81</div>
+        <div class='hub-label'>Overall</div>
+      </div>
+
+      <div class='ring-label rl-sec'><span class='rl-num'>94</span><span>Sec</span></div>
+      <div class='ring-label rl-perf'><span class='rl-num'>71</span><span>Perf</span></div>
+      <div class='ring-label rl-seo'><span class='rl-num'>88</span><span>SEO</span></div>
+    </div>
+  </div>
+
+  <!-- RIGHT: Live Feed -->
+  <div class='feed-panel'>
+    <div class='feed-header'>
+      <div class='feed-title'>Live scan results</div>
+      <div class='live-badge'>
+        <div class='live-dot'></div>
+        <span class='live-text'>3,847 scans today</span>
+      </div>
+    </div>
+    <div class='feed-body'>
+      <div class='feed-track'></div>
+    </div>
+  </div>
+
+</div>
+</body></html>
+    "></iframe>
+  </div>
+</div>
+
+</body>
+</html>

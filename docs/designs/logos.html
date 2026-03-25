@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>ScanPulse — Logo Concepts</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #07070a;
+    font-family: 'Space Grotesk', system-ui, sans-serif;
+    color: white;
+    min-height: 100vh;
+    padding: 60px 40px;
+  }
+  h1 {
+    font-size: 13px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.35);
+    margin-bottom: 48px;
+  }
+  h1 span { color: #ec3586; margin-right: 12px; }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 2px;
+  }
+  .card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 48px 24px 36px;
+    background: rgba(255,255,255,0.02);
+    border: 1px solid rgba(255,255,255,0.04);
+    gap: 24px;
+    transition: background 0.2s;
+    cursor: pointer;
+  }
+  .card:hover { background: rgba(255,255,255,0.045); }
+  .logo-wrap {
+    width: 140px;
+    height: 140px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .name {
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.3);
+    text-align: center;
+  }
+  .name strong {
+    display: block;
+    font-size: 12px;
+    color: rgba(255,255,255,0.65);
+    margin-bottom: 4px;
+    letter-spacing: 0.06em;
+    text-transform: none;
+  }
+</style>
+</head>
+<body>
+
+<h1><span>ScanPulse</span> Logo Concepts — 10 Directions</h1>
+
+<div class="grid">
+
+  <!-- 1. EKG Pulse Line -->
+  <div class="card">
+    <div class="logo-wrap">
+      <svg width="140" height="140" viewBox="0 0 140 140" fill="none">
+        <defs>
+          <filter id="glow1">
+            <feGaussianBlur stdDeviation="2.5" result="blur"/>
+            <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+          </filter>
+        </defs>
+        <line x1="10" y1="70" x2="130" y2="70" stroke="rgba(255,255,255,0.08)" stroke-width="1.5"/>
+        <path d="M10,70 L38,70 L48,70 L54,35 L62,100 L68,50 L74,70 L130,70"
+              stroke="#ec3586" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"
+              filter="url(#glow1)"
+              stroke-dasharray="200" stroke-dashoffset="200">
+          <animate attributeName="stroke-dashoffset" values="200;0;0;200" dur="2.8s" repeatCount="indefinite" calcMode="spline" keySplines="0.4 0 0.2 1;0 0 0 0;0 0 0 0" keyTimes="0;0.55;0.8;1"/>
+        </path>
+        <circle cx="74" cy="70" r="4" fill="#ec3586" opacity="0">
+          <animate attributeName="opacity" values="0;0;1;0" dur="2.8s" repeatCount="indefinite" keyTimes="0;0.54;0.56;0.8"/>
+          <animate attributeName="r" values="4;4;8;4" dur="2.8s" repeatCount="indefinite" keyTimes="0;0.54;0.56;0.8"/>
+        </circle>
+        <text x="70" y="118" text-anchor="middle" font-family="'Space Grotesk',sans-serif" font-weight="700" font-size="13" fill="rgba(255,255,255,0.7)" letter-spacing="4">SCANPULSE</text>
+      </svg>
+    </div>
+    <div class="name"><strong>01 — EKG</strong>Vital signs metaphor</div>
+  </div>
+
+  <!-- 2. Browser Scan Beam -->
+  <div class="card">
+    <div class="logo-wrap">
+      <svg width="140" height="140" viewBox="0 0 140 140" fill="none">
+        <defs>
+          <clipPath id="browserClip">
+            <rect x="14" y="30" width="112" height="78" rx="4"/>
+          </clipPath>
+          <linearGradient id="beamGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#ec3586" stop-opacity="0"/>
+            <stop offset="50%" stop-color="#ec3586" stop-opacity="0.6"/>
+            <stop offset="100%" stop-color="#ec3586" stop-opacity="0"/>
+          </linearGradient>
+        </defs>
+        <rect x="14" y="28" width="112" height="82" rx="6" stroke="rgba(255,255,255,0.25)" stroke-width="1.5"/>
+        <rect x="14" y="28" width="112" height="20" rx="6" fill="rgba(255,255,255,0.06)"/>
+        <line x1="14" y1="48" x2="126" y2="48" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+        <circle cx="28" cy="38" r="3.5" fill="rgba(255,255,255,0.12)"/>
+        <circle cx="40" cy="38" r="3.5" fill="rgba(255,255,255,0.12)"/>
+        <circle cx="52" cy="38" r="3.5" fill="rgba(255,255,255,0.12)"/>
+        <rect x="62" y="32" width="56" height="12" rx="4" fill="rgba(255,255,255,0.06)"/>
+        <g clip-path="url(#browserClip)" opacity="0.1">
+          <rect x="24" y="58" width="55" height="6" rx="2" fill="white"/>
+          <rect x="24" y="70" width="40" height="4" rx="2" fill="white"/>
+          <rect x="24" y="80" width="50" height="4" rx="2" fill="white"/>
+          <rect x="85" y="55" width="32" height="40" rx="3" fill="white"/>
+        </g>
+        <g clip-path="url(#browserClip)">
+          <rect x="14" y="0" width="112" height="16" fill="url(#beamGrad)">
+            <animateTransform attributeName="transform" type="translate" values="0,48;0,110;0,48" dur="2s" repeatCount="indefinite" calcMode="spline" keySplines="0.4 0 0.2 1;0.4 0 0.2 1"/>
+          </rect>
+          <rect x="14" y="0" width="112" height="1.5" fill="#ec3586" opacity="0.9">
+            <animateTransform attributeName="transform" type="translate" values="0,55;0,117;0,55" dur="2s" repeatCount="indefinite" calcMode="spline" keySplines="0.4 0 0.2 1;0.4 0 0.2 1"/>
+          </rect>
+        </g>
+        <text x="70" y="125" text-anchor="middle" font-family="'Space Grotesk',sans-serif" font-weight="700" font-size="13" fill="rgba(255,255,255,0.7)" letter-spacing="4">SCANPULSE</text>
+      </svg>
+    </div>
+    <div class="name"><strong>02 — Browser Scan</strong>Literal website scanner</div>
+  </div>
+
+  <!-- 3. Pulse Globe -->
+  <div class="card">
+    <div class="logo-wrap">
+      <svg width="140" height="140" viewBox="0 0 140 140" fill="none">
+        <defs>
+          <clipPath id="globeClip">
+            <circle cx="70" cy="65" r="42"/>
+          </clipPath>
+          <filter id="glow3">
+            <feGaussianBlur stdDeviation="2" result="blur"/>
+            <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+          </filter>
+        </defs>
+        <circle cx="70" cy="65" r="42" stroke="rgba(255,255,255,0.2)" stroke-width="1.5"/>
+        <ellipse cx="70" cy="65" rx="22" ry="42" stroke="rgba(255,255,255,0.07)" stroke-width="1"/>
+        <ellipse cx="70" cy="65" rx="42" ry="18" stroke="rgba(255,255,255,0.07)" stroke-width="1"/>
+        <line x1="28" y1="65" x2="112" y2="65" stroke="rgba(255,255,255,0.07)" stroke-width="1"/>
+        <g clip-path="url(#globeClip)">
+          <line x1="28" y1="65" x2="112" y2="65" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
+          <path d="M28,65 L44,65 L52,42 L59,85 L65,52 L71,65 L112,65"
+                stroke="#ec3586" stroke-width="2.5" fill="none" stroke-linecap="round"
+                filter="url(#glow3)" stroke-dasharray="180">
+            <animate attributeName="stroke-dashoffset" values="180;0;0;180" dur="3s" repeatCount="indefinite" keyTimes="0;0.5;0.75;1"/>
+          </path>
+        </g>
+        <text x="70" y="125" text-anchor="middle" font-family="'Space Grotesk',sans-serif" font-weight="700" font-size="13" fill="rgba(255,255,255,0.7)" letter-spacing="4">SCANPULSE</text>
+      </svg>
+    </div>
+    <div class="name"><strong>03 — Pulse Globe</strong>World + health signal</div>
+  </div>
+
+  <!-- 4. Magnifier + EKG -->
+  <div class="card">
+    <div class="logo-wrap">
+      <svg width="140" height="140" viewBox="0 0 140 140" fill="none">
+        <defs>
+          <clipPath id="magClip">
+            <circle cx="58" cy="58" r="34"/>
+          </clipPath>
+          <filter id="glow4">
+            <feGaussianBlur stdDeviation="2" result="blur"/>
+            <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+          </filter>
+        </defs>
+        <circle cx="58" cy="58" r="34" stroke="rgba(255,255,255,0.3)" stroke-width="2.5"/>
+        <line x1="84" y1="84" x2="116" y2="116" stroke="rgba(255,255,255,0.3)" stroke-width="5" stroke-linecap="round"/>
+        <g clip-path="url(#magClip)">
+          <line x1="24" y1="58" x2="92" y2="58" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
+          <path d="M24,58 L38,58 L45,38 L52,76 L57,46 L62,58 L92,58"
+                stroke="#ec3586" stroke-width="2" fill="none" stroke-linecap="round"
+                filter="url(#glow4)" stroke-dasharray="130">
+            <animate attributeName="stroke-dashoffset" values="130;0;0;130" dur="2.5s" repeatCount="indefinite" keyTimes="0;0.5;0.75;1"/>
+          </path>
+        </g>
+        <circle cx="58" cy="58" r="34" stroke="#ec3586" stroke-width="1.5" stroke-dasharray="40 175" opacity="0.4">
+          <animateTransform attributeName="transform" type="rotate" from="0 58 58" to="360 58 58" dur="4s" repeatCount="indefinite"/>
+        </circle>
+        <text x="70" y="132" text-anchor="middle" font-family="'Space Grotesk',sans-serif" font-weight="700" font-size="13" fill="rgba(255,255,255,0.7)" letter-spacing="4">SCANPULSE</text>
+      </svg>
+    </div>
+    <div class="name"><strong>04 — Magnifier</strong>Finding health issues</div>
+  </div>
+
+  <!-- 5. Signal Shield -->
+  <div class="card">
+    <div class="logo-wrap">
+      <svg width="140" height="140" viewBox="0 0 140 140" fill="none">
+        <path d="M70,16 L118,36 L118,80 Q118,116 70,130 Q22,116 22,80 L22,36 Z"
+              stroke="rgba(255,255,255,0.18)" stroke-width="1.5" fill="none"/>
+        <rect x="38" y="98" width="11" height="16" rx="2" fill="#00d4aa" opacity="0.3">
+          <animate attributeName="opacity" values="0.3;1;0.3" dur="1.6s" repeatCount="indefinite" begin="0s"/>
+          <animate attributeName="height" values="16;22;16" dur="1.6s" repeatCount="indefinite" begin="0s"/>
+          <animate attributeName="y" values="98;92;98" dur="1.6s" repeatCount="indefinite" begin="0s"/>
+        </rect>
+        <rect x="53" y="88" width="11" height="26" rx="2" fill="#00d4aa" opacity="0.5">
+          <animate attributeName="opacity" values="0.5;1;0.5" dur="1.6s" repeatCount="indefinite" begin="0.2s"/>
+          <animate attributeName="height" values="26;32;26" dur="1.6s" repeatCount="indefinite" begin="0.2s"/>
+          <animate attributeName="y" values="88;82;88" dur="1.6s" repeatCount="indefinite" begin="0.2s"/>
+        </rect>
+        <rect x="68" y="76" width="11" height="38" rx="2" fill="#ffaa00" opacity="0.7">
+          <animate attributeName="opacity" values="0.7;1;0.7" dur="1.6s" repeatCount="indefinite" begin="0.35s"/>
+          <animate attributeName="height" values="38;44;38" dur="1.6s" repeatCount="indefinite" begin="0.35s"/>
+          <animate attributeName="y" values="76;70;76" dur="1.6s" repeatCount="indefinite" begin="0.35s"/>
+        </rect>
+        <rect x="83" y="62" width="11" height="52" rx="2" fill="#ec3586" opacity="0.85">
+          <animate attributeName="opacity" values="0.85;1;0.85" dur="1.6s" repeatCount="indefinite" begin="0.5s"/>
+          <animate attributeName="height" values="52;58;52" dur="1.6s" repeatCount="indefinite" begin="0.5s"/>
+          <animate attributeName="y" values="62;56;62" dur="1.6s" repeatCount="indefinite" begin="0.5s"/>
+        </rect>
+        <text x="70" y="140" text-anchor="middle" font-family="'Space Grotesk',sans-serif" font-weight="700" font-size="11" fill="rgba(255,255,255,0.6)" letter-spacing="4">SCANPULSE</text>
+      </svg>
+    </div>
+    <div class="name"><strong>05 — Signal Shield</strong>Security + performance</div>
+  </div>
+
+  <!-- 6. Crosshair -->
+  <div class="card">
+    <div class="logo-wrap">
+      <svg width="140" height="140" viewBox="0 0 140 140" fill="none">
+        <defs>
+          <filter id="glow6">
+            <feGaussianBlur stdDeviation="3" result="blur"/>
+            <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+          </filter>
+        </defs>
+        <circle cx="70" cy="68" r="54" stroke="rgba(255,255,255,0.04)" stroke-width="1"/>
+        <circle cx="70" cy="68" r="40" stroke="rgba(236,53,134,0.25)" stroke-width="1.5" stroke-dasharray="15 12">
+          <animateTransform attributeName="transform" type="rotate" from="0 70 68" to="360 70 68" dur="8s" repeatCount="indefinite"/>
+        </circle>
+        <circle cx="70" cy="68" r="22" stroke="rgba(255,255,255,0.15)" stroke-width="1.5"/>
+        <line x1="70" y1="14" x2="70" y2="46" stroke="rgba(255,255,255,0.5)" stroke-width="1.5" stroke-linecap="round"/>
+        <line x1="70" y1="90" x2="70" y2="122" stroke="rgba(255,255,255,0.5)" stroke-width="1.5" stroke-linecap="round"/>
+        <line x1="16" y1="68" x2="48" y2="68" stroke="rgba(255,255,255,0.5)" stroke-width="1.5" stroke-linecap="round"/>
+        <line x1="92" y1="68" x2="124" y2="68" stroke="rgba(255,255,255,0.5)" stroke-width="1.5" stroke-linecap="round"/>
+        <circle cx="70" cy="68" r="5" fill="#ec3586" filter="url(#glow6)">
+          <animate attributeName="r" values="5;7;5" dur="1.8s" repeatCount="indefinite"/>
+        </circle>
+        <circle cx="70" cy="68" r="5" fill="none" stroke="#ec3586" stroke-width="1.5">
+          <animate attributeName="r" values="5;30;30" dur="2s" repeatCount="indefinite"/>
+          <animate attributeName="opacity" values="0.8;0;0" dur="2s" repeatCount="indefinite"/>
+        </circle>
+        <text x="70" y="134" text-anchor="middle" font-family="'Space Grotesk',sans-serif" font-weight="700" font-size="13" fill="rgba(255,255,255,0.7)" letter-spacing="4">SCANPULSE</text>
+      </svg>
+    </div>
+    <div class="name"><strong>06 — Crosshair</strong>Target and analyze</div>
+  </div>
+
+  <!-- 7. Score Meter -->
+  <div class="card">
+    <div class="logo-wrap">
+      <svg width="140" height="140" viewBox="0 0 140 140" fill="none">
+        <defs>
+          <linearGradient id="arcGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stop-color="#ff4757"/>
+            <stop offset="45%" stop-color="#ffaa00"/>
+            <stop offset="100%" stop-color="#00d4aa"/>
+          </linearGradient>
+          <filter id="needleGlow">
+            <feGaussianBlur stdDeviation="2" result="blur"/>
+            <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+          </filter>
+        </defs>
+        <path d="M18,95 A56,56 0 1,1 122,95" stroke="rgba(255,255,255,0.07)" stroke-width="8" fill="none" stroke-linecap="round"/>
+        <path d="M18,95 A56,56 0 1,1 122,95" stroke="url(#arcGrad)" stroke-width="5" fill="none" stroke-linecap="round"
+              stroke-dasharray="176" stroke-dashoffset="176">
+          <animate attributeName="stroke-dashoffset" values="176;44;176" dur="3.5s" repeatCount="indefinite" calcMode="spline" keySplines="0.4 0 0.2 1;0.4 0 0.2 1"/>
+        </path>
+        <g stroke="rgba(255,255,255,0.12)" stroke-width="1">
+          <line x1="70" y1="20" x2="70" y2="30"/>
+          <line x1="18" y1="95" x2="28" y2="95"/>
+          <line x1="122" y1="95" x2="112" y2="95"/>
+          <line x1="26" y1="44" x2="33" y2="51"/>
+          <line x1="114" y1="44" x2="107" y2="51"/>
+        </g>
+        <g>
+          <animateTransform attributeName="transform" type="rotate" values="-130 70 95;50 70 95;-130 70 95" dur="3.5s" repeatCount="indefinite" calcMode="spline" keySplines="0.4 0 0.2 1;0.4 0 0.2 1"/>
+          <line x1="70" y1="95" x2="70" y2="35" stroke="#ec3586" stroke-width="2" stroke-linecap="round" filter="url(#needleGlow)"/>
+          <circle cx="70" cy="95" r="6" fill="#07070a" stroke="#ec3586" stroke-width="2"/>
+        </g>
+        <text x="70" y="128" text-anchor="middle" font-family="'Space Grotesk',sans-serif" font-weight="700" font-size="13" fill="rgba(255,255,255,0.7)" letter-spacing="4">SCANPULSE</text>
+      </svg>
+    </div>
+    <div class="name"><strong>07 — Score Meter</strong>The health score needle</div>
+  </div>
+
+  <!-- 8. Network Pulse -->
+  <div class="card">
+    <div class="logo-wrap">
+      <svg width="140" height="140" viewBox="0 0 140 140" fill="none">
+        <defs>
+          <filter id="nodeGlow">
+            <feGaussianBlur stdDeviation="3" result="blur"/>
+            <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+          </filter>
+        </defs>
+        <line x1="70" y1="65" x2="28" y2="38" stroke="rgba(255,255,255,0.1)" stroke-width="1.5"/>
+        <line x1="70" y1="65" x2="112" y2="38" stroke="rgba(255,255,255,0.1)" stroke-width="1.5"/>
+        <line x1="70" y1="65" x2="118" y2="88" stroke="rgba(255,255,255,0.1)" stroke-width="1.5"/>
+        <line x1="70" y1="65" x2="70" y2="108" stroke="rgba(255,255,255,0.1)" stroke-width="1.5"/>
+        <line x1="70" y1="65" x2="22" y2="88" stroke="rgba(255,255,255,0.1)" stroke-width="1.5"/>
+        <circle r="3" fill="#ec3586" opacity="0">
+          <animateMotion path="M70,65 L28,38" dur="1.4s" repeatCount="indefinite" begin="0s"/>
+          <animate attributeName="opacity" values="0;1;1;0" dur="1.4s" repeatCount="indefinite" begin="0s"/>
+        </circle>
+        <circle r="3" fill="#00d4aa" opacity="0">
+          <animateMotion path="M70,65 L112,38" dur="1.4s" repeatCount="indefinite" begin="0.3s"/>
+          <animate attributeName="opacity" values="0;1;1;0" dur="1.4s" repeatCount="indefinite" begin="0.3s"/>
+        </circle>
+        <circle r="3" fill="#ffaa00" opacity="0">
+          <animateMotion path="M70,65 L118,88" dur="1.4s" repeatCount="indefinite" begin="0.6s"/>
+          <animate attributeName="opacity" values="0;1;1;0" dur="1.4s" repeatCount="indefinite" begin="0.6s"/>
+        </circle>
+        <circle r="3" fill="#6c5ce7" opacity="0">
+          <animateMotion path="M70,65 L22,88" dur="1.4s" repeatCount="indefinite" begin="0.9s"/>
+          <animate attributeName="opacity" values="0;1;1;0" dur="1.4s" repeatCount="indefinite" begin="0.9s"/>
+        </circle>
+        <circle cx="28" cy="38" r="7" stroke="#00d4aa" stroke-width="1.5" fill="rgba(0,212,170,0.07)"/>
+        <circle cx="112" cy="38" r="7" stroke="#ffaa00" stroke-width="1.5" fill="rgba(255,170,0,0.07)"/>
+        <circle cx="118" cy="88" r="7" stroke="#00d4aa" stroke-width="1.5" fill="rgba(0,212,170,0.07)"/>
+        <circle cx="70" cy="108" r="7" stroke="#6c5ce7" stroke-width="1.5" fill="rgba(108,92,231,0.07)"/>
+        <circle cx="22" cy="88" r="7" stroke="#ec3586" stroke-width="1.5" fill="rgba(236,53,134,0.07)"/>
+        <circle cx="70" cy="65" r="12" fill="rgba(236,53,134,0.15)" stroke="#ec3586" stroke-width="2" filter="url(#nodeGlow)"/>
+        <circle cx="70" cy="65" r="5" fill="#ec3586"/>
+        <circle cx="70" cy="65" r="12" fill="none" stroke="#ec3586" stroke-width="1.5">
+          <animate attributeName="r" values="12;38" dur="2s" repeatCount="indefinite"/>
+          <animate attributeName="opacity" values="0.6;0" dur="2s" repeatCount="indefinite"/>
+        </circle>
+        <text x="70" y="130" text-anchor="middle" font-family="'Space Grotesk',sans-serif" font-weight="700" font-size="13" fill="rgba(255,255,255,0.7)" letter-spacing="4">SCANPULSE</text>
+      </svg>
+    </div>
+    <div class="name"><strong>08 — Network</strong>Checks firing across web</div>
+  </div>
+
+  <!-- 9. Stethoscope -->
+  <div class="card">
+    <div class="logo-wrap">
+      <svg width="140" height="140" viewBox="0 0 140 140" fill="none">
+        <defs>
+          <filter id="glow9">
+            <feGaussianBlur stdDeviation="2.5" result="blur"/>
+            <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+          </filter>
+        </defs>
+        <path d="M36,22 L36,55 Q36,82 70,82 Q104,82 104,55 L104,22"
+              stroke="rgba(255,255,255,0.3)" stroke-width="4" fill="none" stroke-linecap="round"/>
+        <circle cx="36" cy="19" r="5" fill="rgba(255,255,255,0.25)" stroke="rgba(255,255,255,0.4)" stroke-width="1.5"/>
+        <circle cx="104" cy="19" r="5" fill="rgba(255,255,255,0.25)" stroke="rgba(255,255,255,0.4)" stroke-width="1.5"/>
+        <path d="M70,82 L70,95" stroke="rgba(255,255,255,0.3)" stroke-width="4" stroke-linecap="round"/>
+        <circle cx="70" cy="108" r="18" stroke="#ec3586" stroke-width="2" fill="rgba(236,53,134,0.08)" filter="url(#glow9)">
+          <animate attributeName="r" values="18;20;18" dur="1.6s" repeatCount="indefinite"/>
+        </circle>
+        <path d="M54,108 L60,108 L64,100 L68,114 L72,104 L76,108 L86,108"
+              stroke="#ec3586" stroke-width="2" fill="none" stroke-linecap="round"
+              stroke-dasharray="60">
+          <animate attributeName="stroke-dashoffset" values="60;0;0;60" dur="1.6s" repeatCount="indefinite" keyTimes="0;0.5;0.75;1"/>
+        </path>
+        <text x="70" y="140" text-anchor="middle" font-family="'Space Grotesk',sans-serif" font-weight="700" font-size="11" fill="rgba(255,255,255,0.6)" letter-spacing="4">SCANPULSE</text>
+      </svg>
+    </div>
+    <div class="name"><strong>09 — Stethoscope</strong>Diagnosing website health</div>
+  </div>
+
+  <!-- 10. Score Bars -->
+  <div class="card">
+    <div class="logo-wrap">
+      <svg width="140" height="140" viewBox="0 0 140 140" fill="none">
+        <defs>
+          <filter id="glow10">
+            <feGaussianBlur stdDeviation="2" result="blur"/>
+            <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+          </filter>
+          <linearGradient id="barGrad1" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%" stop-color="#00d4aa" stop-opacity="0.2"/>
+            <stop offset="100%" stop-color="#00d4aa"/>
+          </linearGradient>
+          <linearGradient id="barGrad2" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%" stop-color="#ffaa00" stop-opacity="0.2"/>
+            <stop offset="100%" stop-color="#ffaa00"/>
+          </linearGradient>
+          <linearGradient id="barGrad3" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%" stop-color="#ec3586" stop-opacity="0.2"/>
+            <stop offset="100%" stop-color="#ec3586"/>
+          </linearGradient>
+        </defs>
+        <text x="14" y="47" font-family="'Space Grotesk',sans-serif" font-size="9" fill="rgba(0,212,170,0.7)" font-weight="600" letter-spacing="1">SEC</text>
+        <text x="14" y="73" font-family="'Space Grotesk',sans-serif" font-size="9" fill="rgba(255,170,0,0.7)" font-weight="600" letter-spacing="1">PRF</text>
+        <text x="14" y="99" font-family="'Space Grotesk',sans-serif" font-size="9" fill="rgba(236,53,134,0.7)" font-weight="600" letter-spacing="1">SEO</text>
+        <rect x="38" y="37" width="88" height="10" rx="3" fill="rgba(0,212,170,0.08)"/>
+        <rect x="38" y="63" width="88" height="10" rx="3" fill="rgba(255,170,0,0.08)"/>
+        <rect x="38" y="89" width="88" height="10" rx="3" fill="rgba(236,53,134,0.08)"/>
+        <rect x="38" y="37" width="0" height="10" rx="3" fill="url(#barGrad1)" filter="url(#glow10)">
+          <animate attributeName="width" values="0;78;78;0" dur="3s" repeatCount="indefinite" calcMode="spline" keySplines="0.4 0 0.2 1;0 0 0 0;0 0 0.6 1" keyTimes="0;0.4;0.7;1" begin="0s"/>
+        </rect>
+        <rect x="38" y="63" width="0" height="10" rx="3" fill="url(#barGrad2)" filter="url(#glow10)">
+          <animate attributeName="width" values="0;55;55;0" dur="3s" repeatCount="indefinite" calcMode="spline" keySplines="0.4 0 0.2 1;0 0 0 0;0 0 0.6 1" keyTimes="0;0.4;0.7;1" begin="0.25s"/>
+        </rect>
+        <rect x="38" y="89" width="0" height="10" rx="3" fill="url(#barGrad3)" filter="url(#glow10)">
+          <animate attributeName="width" values="0;70;70;0" dur="3s" repeatCount="indefinite" calcMode="spline" keySplines="0.4 0 0.2 1;0 0 0 0;0 0 0.6 1" keyTimes="0;0.4;0.7;1" begin="0.5s"/>
+        </rect>
+        <text x="122" y="47" font-family="'Space Grotesk',sans-serif" font-size="9" fill="rgba(0,212,170,0.6)" font-weight="700" text-anchor="end">94</text>
+        <text x="122" y="73" font-family="'Space Grotesk',sans-serif" font-size="9" fill="rgba(255,170,0,0.6)" font-weight="700" text-anchor="end">71</text>
+        <text x="122" y="99" font-family="'Space Grotesk',sans-serif" font-size="9" fill="rgba(236,53,134,0.6)" font-weight="700" text-anchor="end">88</text>
+        <line x1="14" y1="110" x2="126" y2="110" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
+        <text x="70" y="128" text-anchor="middle" font-family="'Space Grotesk',sans-serif" font-weight="700" font-size="13" fill="rgba(255,255,255,0.7)" letter-spacing="4">SCANPULSE</text>
+      </svg>
+    </div>
+    <div class="name"><strong>10 — Score Bars</strong>Three pillar scores</div>
+  </div>
+
+</div>
+
+<p style="margin-top:40px; font-size:11px; color:rgba(255,255,255,0.18); letter-spacing:0.1em">All animations loop · Colors: #ec3586 #00d4aa #ffaa00 #6c5ce7</p>
+</body>
+</html>

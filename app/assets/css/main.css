@@ -82,6 +82,13 @@
   to { transform: rotate(360deg); }
 }
 
+/* ── Clerk internal overrides ────────────────────────── */
+/* Clerk internal text — blanket white override */
+[class^="cl-internal-"],
+[class*=" cl-internal-"] {
+  color: rgba(255, 255, 255, 0.85) !important;
+}
+
 @media (prefers-reduced-motion: reduce) {
   * { animation: none !important; transition: none !important; }
 }

@@ -7,379 +7,820 @@ useSeoMeta({
 const { isSignedIn } = useAuth()
 const router = useRouter()
 
-const openFaq = ref<number | null>(null)
-const heroUrl = ref('')
-
-const faqs = [
-  { q: 'How accurate are the security checks?', a: 'We detect publicly visible vulnerabilities — SSL/TLS, security headers, HTTPS enforcement, and known misconfigurations. For production apps handling sensitive data, pair ScanPulse with a full penetration test.' },
-  { q: 'Is ScanPulse free?', a: 'Basic scans are completely free with no account required. Sign up for scan history, monitoring alerts, PDF reports, and scheduled scans.' },
-  { q: 'Do you need to install anything on my site?', a: 'Nothing. ScanPulse scans entirely from the outside — the same way search engines and attackers see your site.' },
-  { q: 'How is the performance score calculated?', a: 'We measure time-to-first-byte, compression, image optimisation, and caching headers — signals that directly affect Core Web Vitals and user experience.' },
-  { q: 'Can I scan any website?', a: 'Any publicly accessible site. Many users scan competitor sites to benchmark their own performance.' },
-]
-
-function handleScan(url: string) {
-  if (isSignedIn.value) {
-    router.push(`/results?url=${encodeURIComponent(url)}`)
-  } else {
-    router.push(`/sign-up`)
-  }
+function handleScan() {
+  router.push(isSignedIn.value ? '/dashboard' : '/sign-up')
 }
 
-const checks = [
-  { pillar: 'security', color: '#00d4aa', label: 'Security', items: ['HTTPS & SSL', 'Security headers', 'X-Frame-Options', 'Content-Security-Policy', 'HSTS enforcement'] },
-  { pillar: 'performance', color: '#ffaa00', label: 'Performance', items: ['Time to first byte', 'Compression (gzip/br)', 'Image dimensions', 'Cache headers', 'Transfer size'] },
-  { pillar: 'seo', color: '#6c5ce7', label: 'SEO', items: ['Title & meta tags', 'H1 structure', 'Canonical URLs', 'Open Graph tags', 'Robots meta'] },
+// ── Section navigation ─────────────────────────────────
+const scrollContainer = ref<HTMLElement | null>(null)
+const currentSection = ref(0)
+
+const sections = [
+  { index: 0, label: 'Live Feed',   num: '01' },
+  { index: 1, label: 'Coverage',    num: '02' },
+  { index: 2, label: 'How It Works',num: '03' },
+  { index: 3, label: 'Results',     num: '04' },
+  { index: 4, label: 'Pricing',     num: '05' },
+]
+
+const steps = [
+  {
+    num: '01',
+    title: 'Paste your URL',
+    desc: 'Drop any public URL into the scanner. No install, no setup, no waiting.',
+    color: '#ec3586',
+  },
+  {
+    num: '02',
+    title: 'We scan in seconds',
+    desc: '15+ checks fire simultaneously across security, performance, and SEO pillars.',
+    color: '#ffaa00',
+  },
+  {
+    num: '03',
+    title: 'Get exact fixes',
+    desc: 'Every failed check comes with a plain-English explanation and a concrete fix.',
+    color: '#00d4aa',
+  },
+]
+
+const sampleIssues = [
+  { title: 'CSP header missing',         pillar: 'SECURITY',    status: 'CRITICAL', color: '#ff4757', fix: 'Add Content-Security-Policy header to your server config.' },
+  { title: 'HTTPS enforced',             pillar: 'SECURITY',    status: 'PASS',     color: '#00d4aa', fix: null },
+  { title: 'TTFB 420ms',                 pillar: 'PERFORMANCE', status: 'WARNING',  color: '#ffaa00', fix: 'Reduce server response time — target under 200ms.' },
+  { title: 'Gzip compression on',        pillar: 'PERFORMANCE', status: 'PASS',     color: '#00d4aa', fix: null },
+  { title: 'Image dimensions missing',   pillar: 'PERFORMANCE', status: 'CRITICAL', color: '#ff4757', fix: 'Add width/height attributes to all <img> tags.' },
+  { title: 'No canonical URL',           pillar: 'SEO',         status: 'CRITICAL', color: '#ff4757', fix: 'Add <link rel="canonical"> to prevent duplicate content.' },
+  { title: 'Title tag present',          pillar: 'SEO',         status: 'PASS',     color: '#00d4aa', fix: null },
+  { title: 'Multiple H1 tags',           pillar: 'SEO',         status: 'WARNING',  color: '#ffaa00', fix: 'Use a single H1 per page for clear document hierarchy.' },
+]
+
+const plans = [
+  {
+    name: 'Free',
+    price: '$0',
+    period: 'forever',
+    color: 'rgba(255,255,255,0.12)',
+    accent: 'rgba(255,255,255,0.3)',
+    scans: '5 scans / month',
+    features: ['All 3 pillars', 'Core issue detection', '7-day history'],
+    cta: 'Start free',
+    highlight: false,
+  },
+  {
+    name: 'Pro',
+    price: '$19',
+    period: '/ month',
+    color: '#ec3586',
+    accent: '#ec3586',
+    scans: '100 scans / month',
+    features: ['Fix recommendations', '90-day history', 'Email alerts'],
+    cta: 'Get Pro',
+    highlight: true,
+  },
+  {
+    name: 'Agency',
+    price: '$79',
+    period: '/ month',
+    color: '#6c5ce7',
+    accent: '#6c5ce7',
+    scans: 'Unlimited scans',
+    features: ['Multiple domains', 'White-label PDF reports', 'API access'],
+    cta: 'Contact us',
+    highlight: false,
+  },
+]
+
+function scrollToSection(index: number) {
+  if (!scrollContainer.value) return
+  scrollContainer.value.scrollTo({
+    top: index * window.innerHeight,
+    behavior: 'smooth',
+  })
+}
+
+onMounted(() => {
+  const el = scrollContainer.value
+  if (!el) return
+
+  let timer: ReturnType<typeof setTimeout> | null = null
+
+  el.addEventListener('scroll', () => {
+    // update immediately for live tracking
+    currentSection.value = Math.round(el.scrollTop / window.innerHeight)
+    // also debounce to catch snap settle
+    if (timer) clearTimeout(timer)
+    timer = setTimeout(() => {
+      currentSection.value = Math.round(el.scrollTop / window.innerHeight)
+    }, 80)
+  }, { passive: true })
+})
+
+const feedItems = [
+  { title: 'HTTPS enforced',          pillar: 'SECURITY',    color: '#00d4aa', status: 'PASS',     url: 'stripe.com'   },
+  { title: 'HSTS header present',     pillar: 'SECURITY',    color: '#00d4aa', status: 'PASS',     url: 'vercel.com'   },
+  { title: 'CSP header missing',      pillar: 'SECURITY',    color: '#ff4757', status: 'CRITICAL', url: 'notion.so'    },
+  { title: 'X-Frame-Options set',     pillar: 'SECURITY',    color: '#00d4aa', status: 'PASS',     url: 'linear.app'   },
+  { title: 'X-Content-Type-Options',  pillar: 'SECURITY',    color: '#ffaa00', status: 'WARNING',  url: 'github.com'   },
+  { title: 'TTFB 420ms',              pillar: 'PERFORMANCE', color: '#ffaa00', status: 'WARNING',  url: 'figma.com'    },
+  { title: 'Gzip compression on',     pillar: 'PERFORMANCE', color: '#00d4aa', status: 'PASS',     url: 'shopify.com'  },
+  { title: 'Image dimensions missing',pillar: 'PERFORMANCE', color: '#ff4757', status: 'CRITICAL', url: 'airbnb.com'   },
+  { title: 'Title tag present',       pillar: 'SEO',         color: '#00d4aa', status: 'PASS',     url: 'stripe.com'   },
+  { title: 'Meta description set',    pillar: 'SEO',         color: '#00d4aa', status: 'PASS',     url: 'atlassian.com'},
+  { title: 'Multiple H1 tags',        pillar: 'SEO',         color: '#ffaa00', status: 'WARNING',  url: 'github.com'   },
+  { title: 'No canonical URL',        pillar: 'SEO',         color: '#ff4757', status: 'CRITICAL', url: 'typeform.com' },
+  { title: 'Open Graph tags missing', pillar: 'SEO',         color: '#ffaa00', status: 'WARNING',  url: 'figma.com'    },
+  { title: 'SSL certificate valid',   pillar: 'SECURITY',    color: '#00d4aa', status: 'PASS',     url: 'linear.app'   },
+  { title: 'Transfer size 4.2MB',     pillar: 'PERFORMANCE', color: '#ff4757', status: 'CRITICAL', url: 'shopify.com'  },
+  { title: 'Cache headers missing',   pillar: 'PERFORMANCE', color: '#ffaa00', status: 'WARNING',  url: 'notion.so'    },
+]
+
+const feedLoop = [...feedItems, ...feedItems, ...feedItems]
+
+const pillars = [
+  {
+    id: 'security',
+    color: '#00d4aa',
+    label: 'Security',
+    count: 5,
+    desc: 'Spot vulnerabilities before attackers do.',
+    checks: ['HTTPS & SSL enforcement', 'Security headers', 'X-Frame-Options', 'Content-Security-Policy', 'HSTS header'],
+  },
+  {
+    id: 'performance',
+    color: '#ffaa00',
+    label: 'Performance',
+    count: 3,
+    desc: 'Every millisecond affects your conversion rate.',
+    checks: ['Time to first byte', 'Gzip / Brotli compression', 'Image dimensions', 'Cache-Control headers', 'Transfer size'],
+  },
+  {
+    id: 'seo',
+    color: '#6c5ce7',
+    label: 'SEO',
+    count: 4,
+    desc: 'Rank higher with signals search engines reward.',
+    checks: ['Title & meta description', 'H1 structure', 'Canonical URL', 'Open Graph tags', 'Robots meta'],
+  },
 ]
 </script>
 
 <template>
-  <div class="min-h-screen bg-dark overflow-x-hidden">
+  <!-- Scroll snap container -->
+  <div ref="scrollContainer" class="h-screen overflow-y-scroll snap-container bg-[#07070a]">
     <NavBar />
 
-    <!-- ── Hero ───────────────────────────────────────────────── -->
-    <section class="relative min-h-screen flex items-center">
+    <!-- ── Left timeline nav ────────────────────────────────────── -->
+    <nav class="fixed left-6 top-1/2 -translate-y-1/2 z-40 flex flex-col items-center" style="gap:0">
+      <template v-for="(sec, i) in sections" :key="sec.index">
 
-      <!-- Background orb -->
-      <div class="absolute inset-0 pointer-events-none overflow-hidden">
-        <div
-          class="absolute top-[-10%] right-[-5%] w-[700px] h-[700px] rounded-full"
-          style="background: radial-gradient(circle, rgba(236,53,134,0.12) 0%, rgba(108,92,231,0.06) 45%, transparent 70%)"
-        />
-        <div
-          class="absolute bottom-[-20%] left-[-10%] w-[500px] h-[500px] rounded-full"
-          style="background: radial-gradient(circle, rgba(0,212,170,0.07) 0%, transparent 65%)"
-        />
-        <!-- Grid lines -->
-        <div class="absolute inset-0" style="background-image: linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px); background-size: 60px 60px;" />
-      </div>
-
-      <div class="relative z-10 w-full max-w-7xl mx-auto px-6 pt-28 pb-16 grid lg:grid-cols-2 gap-16 items-center">
-
-        <!-- Left: copy + input -->
-        <div>
-          <div class="inline-flex items-center gap-2 mb-8 px-3 py-1.5 rounded-full border border-white/10 bg-white/[0.03]">
-            <span class="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
-            <span class="text-white/50 text-xs font-display tracking-wide">Live scanning · No install required</span>
-          </div>
-
-          <h1 class="font-display font-bold leading-[0.9] mb-8" style="font-size: clamp(3.6rem, 7.5vw, 6.2rem)">
-            Your site's<br />health,<br />
-            <em class="not-italic" style="color: #ec3586; font-size: 1.08em; letter-spacing: -0.02em">revealed.</em>
-          </h1>
-
-          <p class="text-white/40 font-body leading-relaxed mb-10" style="font-size: clamp(1rem, 1.4vw, 1.1rem); max-width: 44ch">
-            Security vulnerabilities, performance bottlenecks, and SEO gaps —
-            surfaced with actionable fixes, not just scores.
-          </p>
-
-          <div>
-            <div class="flex items-center gap-2 mb-3">
-              <div class="w-0.5 h-4 bg-primary rounded-full" />
-              <span class="text-white/30 text-[10px] font-display uppercase tracking-[0.18em]">Target URL</span>
-            </div>
-            <ScanInput size="lg" @scan="handleScan" />
-          </div>
-
-          <!-- Trust signals -->
-          <div class="mt-8 flex items-center gap-5 flex-wrap">
-            <div v-for="sig in ['Free forever', '~10s results', '15+ checks']" :key="sig" class="flex items-center gap-1.5">
-              <div class="w-1 h-1 rounded-full bg-success" />
-              <span class="text-white/30 text-xs font-body">{{ sig }}</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Right: radar visualisation -->
-        <div class="hidden lg:flex items-center justify-center relative">
-          <div class="relative w-[560px] h-[560px]">
-            <!-- Outer glow — stronger -->
-            <div class="absolute inset-[-40px] rounded-full" style="background: radial-gradient(circle, rgba(236,53,134,0.13) 0%, rgba(108,92,231,0.05) 45%, transparent 70%)" />
-
-            <!-- Animated radar SVG -->
-            <svg viewBox="0 0 480 480" class="w-full h-full" xmlns="http://www.w3.org/2000/svg">
-              <defs>
-                <radialGradient id="radarBg" cx="50%" cy="50%" r="50%">
-                  <stop offset="0%" stop-color="#16161e" />
-                  <stop offset="100%" stop-color="#07070a" />
-                </radialGradient>
-                <linearGradient id="sweepFill" x1="0%" y1="0%" x2="100%" y2="0%">
-                  <stop offset="0%" stop-color="#ec3586" stop-opacity="0" />
-                  <stop offset="70%" stop-color="#ec3586" stop-opacity="0.18" />
-                  <stop offset="100%" stop-color="#ec3586" stop-opacity="0" />
-                </linearGradient>
-              </defs>
-
-              <!-- Background circle -->
-              <circle cx="240" cy="240" r="235" fill="url(#radarBg)" stroke="rgba(255,255,255,0.05)" stroke-width="1" />
-
-              <!-- Concentric rings -->
-              <circle cx="240" cy="240" r="60"  fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="1" />
-              <circle cx="240" cy="240" r="110" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="1" />
-              <circle cx="240" cy="240" r="165" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="1" />
-              <circle cx="240" cy="240" r="220" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="1" />
-
-              <!-- Crosshairs -->
-              <line x1="240" y1="10"  x2="240" y2="470" stroke="rgba(255,255,255,0.04)" stroke-width="1" />
-              <line x1="10"  y1="240" x2="470" y2="240" stroke="rgba(255,255,255,0.04)" stroke-width="1" />
-              <line x1="70"  y1="70"  x2="410" y2="410" stroke="rgba(255,255,255,0.03)" stroke-width="1" />
-              <line x1="410" y1="70"  x2="70"  y2="410" stroke="rgba(255,255,255,0.03)" stroke-width="1" />
-
-              <!-- Radar sweep (CSS animated) -->
-              <g style="transform-origin: 240px 240px; animation: radarSpin 5s linear infinite">
-                <path d="M240 240 L240 25 A215 215 0 0 1 455 240 Z" fill="url(#sweepFill)" />
-                <line x1="240" y1="240" x2="240" y2="25" stroke="#ec3586" stroke-width="1.5" stroke-opacity="0.7" />
-              </g>
-
-              <!-- Security hits — teal -->
-              <circle cx="310" cy="130" r="5" fill="#00d4aa" opacity="0.9">
-                <animate attributeName="opacity" values="0.9;0.3;0.9" dur="3s" begin="0s" repeatCount="indefinite" />
-              </circle>
-              <circle cx="310" cy="130" r="12" fill="none" stroke="#00d4aa" stroke-width="1" opacity="0.4">
-                <animate attributeName="r" values="8;18;8" dur="3s" begin="0s" repeatCount="indefinite" />
-                <animate attributeName="opacity" values="0.5;0;0.5" dur="3s" begin="0s" repeatCount="indefinite" />
-              </circle>
-
-              <!-- Performance hits — amber -->
-              <circle cx="160" cy="300" r="4" fill="#ffaa00" opacity="0.9">
-                <animate attributeName="opacity" values="0.9;0.3;0.9" dur="4s" begin="1.2s" repeatCount="indefinite" />
-              </circle>
-              <circle cx="160" cy="300" r="10" fill="none" stroke="#ffaa00" stroke-width="1" opacity="0.4">
-                <animate attributeName="r" values="6;16;6" dur="4s" begin="1.2s" repeatCount="indefinite" />
-                <animate attributeName="opacity" values="0.5;0;0.5" dur="4s" begin="1.2s" repeatCount="indefinite" />
-              </circle>
-
-              <!-- SEO hits — purple -->
-              <circle cx="355" cy="320" r="4" fill="#6c5ce7" opacity="0.9">
-                <animate attributeName="opacity" values="0.9;0.3;0.9" dur="3.5s" begin="0.7s" repeatCount="indefinite" />
-              </circle>
-              <circle cx="355" cy="320" r="10" fill="none" stroke="#6c5ce7" stroke-width="1" opacity="0.4">
-                <animate attributeName="r" values="6;16;6" dur="3.5s" begin="0.7s" repeatCount="indefinite" />
-                <animate attributeName="opacity" values="0.5;0;0.5" dur="3.5s" begin="0.7s" repeatCount="indefinite" />
-              </circle>
-
-              <!-- Center dot -->
-              <circle cx="240" cy="240" r="5" fill="#ec3586">
-                <animate attributeName="r" values="4;7;4" dur="2s" repeatCount="indefinite" />
-              </circle>
-              <circle cx="240" cy="240" r="14" fill="none" stroke="#ec3586" stroke-width="1" opacity="0.3">
-                <animate attributeName="r" values="10;20;10" dur="2s" repeatCount="indefinite" />
-                <animate attributeName="opacity" values="0.4;0;0.4" dur="2s" repeatCount="indefinite" />
-              </circle>
-            </svg>
-
-            <!-- Floating score cards — more dramatic -->
-            <div class="absolute top-6 left-[-16px] bg-dark-elevated border border-white/8 rounded-xl px-5 py-3.5 shadow-elevation-lg">
-              <p class="text-[9px] font-display uppercase tracking-[0.16em] text-security mb-2">Security</p>
-              <p class="text-4xl font-display font-bold text-white leading-none">94</p>
-            </div>
-            <div class="absolute bottom-24 left-[-8px] bg-dark-elevated border border-white/8 rounded-xl px-5 py-3.5 shadow-elevation-lg">
-              <p class="text-[9px] font-display uppercase tracking-[0.16em] text-performance mb-2">Performance</p>
-              <p class="text-4xl font-display font-bold text-white leading-none">71</p>
-            </div>
-            <div class="absolute bottom-6 right-[-8px] bg-dark-elevated border border-white/8 rounded-xl px-5 py-3.5 shadow-elevation-lg">
-              <p class="text-[9px] font-display uppercase tracking-[0.16em] text-seo mb-2">SEO</p>
-              <p class="text-4xl font-display font-bold text-white leading-none">88</p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Scroll indicator -->
-      <div class="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 opacity-30">
-        <span class="text-[10px] font-display tracking-widest text-white uppercase">Scroll</span>
-        <div class="w-px h-8 bg-white/30" style="animation: float 2s ease-in-out infinite" />
-      </div>
-    </section>
-
-    <!-- ── Stats ticker ────────────────────────────────────────── -->
-    <div class="border-y border-dark-border bg-dark-surface/60 py-4 px-6 overflow-x-auto">
-      <div class="max-w-6xl mx-auto flex items-center gap-0">
-        <div
-          v-for="(stat, i) in [
-            { value: '15+', label: 'checks per scan' },
-            { value: '3', label: 'analysis pillars' },
-            { value: '~10s', label: 'average scan time' },
-            { value: 'Free', label: 'no card required' },
-          ]"
-          :key="i"
-          class="flex items-center gap-3 flex-shrink-0"
+        <!-- Section entry -->
+        <button
+          class="timeline-entry group flex items-center gap-3"
+          :class="{ active: currentSection === sec.index }"
+          @click="scrollToSection(sec.index)"
+          :aria-label="`Go to ${sec.label}`"
         >
-          <span class="font-display font-bold text-white text-sm">{{ stat.value }}</span>
-          <span class="text-white/25 text-xs font-body">{{ stat.label }}</span>
-          <div v-if="i < 3" class="w-px h-3 bg-white/10 mx-5" />
+          <!-- Dot -->
+          <div class="timeline-dot" :class="currentSection === sec.index ? 'is-active' : ''" />
+
+        </button>
+
+        <!-- Connector line between entries -->
+        <div v-if="i < sections.length - 1" class="timeline-line">
+          <div class="timeline-line-fill" :style="{ height: currentSection > i ? '100%' : '0%' }" />
+        </div>
+
+      </template>
+    </nav>
+
+    <!-- ── Section 1: Hero ──────────────────────────────────────── -->
+    <section class="h-screen snap-section flex overflow-hidden">
+
+      <!-- LEFT: Editorial text -->
+      <div class="relative z-10 flex flex-col justify-center px-16 xl:px-24 shrink-0" style="width: 44%">
+
+        <!-- Grid lines bg -->
+        <div
+          class="absolute inset-0 pointer-events-none"
+          style="background-image: linear-gradient(rgba(255,255,255,0.018) 1px, transparent 1px), linear-gradient(90deg,rgba(255,255,255,0.018) 1px,transparent 1px); background-size:64px 64px"
+        />
+
+        <!-- Eyebrow -->
+        <div class="relative flex items-center gap-3 mb-8">
+          <div class="w-7 h-px bg-primary" />
+          <span class="text-[11px] font-display font-semibold tracking-[0.2em] uppercase text-primary">
+            ScanPulse — Website Health
+          </span>
+        </div>
+
+        <!-- H1 -->
+        <h1
+          class="font-display font-bold leading-[0.88] tracking-[-0.04em] text-white mb-9"
+          style="font-size: clamp(3.4rem, 5.5vw, 5.6rem)"
+        >
+          Your site's<br />
+          <span style="color:#ec3586">vital signs,</span><br />
+          live.
+        </h1>
+
+        <!-- Subtext -->
+        <p
+          class="font-body text-white/35 leading-relaxed mb-12"
+          style="font-size:clamp(0.9rem,1.2vw,1.05rem); max-width:38ch"
+        >
+          Security, performance, and SEO — scanned in seconds.
+          Know exactly what needs fixing.
+        </p>
+
+        <!-- Stats -->
+        <div class="flex gap-11 mb-12">
+          <div>
+            <div class="font-display font-bold leading-none mb-1.5" style="font-size:2.6rem; color:#00d4aa">5</div>
+            <div class="text-[10px] font-display uppercase tracking-[0.12em] text-white/28">Security</div>
+          </div>
+          <div>
+            <div class="font-display font-bold leading-none mb-1.5" style="font-size:2.6rem; color:#ffaa00">3</div>
+            <div class="text-[10px] font-display uppercase tracking-[0.12em] text-white/28">Performance</div>
+          </div>
+          <div>
+            <div class="font-display font-bold leading-none mb-1.5" style="font-size:2.6rem; color:#6c5ce7">4</div>
+            <div class="text-[10px] font-display uppercase tracking-[0.12em] text-white/28">SEO checks</div>
+          </div>
+        </div>
+
+        <!-- CTA -->
+        <button
+          class="self-start bg-primary text-white font-display font-semibold rounded-[9px] transition-all duration-200 hover:bg-primary/90 hover:scale-[1.02] active:scale-[0.98]"
+          style="padding:17px 40px; font-size:15px; letter-spacing:0.02em"
+          @click="handleScan"
+        >
+          Run free scan →
+        </button>
+
+        <!-- Trust chips -->
+        <div class="flex items-center gap-5 mt-8 flex-wrap">
+          <div v-for="s in ['Free forever', '~10s results', '15+ checks']" :key="s" class="flex items-center gap-1.5">
+            <div class="w-1 h-1 rounded-full bg-success" />
+            <span class="text-white/25 text-[11px] font-body">{{ s }}</span>
+          </div>
+        </div>
+
+        <!-- Scroll hint -->
+        <div class="absolute bottom-8 left-16 xl:left-24 flex items-center gap-3 scroll-hint">
+          <div class="scroll-chevron">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+              <path d="M3 5l4 4 4-4" stroke="rgba(255,255,255,0.25)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+          <span class="text-[10px] font-display uppercase tracking-[0.16em] text-white/20">What we check</span>
         </div>
       </div>
-    </div>
 
-    <!-- ── What we check ──────────────────────────────────────── -->
-    <section class="py-24 px-6 border-b border-dark-border">
-      <div class="max-w-6xl mx-auto">
-        <div class="mb-16">
-          <p class="text-primary text-[10px] font-display uppercase tracking-[0.18em] mb-4">Coverage</p>
-          <h2 class="font-display font-bold text-white mb-4" style="font-size: clamp(2.2rem, 3.5vw, 3rem)">15+ checks across three pillars</h2>
-          <p class="text-white/35 font-body" style="max-width: 44ch">Every check maps to a real-world impact — vulnerability, user experience, or search ranking.</p>
-        </div>
+      <!-- RIGHT: Live feed -->
+      <div class="flex-1 relative overflow-hidden border-l border-white/[0.04]">
 
-        <!-- Horizontal strips — one per pillar -->
-        <div class="divide-y divide-dark-border">
-          <div
-            v-for="check in checks"
-            :key="check.pillar"
-            class="flex items-start gap-8 md:gap-20 py-10 group hover:bg-dark-surface/40 transition-colors duration-300 -mx-4 px-4 rounded-lg"
-          >
-            <!-- Pillar name — left, large -->
-            <div class="flex-shrink-0 w-32 md:w-44">
-              <div class="w-2 h-2 rounded-full mb-3" :style="{ background: check.color }" />
-              <h3
-                class="font-display font-bold text-white leading-[1.05]"
-                style="font-size: clamp(1.4rem, 2.5vw, 2rem)"
-              >{{ check.label }}</h3>
-            </div>
-            <!-- Check items — pill list -->
-            <ul class="flex flex-wrap gap-2 pt-1 flex-1">
-              <li
-                v-for="item in check.items"
-                :key="item"
-                class="text-sm font-body text-white/40 px-3 py-1.5 border border-white/[0.07] rounded-full transition-colors group-hover:text-white/60 group-hover:border-white/[0.14]"
-              >{{ item }}</li>
-            </ul>
+        <!-- Feed header -->
+        <div class="absolute top-0 left-0 right-0 z-30 flex items-center justify-between px-7 py-5 border-b border-white/[0.04]" style="background: linear-gradient(to bottom, #07070a 70%, transparent)">
+          <span class="text-[10px] font-display font-semibold tracking-[0.18em] uppercase text-white/25">
+            Live Scan Results
+          </span>
+          <div class="flex items-center gap-2 rounded-full border px-3 py-1" style="background:rgba(0,212,170,0.06); border-color:rgba(0,212,170,0.15)">
+            <div class="w-1.5 h-1.5 rounded-full bg-[#00d4aa] feed-pulse" />
+            <span class="text-[9px] font-display font-semibold tracking-[0.14em] uppercase text-[#00d4aa]">3,847 scans today</span>
           </div>
         </div>
-      </div>
-    </section>
 
-    <!-- ── Example result ─────────────────────────────────────── -->
-    <section class="py-24 px-6">
-      <div class="max-w-6xl mx-auto grid lg:grid-cols-2 gap-16 items-center">
-        <div>
-          <p class="text-primary text-[10px] font-display uppercase tracking-[0.18em] mb-4">What you get</p>
-          <h2 class="font-display font-bold text-white mb-6" style="font-size: clamp(2.2rem, 3.5vw, 3rem); line-height: 1.05">
-            Scores you can act on,<br />not just look at.
-          </h2>
-          <p class="text-white/45 font-body leading-relaxed mb-8" style="max-width: 42ch">
-            Every finding includes a plain-English explanation and a specific
-            fix — so you know exactly what to do next, not just what's broken.
-          </p>
-          <NuxtLink to="/sign-up" class="btn-primary inline-flex">Start scanning free →</NuxtLink>
-        </div>
-
-        <!-- Mock result card -->
-        <div class="bg-dark-surface border border-dark-border rounded-card p-6 shadow-elevation-lg">
-          <div class="flex items-center justify-between mb-6 pb-5 border-b border-dark-border">
-            <div>
-              <p class="text-white/30 text-xs font-body mb-1">Scan result</p>
-              <p class="text-white font-display font-medium text-sm">example.com</p>
-            </div>
-            <div class="text-right">
-              <p class="text-white/30 text-xs font-body mb-1">Overall</p>
-              <p class="text-3xl font-display font-bold text-warning">74</p>
-            </div>
-          </div>
-
-          <!-- Score bars -->
-          <div class="space-y-4 mb-6">
-            <div v-for="s in [{ label: 'Security', score: 60, color: '#00d4aa' }, { label: 'Performance', score: 80, color: '#ffaa00' }, { label: 'SEO', score: 75, color: '#6c5ce7' }]" :key="s.label">
-              <div class="flex justify-between mb-1.5">
-                <span class="text-xs font-display text-white/50">{{ s.label }}</span>
-                <span class="text-xs font-display font-semibold text-white">{{ s.score }}</span>
-              </div>
-              <div class="h-1 bg-white/[0.06] rounded-full overflow-hidden">
-                <div class="h-full rounded-full transition-all" :style="{ width: s.score + '%', background: s.color }" />
-              </div>
-            </div>
-          </div>
-
-          <!-- Sample issues -->
-          <div class="space-y-2">
-            <div class="flex items-start gap-3 p-3 rounded-lg bg-dark-elevated">
-              <span class="mt-0.5 w-1.5 h-1.5 rounded-full bg-danger flex-shrink-0" />
-              <div>
-                <p class="text-white text-xs font-display font-medium">Missing Content-Security-Policy</p>
-                <p class="text-white/35 text-xs font-body mt-0.5">Add a CSP header to prevent XSS attacks.</p>
-              </div>
-            </div>
-            <div class="flex items-start gap-3 p-3 rounded-lg bg-dark-elevated">
-              <span class="mt-0.5 w-1.5 h-1.5 rounded-full bg-warning flex-shrink-0" />
-              <div>
-                <p class="text-white text-xs font-display font-medium">No compression detected</p>
-                <p class="text-white/35 text-xs font-body mt-0.5">Enable gzip or Brotli to reduce transfer size.</p>
-              </div>
-            </div>
-            <div class="flex items-start gap-3 p-3 rounded-lg bg-dark-elevated">
-              <span class="mt-0.5 w-1.5 h-1.5 rounded-full bg-success flex-shrink-0" />
-              <div>
-                <p class="text-white text-xs font-display font-medium">HTTPS enforced</p>
-                <p class="text-white/35 text-xs font-body mt-0.5">SSL certificate is valid and HTTPS is active.</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- ── FAQ ────────────────────────────────────────────────── -->
-    <section class="py-24 px-6 border-t border-dark-border">
-      <div class="max-w-3xl mx-auto">
-        <p class="text-primary text-xs font-display uppercase tracking-widest mb-3">FAQ</p>
-        <h2 class="font-display font-bold text-white mb-12" style="font-size: clamp(1.8rem, 3vw, 2.4rem)">Common questions</h2>
-
-        <div class="divide-y divide-dark-border">
-          <div
-            v-for="(faq, i) in faqs"
-            :key="i"
-            class="py-5 cursor-pointer group"
-            @click="openFaq = openFaq === i ? null : i"
-          >
-            <div class="flex items-center justify-between gap-4">
-              <span
-                class="font-display font-medium text-white/70 group-hover:text-white transition-colors"
-                style="font-size: 0.95rem"
-              >{{ faq.q }}</span>
-              <div
-                class="w-5 h-5 rounded-full border border-white/10 flex items-center justify-center flex-shrink-0 transition-all duration-200"
-                :class="openFaq === i ? 'border-primary bg-primary/10' : ''"
-              >
-                <svg
-                  class="w-2.5 h-2.5 text-white/40 transition-transform duration-200"
-                  :class="openFaq === i ? 'rotate-45 text-primary' : ''"
-                  fill="none" stroke="currentColor" viewBox="0 0 24 24"
-                >
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16M4 12h16" />
-                </svg>
-              </div>
-            </div>
+        <!-- Scrolling feed items -->
+        <div class="absolute inset-0 overflow-hidden pt-14">
+          <div class="feed-scroll flex flex-col gap-1.5 px-5 py-4">
             <div
-              class="overflow-hidden transition-all duration-300"
-              :style="{ maxHeight: openFaq === i ? '200px' : '0', opacity: openFaq === i ? 1 : 0 }"
+              v-for="(item, i) in feedLoop"
+              :key="i"
+              class="rounded-lg px-4 py-3 flex items-center gap-3"
+              style="background: rgba(255,255,255,0.022); border-left: 2px solid"
+              :style="{ borderLeftColor: item.color }"
             >
-              <p class="text-white/45 font-body text-sm leading-relaxed pt-3" style="max-width: 56ch">{{ faq.a }}</p>
+              <div class="w-1.5 h-1.5 rounded-full shrink-0" :style="{ background: item.color }" />
+              <div class="flex-1 min-w-0">
+                <div class="text-[12px] font-display font-medium text-white/70 truncate">{{ item.title }}</div>
+                <div class="flex items-center gap-2 mt-0.5">
+                  <span class="text-[8px] font-display uppercase tracking-[0.14em] text-white/25">{{ item.pillar }}</span>
+                  <span class="text-[9px] font-display font-bold tracking-[0.08em]" :style="{ color: item.color }">{{ item.status }}</span>
+                </div>
+              </div>
+              <div class="text-[9px] font-body shrink-0 text-white/18">{{ item.url }}</div>
             </div>
+          </div>
+        </div>
+
+        <!-- Fade overlays -->
+        <div class="absolute top-14 left-0 right-0 h-12 pointer-events-none z-20" style="background: linear-gradient(to bottom, #07070a, transparent)" />
+        <div class="absolute bottom-0 left-0 right-0 h-32 pointer-events-none z-20" style="background: linear-gradient(to top, #07070a, transparent)" />
+      </div>
+    </section>
+
+    <!-- ── Section 2: What we check ─────────────────────────────── -->
+    <section class="h-screen snap-section flex overflow-hidden">
+
+      <!-- LEFT: Section intro -->
+      <div class="relative flex flex-col justify-center px-16 xl:px-24 shrink-0 border-r border-white/[0.04]" style="width: 44%">
+
+        <!-- Grid lines bg -->
+        <div
+          class="absolute inset-0 pointer-events-none"
+          style="background-image: linear-gradient(rgba(255,255,255,0.018) 1px, transparent 1px), linear-gradient(90deg,rgba(255,255,255,0.018) 1px,transparent 1px); background-size:64px 64px"
+        />
+
+        <div class="relative">
+          <p class="text-[11px] font-display font-semibold tracking-[0.2em] uppercase text-primary mb-6 flex items-center gap-3">
+            <span class="w-7 h-px bg-primary inline-block" />
+            Coverage
+          </p>
+          <h2
+            class="font-display font-bold text-white leading-[0.9] tracking-[-0.03em] mb-8"
+            style="font-size: clamp(2.8rem, 4.5vw, 4.2rem)"
+          >
+            15+ checks.<br />
+            <span class="text-white/30">Three pillars.</span><br />
+            One score.
+          </h2>
+          <p class="font-body text-white/35 leading-relaxed mb-12" style="max-width: 36ch; font-size: 0.95rem">
+            Every check maps to a real-world impact — a vulnerability, a lost conversion, or a missed ranking.
+          </p>
+          <button
+            class="inline-flex items-center gap-2 bg-primary text-white font-display font-semibold rounded-[9px] transition-all duration-200 hover:bg-primary/90 hover:scale-[1.02]"
+            style="padding:15px 36px; font-size:14px; letter-spacing:0.02em"
+            @click="handleScan"
+          >
+            Start scanning free →
+          </button>
+        </div>
+
+        <!-- Scroll hint down -->
+        <div class="absolute bottom-8 left-16 xl:left-24 flex items-center gap-3 scroll-hint">
+          <div class="scroll-chevron">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+              <path d="M3 5l4 4 4-4" stroke="rgba(255,255,255,0.25)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+          <span class="text-[10px] font-display uppercase tracking-[0.16em] text-white/20">How it works</span>
+        </div>
+      </div>
+
+      <!-- RIGHT: Three pillar columns -->
+      <div class="flex-1 flex overflow-hidden">
+        <div
+          v-for="(pillar, i) in pillars"
+          :key="pillar.id"
+          class="flex-1 flex flex-col justify-center px-10 py-16 relative"
+          :class="i < 2 ? 'border-r border-white/[0.04]' : ''"
+        >
+          <!-- Pillar number -->
+          <div
+            class="font-display font-bold leading-none mb-1 pillar-num"
+            style="font-size: clamp(4rem, 6vw, 6rem); letter-spacing: -0.05em;"
+            :style="{ color: pillar.color }"
+          >
+            {{ pillar.count }}
+          </div>
+
+          <!-- Label -->
+          <div class="font-display font-bold text-white mb-3" style="font-size:1.4rem; letter-spacing:-0.02em">
+            {{ pillar.label }}
+          </div>
+
+          <!-- Desc -->
+          <p class="font-body text-white/30 text-sm leading-relaxed mb-8" style="max-width: 22ch">
+            {{ pillar.desc }}
+          </p>
+
+          <!-- Check list -->
+          <ul class="space-y-3">
+            <li
+              v-for="check in pillar.checks"
+              :key="check"
+              class="flex items-center gap-3"
+            >
+              <div class="w-1 h-1 rounded-full shrink-0" :style="{ background: pillar.color }" />
+              <span class="text-[12px] font-body text-white/45">{{ check }}</span>
+            </li>
+          </ul>
+
+          <!-- Bottom accent line -->
+          <div
+            class="absolute bottom-0 left-0 right-0 h-[2px]"
+            :style="{ background: pillar.color, opacity: 0.25 }"
+          />
+        </div>
+      </div>
+    </section>
+
+    <!-- ── Section 3: How It Works ─────────────────────────────── -->
+    <section class="h-screen snap-section relative overflow-hidden flex flex-col">
+
+      <!-- Grid bg -->
+      <div class="absolute inset-0 pointer-events-none" style="background-image: linear-gradient(rgba(255,255,255,0.018) 1px, transparent 1px), linear-gradient(90deg,rgba(255,255,255,0.018) 1px,transparent 1px); background-size:64px 64px" />
+
+      <!-- Header strip -->
+      <div class="relative z-10 shrink-0 flex items-center justify-between px-16 xl:px-24 pt-10 pb-8">
+        <div>
+          <div class="flex items-center gap-3 mb-4">
+            <div class="w-7 h-px bg-primary" />
+            <span class="text-[11px] font-display font-semibold tracking-[0.2em] uppercase text-primary">How it works</span>
+          </div>
+          <h2 class="font-display font-bold text-white leading-[0.88] tracking-[-0.04em]" style="font-size: clamp(2.2rem, 3.5vw, 3.2rem)">
+            Up and running<br /><span class="text-white/25">in three steps.</span>
+          </h2>
+        </div>
+        <button
+          class="shrink-0 bg-primary text-white font-display font-semibold rounded-[9px] transition-all duration-200 hover:bg-primary/90 hover:scale-[1.02]"
+          style="padding:14px 32px; font-size:13px; letter-spacing:0.02em"
+          @click="handleScan"
+        >Try it free →</button>
+      </div>
+
+      <!-- Divider -->
+      <div class="relative z-10 shrink-0 h-px mx-0 bg-white/[0.04]" />
+
+      <!-- Step columns — fill remaining height -->
+      <div class="relative z-10 flex-1 grid grid-cols-3 min-h-0">
+        <div
+          v-for="(step, i) in steps"
+          :key="step.num"
+          class="hiw-step relative flex flex-col justify-start px-16 xl:px-20 pt-10 pb-12 overflow-hidden"
+          :class="i < steps.length - 1 ? 'border-r border-white/[0.04]' : ''"
+        >
+          <!-- Radial glow -->
+          <div class="absolute inset-0 pointer-events-none" :style="{ background: `radial-gradient(ellipse at 20% 50%, ${step.color}12 0%, transparent 65%)` }" />
+
+          <!-- Ghost number -->
+          <div
+            class="absolute left-10 bottom-4 font-display font-bold leading-none pointer-events-none select-none"
+            style="font-size: 16rem; letter-spacing: -0.06em; opacity: 0.04; line-height: 0.85"
+            :style="{ color: step.color }"
+          >{{ step.num }}</div>
+
+          <!-- Dot -->
+          <div class="flex items-center gap-4 mb-8">
+            <div class="hiw-dot w-3 h-3 rounded-full shrink-0" :style="{ background: step.color, boxShadow: `0 0 14px ${step.color}90` }" />
+            <div class="flex-1 h-px" style="background: rgba(255,255,255,0.05)" />
+          </div>
+
+          <!-- Step label -->
+          <div class="font-display font-semibold mb-4 leading-none" style="font-size: 0.7rem; letter-spacing: 0.2em" :style="{ color: step.color }">
+            STEP {{ step.num }}
+          </div>
+
+          <!-- Title -->
+          <div class="font-display font-bold text-white mb-4 leading-[1.1]" style="font-size: clamp(1.4rem, 2vw, 1.85rem); letter-spacing: -0.025em">
+            {{ step.title }}
+          </div>
+
+          <!-- Desc -->
+          <p class="font-body text-white/35 leading-relaxed" style="font-size: 0.88rem; max-width: 26ch">
+            {{ step.desc }}
+          </p>
+
+          <!-- Bottom accent -->
+          <div class="absolute bottom-0 left-0 right-0 h-[1px]" :style="{ background: `linear-gradient(to right, ${step.color}50, transparent 60%)` }" />
+        </div>
+      </div>
+
+      <!-- Scroll hint -->
+      <div class="absolute bottom-6 left-16 xl:left-24 z-20 flex items-center gap-3 scroll-hint">
+        <div class="scroll-chevron">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+            <path d="M3 5l4 4 4-4" stroke="rgba(255,255,255,0.25)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <span class="text-[10px] font-display uppercase tracking-[0.16em] text-white/20">See a result</span>
+      </div>
+    </section>
+
+    <!-- ── Section 4: Sample Result ──────────────────────────────── -->
+    <section class="h-screen snap-section flex overflow-hidden relative">
+      <div
+        class="absolute inset-0 pointer-events-none"
+        style="background-image: linear-gradient(rgba(255,255,255,0.018) 1px, transparent 1px), linear-gradient(90deg,rgba(255,255,255,0.018) 1px,transparent 1px); background-size:64px 64px"
+      />
+
+      <!-- LEFT: context -->
+      <div class="relative z-10 flex flex-col justify-center px-16 xl:px-24 shrink-0" style="width: 38%">
+        <div class="flex items-center gap-3 mb-8">
+          <div class="w-7 h-px bg-primary" />
+          <span class="text-[11px] font-display font-semibold tracking-[0.2em] uppercase text-primary">Sample result</span>
+        </div>
+
+        <h2
+          class="font-display font-bold text-white leading-[0.9] tracking-[-0.03em] mb-8"
+          style="font-size: clamp(2.2rem, 3.8vw, 3.4rem)"
+        >
+          Every issue.<br />
+          <span class="text-white/30">Exact fix.</span>
+        </h2>
+
+        <p class="font-body text-white/35 leading-relaxed mb-12" style="font-size: 0.95rem; max-width: 34ch">
+          Each failed check comes with a plain-English explanation so you know exactly what to do.
+        </p>
+
+        <!-- Score summary -->
+        <div class="flex gap-8 mb-10">
+          <div>
+            <div class="font-display font-bold leading-none mb-1" style="font-size: 2.8rem; letter-spacing: -0.04em; color: #ec3586">81</div>
+            <div class="text-[10px] font-display uppercase tracking-[0.12em] text-white/25">Overall</div>
+          </div>
+          <div>
+            <div class="font-display font-bold leading-none mb-1" style="font-size: 2.8rem; letter-spacing: -0.04em; color: #00d4aa">94</div>
+            <div class="text-[10px] font-display uppercase tracking-[0.12em] text-white/25">Security</div>
+          </div>
+          <div>
+            <div class="font-display font-bold leading-none mb-1" style="font-size: 2.8rem; letter-spacing: -0.04em; color: #ffaa00">71</div>
+            <div class="text-[10px] font-display uppercase tracking-[0.12em] text-white/25">Perf</div>
+          </div>
+          <div>
+            <div class="font-display font-bold leading-none mb-1" style="font-size: 2.8rem; letter-spacing: -0.04em; color: #6c5ce7">78</div>
+            <div class="text-[10px] font-display uppercase tracking-[0.12em] text-white/25">SEO</div>
+          </div>
+        </div>
+
+        <button
+          class="self-start bg-primary text-white font-display font-semibold rounded-[9px] transition-all duration-200 hover:bg-primary/90 hover:scale-[1.02]"
+          style="padding:15px 36px; font-size:14px; letter-spacing:0.02em"
+          @click="handleScan"
+        >
+          Scan your site →
+        </button>
+
+        <!-- Scroll hint -->
+        <div class="absolute bottom-8 left-16 xl:left-24 flex items-center gap-3 scroll-hint">
+          <div class="scroll-chevron">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+              <path d="M3 5l4 4 4-4" stroke="rgba(255,255,255,0.25)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+          <span class="text-[10px] font-display uppercase tracking-[0.16em] text-white/20">Pricing</span>
+        </div>
+      </div>
+
+      <!-- RIGHT: issue list -->
+      <div class="flex-1 relative border-l border-white/[0.04] flex flex-col justify-center px-10 gap-2 overflow-hidden">
+        <!-- URL bar -->
+        <div class="flex items-center gap-3 mb-6 px-4 py-3 rounded-lg border border-white/[0.06]" style="background:rgba(255,255,255,0.02)">
+          <div class="w-2 h-2 rounded-full bg-[#00d4aa]" />
+          <span class="font-body text-white/30 text-sm">stripe.com</span>
+          <span class="ml-auto font-display font-semibold text-xs tracking-widest text-white/20">SCAN COMPLETE</span>
+        </div>
+
+        <div
+          v-for="issue in sampleIssues"
+          :key="issue.title"
+          class="result-row rounded-lg px-4 py-3.5 border border-transparent"
+          :style="issue.status !== 'PASS' ? `border-left-color: ${issue.color}` : ''"
+          style="background: rgba(255,255,255,0.02); border-left-width: 2px"
+        >
+          <div class="flex items-center gap-3">
+            <div class="w-1.5 h-1.5 rounded-full shrink-0" :style="{ background: issue.color }" />
+            <span class="font-body text-white/70 text-sm flex-1">{{ issue.title }}</span>
+            <span class="text-[9px] font-display font-semibold tracking-[0.12em] uppercase text-white/20 mr-3">{{ issue.pillar }}</span>
+            <span
+              class="text-[9px] font-display font-bold tracking-[0.1em] uppercase px-2 py-0.5 rounded"
+              :style="{ color: issue.color, background: `${issue.color}15` }"
+            >{{ issue.status }}</span>
+          </div>
+          <div v-if="issue.fix" class="mt-2 ml-[21px] text-[11px] font-body text-white/25 leading-relaxed">
+            {{ issue.fix }}
           </div>
         </div>
       </div>
     </section>
 
-    <!-- ── Footer ─────────────────────────────────────────────── -->
-    <footer class="border-t border-dark-border py-10 px-6">
-      <div class="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
-        <div class="flex items-center gap-3">
-          <Logo :animate="false" class="w-7 h-7 opacity-60" />
-          <span class="font-display text-white/30 text-sm">ScanPulse</span>
+    <!-- ── Section 5: Pricing ───────────────────────────────────── -->
+    <section class="h-screen snap-section relative overflow-hidden flex flex-col">
+
+      <!-- Grid bg -->
+      <div class="absolute inset-0 pointer-events-none" style="background-image: linear-gradient(rgba(255,255,255,0.018) 1px, transparent 1px), linear-gradient(90deg,rgba(255,255,255,0.018) 1px,transparent 1px); background-size:64px 64px" />
+
+      <!-- Pro glow — ambient light behind the highlight card -->
+      <div class="absolute pointer-events-none" style="top: 10%; left: 33%; width: 34%; height: 80%; background: radial-gradient(ellipse at 50% 30%, rgba(236,53,134,0.07) 0%, transparent 70%)" />
+
+      <!-- Header -->
+      <div class="relative z-10 shrink-0 flex items-center justify-between px-16 xl:px-24 pt-10 pb-8">
+        <div>
+          <div class="flex items-center gap-3 mb-4">
+            <div class="w-7 h-px bg-primary" />
+            <span class="text-[11px] font-display font-semibold tracking-[0.2em] uppercase text-primary">Pricing</span>
+          </div>
+          <h2 class="font-display font-bold text-white leading-[0.88] tracking-[-0.04em]" style="font-size: clamp(2.2rem, 3.5vw, 3.2rem)">
+            Simple pricing.<br /><span class="text-white/25">No surprises.</span>
+          </h2>
         </div>
-        <p class="text-white/20 text-xs font-body">© 2026 ScanPulse. Free website health scanning.</p>
+        <!-- Toggle placeholder -->
+        <div class="flex items-center gap-3 px-4 py-2 rounded-full border border-white/[0.07]" style="background: rgba(255,255,255,0.03)">
+          <span class="text-[11px] font-display font-semibold tracking-[0.14em] uppercase text-white/50">Monthly</span>
+          <div class="w-px h-3 bg-white/10" />
+          <span class="text-[11px] font-display font-semibold tracking-[0.14em] uppercase text-white/20">Annual</span>
+        </div>
       </div>
-    </footer>
+
+      <!-- Divider -->
+      <div class="relative z-10 shrink-0 h-px bg-white/[0.04]" />
+
+      <!-- Plan columns — fill remaining height -->
+      <div class="relative z-10 flex-1 grid grid-cols-3 min-h-0">
+        <div
+          v-for="(plan, i) in plans"
+          :key="plan.name"
+          class="pricing-col relative flex flex-col px-12 xl:px-16 pt-10 pb-12 overflow-hidden"
+          :class="[i < plans.length - 1 ? 'border-r border-white/[0.04]' : '', plan.highlight ? 'pricing-col--highlight' : '']"
+        >
+          <!-- Per-column accent glow -->
+          <div class="absolute inset-0 pointer-events-none" :style="{ background: `radial-gradient(ellipse at 50% 0%, ${plan.accent}10 0%, transparent 60%)` }" />
+
+          <!-- Top accent line -->
+          <div class="absolute top-0 left-0 right-0 h-[2px]" :style="{ background: plan.highlight ? plan.accent : `${plan.accent}30` }" />
+
+          <!-- Plan name + badge -->
+          <div class="flex items-center gap-3 mb-8">
+            <div class="w-1.5 h-1.5 rounded-full" :style="{ background: plan.accent }" />
+            <span class="text-[11px] font-display font-bold tracking-[0.18em] uppercase" :style="{ color: plan.accent }">{{ plan.name }}</span>
+            <span v-if="plan.highlight" class="ml-auto text-[9px] font-display font-bold tracking-[0.14em] uppercase px-2 py-0.5 rounded-full" style="background: rgba(236,53,134,0.15); color: #ec3586">Most popular</span>
+          </div>
+
+          <!-- Price block -->
+          <div class="mb-2">
+            <div class="flex items-end gap-2 leading-none">
+              <span class="font-display font-bold text-white" style="font-size: 3.8rem; letter-spacing: -0.05em; line-height: 1">{{ plan.price }}</span>
+              <span class="font-body text-white/30 text-sm pb-1.5">{{ plan.period }}</span>
+            </div>
+          </div>
+
+          <!-- Scan limit -->
+          <div class="text-[11px] font-display tracking-[0.1em] uppercase mb-8 pb-8 border-b border-white/[0.05]" :style="{ color: plan.accent }">
+            {{ plan.scans }}
+          </div>
+
+          <!-- Features -->
+          <ul class="space-y-4 flex-1">
+            <li v-for="f in plan.features" :key="f" class="flex items-start gap-3">
+              <svg class="shrink-0 mt-0.5" width="13" height="13" viewBox="0 0 13 13" fill="none">
+                <path d="M2.5 6.5L5 9l5.5-5.5" :stroke="plan.accent" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+              <span class="text-[13px] font-body text-white/50 leading-snug">{{ f }}</span>
+            </li>
+          </ul>
+
+          <!-- CTA -->
+          <button
+            class="w-full rounded-[10px] font-display font-semibold text-[13px] transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] mt-8"
+            :class="plan.highlight ? 'text-white' : 'border text-white/55 hover:text-white/80'"
+            :style="plan.highlight
+              ? 'background: #ec3586; padding: 14px 0; letter-spacing: 0.02em'
+              : `border-color: ${plan.accent}25; padding: 14px 0; letter-spacing: 0.02em`"
+            @click="handleScan"
+          >{{ plan.cta }}</button>
+        </div>
+      </div>
+
+      <!-- Back hint -->
+      <div class="absolute bottom-6 left-16 xl:left-24 z-20 flex items-center gap-3 opacity-20">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" style="transform:rotate(180deg)">
+          <path d="M3 5l4 4 4-4" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <span class="text-[10px] font-display uppercase tracking-[0.16em] text-white">Back to top</span>
+      </div>
+    </section>
+
   </div>
 </template>
 
 <style scoped>
-@keyframes radarSpin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+/* ── Scroll snap ──────────────────────────────────────── */
+.snap-container {
+  scroll-snap-type: y mandatory;
+  scroll-behavior: smooth;
 }
-@keyframes float {
-  0%, 100% { transform: scaleY(1); opacity: 0.3; }
-  50% { transform: scaleY(1.5); opacity: 0.6; }
+/* Hide scrollbar but keep scrolling */
+.snap-container::-webkit-scrollbar { display: none; }
+.snap-container { -ms-overflow-style: none; scrollbar-width: none; }
+
+.snap-section {
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
+}
+
+/* ── Feed scroll ──────────────────────────────────────── */
+@keyframes feedScroll {
+  from { transform: translateY(0); }
+  to   { transform: translateY(-33.333%); }
+}
+.feed-scroll {
+  animation: feedScroll 28s linear infinite;
+}
+
+/* Live pulse dot */
+@keyframes feedPulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%       { opacity: 0.4; transform: scale(0.8); }
+}
+.feed-pulse {
+  animation: feedPulse 1.5s ease-in-out infinite;
+}
+
+/* ── Left timeline nav ───────────────────────────────── */
+.timeline-entry {
+  position: relative;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.timeline-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.18);
+  flex-shrink: 0;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.timeline-dot.is-active {
+  width: 10px;
+  height: 10px;
+  background: #ec3586;
+  box-shadow: 0 0 12px rgba(236, 53, 134, 0.6);
+}
+.timeline-entry:hover .timeline-dot:not(.is-active) {
+  background: rgba(255, 255, 255, 0.45);
+  width: 7px;
+  height: 7px;
+}
+
+
+/* Connector line */
+.timeline-line {
+  width: 1px;
+  height: 120px;
+  background: rgba(255, 255, 255, 0.07);
+  position: relative;
+  overflow: hidden;
+  margin: 6px 0;
+  align-self: flex-start;
+  transform: translateX(4px);
+}
+.timeline-line-fill {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  background: #ec3586;
+  transition: height 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 0 6px rgba(236, 53, 134, 0.5);
+}
+
+/* ── How it works ─────────────────────────────────────── */
+@keyframes hiwPulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50%       { transform: scale(1.5); opacity: 0.5; }
+}
+.hiw-dot {
+  animation: hiwPulse 2.4s ease-in-out infinite;
+}
+.hiw-step:nth-child(2) .hiw-dot { animation-delay: 0.8s; }
+.hiw-step:nth-child(3) .hiw-dot { animation-delay: 1.6s; }
+
+/* ── Pricing columns ──────────────────────────────────── */
+.pricing-col {
+  transition: background 0.2s ease;
+}
+.pricing-col:hover {
+  background: rgba(255, 255, 255, 0.015);
+}
+.pricing-col--highlight {
+  background: rgba(236, 53, 134, 0.03);
+}
+.pricing-col--highlight:hover {
+  background: rgba(236, 53, 134, 0.055);
+}
+
+/* ── Scroll hint bounce ───────────────────────────────── */
+@keyframes hintBounce {
+  0%, 100% { transform: translateY(0); opacity: 0.4; }
+  50%       { transform: translateY(4px); opacity: 0.7; }
+}
+.scroll-hint {
+  animation: hintBounce 2s ease-in-out infinite;
+}
+.scroll-chevron {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 1px solid rgba(255,255,255,0.1);
 }
 </style>
