@@ -2,7 +2,7 @@
 
 import { action } from './_generated/server'
 import { v } from 'convex/values'
-import { api } from './_generated/api'
+import { internal } from './_generated/api'
 
 interface ScanIssue {
   pillar: string
@@ -14,7 +14,7 @@ interface ScanIssue {
 export const runScan = action({
   args: { scanId: v.id('scans'), url: v.string() },
   handler: async (ctx, { scanId, url }) => {
-    await ctx.runMutation(api.scans.updateScan, { scanId, status: 'running' })
+    await ctx.runMutation(internal.scans.updateScan, { scanId, status: 'running' })
 
     try {
       const controller = new AbortController()
@@ -102,7 +102,7 @@ export const runScan = action({
 
       const overallScore = Math.round((securityScore + performanceScore + seoScore) / 3)
 
-      await ctx.runMutation(api.scans.updateScan, {
+      await ctx.runMutation(internal.scans.updateScan, {
         scanId,
         status: 'done',
         securityScore,
@@ -113,7 +113,7 @@ export const runScan = action({
       })
     }
     catch (err) {
-      await ctx.runMutation(api.scans.updateScan, {
+      await ctx.runMutation(internal.scans.updateScan, {
         scanId,
         status: 'error',
         errorMessage: err instanceof Error ? err.message : 'Unknown error occurred',
