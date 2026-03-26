@@ -191,13 +191,6 @@ Scores are `(passing checks / total checks) × 100`. Overall = average of three 
 - [x] Native HMAC-SHA256 webhook verification (no svix dependency)
 - [x] Dashboard queries decoupled with Promise.allSettled
 
-### Scan Improvements
-- [ ] More checks: Open Graph tags, robots.txt, sitemap.xml, redirect chains
-- [ ] PageSpeed Insights API integration for real Core Web Vitals
-- [ ] SSL certificate expiry check
-- [ ] Mixed content detection
-- [ ] Response time percentiles (not just TTFB)
-
 ### Dashboard
 - [ ] Refresh scan history in real-time (Convex subscription via `onUpdate`)
 - [ ] Delete scan from history
@@ -221,13 +214,110 @@ Scores are `(passing checks / total checks) × 100`. Overall = average of three 
 
 ---
 
-## Phase 3 — Growth
+## Phase 2.5 — Best-in-Class Scan Engine
 
-- [ ] Public API (`/api/scan`) for developers
-- [ ] Chrome extension
-- [ ] Bulk scan (CSV upload)
-- [ ] Team accounts
-- [ ] White-label for agencies
+> **Goal**: Make ScanPulse the most comprehensive free website scanner on the market.
+> Competitors (GTmetrix, SecurityHeaders.com, PageSpeed Insights, Ahrefs) each own one pillar.
+> We own all of them — plus Accessibility, which nobody else offers for free.
+
+### 🔒 Security — Expand to 15+ checks
+Currently 5 checks. Target: most thorough free security header scanner available.
+
+**TLS / Certificate**
+- [ ] SSL certificate expiry — show days remaining, warn at <30 days
+- [ ] TLS version detection — flag TLS 1.0/1.1 as critical, reward TLS 1.3
+- [ ] Cipher suite strength — warn on weak/export ciphers
+
+**Headers (expand current set)**
+- [ ] `Referrer-Policy` header present and strict
+- [ ] `Permissions-Policy` header present
+- [ ] Cross-Origin headers: `COEP`, `COOP`, `CORP`
+- [ ] Server info leakage — `Server:` and `X-Powered-By` should be absent or obscured
+
+**Content & Cookies**
+- [ ] Mixed content detection — HTTPS page loading HTTP sub-resources
+- [ ] Cookie flags audit — check Secure, HttpOnly, SameSite on all Set-Cookie headers
+- [ ] Subresource Integrity (SRI) on external `<script>` and `<link>` tags
+
+**Exposure**
+- [ ] Sensitive file exposure probe — `/.env`, `/.git/HEAD`, `/phpinfo.php`, `/wp-login.php`
+- [ ] CORS misconfiguration — `Access-Control-Allow-Origin: *` on credentialed requests
+- [ ] Redirect chain audit — http→https, www→non-www, count hops, flag long chains
+
+### ⚡ Performance — Real data, not estimates
+Currently 3 checks. Target: replace Lighthouse for most users.
+
+**Core Web Vitals (real field data)**
+- [ ] PageSpeed Insights API integration — LCP, INP, CLS (real user data, not synthetic)
+- [ ] CrUX data where available, fallback to lab data
+
+**Resource audit**
+- [ ] Total page weight — HTML + CSS + JS + images breakdown
+- [ ] Render-blocking resources count and size
+- [ ] JavaScript bundle size — flag if >500kb uncompressed
+- [ ] Image format audit — detect unoptimised PNG/JPEG that should be WebP/AVIF
+- [ ] Image lazy loading coverage — % of below-fold images with `loading="lazy"`
+- [ ] Third-party script count and domains
+
+**Infrastructure**
+- [ ] HTTP/2 or HTTP/3 support
+- [ ] CDN detection — Cloudflare, Fastly, AWS CloudFront, Vercel, etc.
+- [ ] Cache-Control audit — are static assets cached with long max-age?
+- [ ] Font loading strategy — `font-display` swap, preload hints
+- [ ] Compression ratio — report actual bytes saved by gzip/Brotli
+
+### 🔍 SEO — Full technical SEO audit
+Currently 4 checks. Target: replace free Screaming Frog / Ahrefs site audit for single pages.
+
+**Social & Structured Data**
+- [ ] Open Graph tags — og:title, og:description, og:image, og:url
+- [ ] Twitter Card tags — twitter:card, twitter:title, twitter:image
+- [ ] JSON-LD / Schema.org structured data detection and type identification
+- [ ] Social preview simulation — show how the page looks when shared on X/LinkedIn
+
+**Crawlability**
+- [ ] robots.txt — reachable, valid, not blocking key pages
+- [ ] sitemap.xml — reachable, linked from robots.txt
+- [ ] `noindex` detection — is this page actually indexable?
+- [ ] Canonical URL — self-referencing, no conflicts
+
+**On-page**
+- [ ] Mobile viewport meta tag present
+- [ ] Image alt text coverage — % of images with alt attribute
+- [ ] Internal link count
+- [ ] Hreflang tags for multilingual sites
+- [ ] URL structure — no query string junk, readable slugs
+- [ ] Page word count — thin content detection (<300 words)
+
+### ♿ Accessibility — 4th Pillar (unique differentiator)
+No major free scanner includes accessibility. This is our moat.
+
+- [ ] Color contrast ratio — WCAG AA (4.5:1) and AAA (7:1) for body text
+- [ ] Images without alt text — count and list offenders
+- [ ] Form inputs without associated `<label>`
+- [ ] Buttons with no accessible name (no text, no aria-label)
+- [ ] `lang` attribute present on `<html>` element
+- [ ] Focus visible — interactive elements have visible focus ring
+- [ ] Heading hierarchy — h1→h2→h3 in logical order, no skipped levels
+- [ ] ARIA landmark regions present (main, nav, footer)
+- [ ] Links with non-descriptive text ("click here", "read more")
+- [ ] Auto-playing media (video/audio) — WCAG failure
+
+### 🤖 AI-Powered Recommendations
+The feature that turns a score into action — and justifies Pro pricing.
+
+- [ ] Technology stack detection — WordPress, Shopify, Next.js, Nuxt, Nginx, Apache, etc.
+- [ ] Platform-aware fix recommendations — show the right config for their stack
+  - e.g. "Add to your `next.config.js` headers" vs "Add to `.htaccess`" vs "Cloudflare Page Rule"
+- [ ] Priority ranking — sort issues by `impact × ease of fix`, not just severity
+- [ ] Code snippet per issue — copy-pasteable fix for every failing check
+- [ ] Plain-English summary — "Your site is secure but slow. The biggest win is enabling compression — it'll cut load time by ~40%."
+
+### 📊 Score Intelligence
+- [ ] Score history stored per URL — trend chart over time (sparkline on dashboard)
+- [ ] Regression detection — flag if any pillar drops >10 points since last scan
+- [ ] Competitor scan — scan two URLs side by side, see scores compared
+- [ ] Industry benchmarking — "Your performance score is better than 73% of e-commerce sites"
 
 ---
 
@@ -259,4 +349,4 @@ NUXT_PUBLIC_CONVEX_URL=https://your-deployment.convex.cloud
 
 ---
 
-_Last updated: 2026-03-26_
+_Last updated: 2026-03-26 — Phase 2.5 added_

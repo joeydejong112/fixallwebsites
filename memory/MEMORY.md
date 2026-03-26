@@ -189,13 +189,6 @@ Scores: `(passing / total) × 100`. Overall = average of three pillars.
 
 ## Phase 2 — Remaining Work
 
-### Scan Improvements
-- [ ] More checks: Open Graph tags, robots.txt, sitemap.xml, redirect chains
-- [ ] PageSpeed Insights API for real Core Web Vitals
-- [ ] SSL certificate expiry check
-- [ ] Mixed content detection
-- [ ] Response time percentiles
-
 ### Dashboard
 - [ ] Real-time scan history (Convex subscription via `onUpdate`)
 - [ ] Delete scan from history
@@ -216,6 +209,68 @@ Scores: `(passing / total) × 100`. Overall = average of three pillars.
 ### Billing
 - [ ] Stripe integration for Pro tier
 - [ ] Pro: unlimited scans, PDF reports, monitoring, API access
+
+---
+
+## Phase 2.5 — Best-in-Class Scan Engine (Not Started)
+
+> Goal: own all pillars in one tool. Competitors each cover one area. We cover all four.
+
+### Security (expand 5 → 15+ checks)
+- [ ] SSL expiry + TLS version + cipher strength
+- [ ] Referrer-Policy, Permissions-Policy, COEP/COOP/CORP headers
+- [ ] Server info leakage (Server:, X-Powered-By)
+- [ ] Mixed content detection
+- [ ] Cookie flags audit (Secure, HttpOnly, SameSite)
+- [ ] Subresource Integrity (SRI) on external scripts
+- [ ] Sensitive file exposure probe (.env, .git, phpinfo)
+- [ ] CORS misconfiguration
+- [ ] Redirect chain audit
+
+### Performance (expand 3 → 12+ checks)
+- [ ] PageSpeed Insights API — real LCP, INP, CLS
+- [ ] Total page weight breakdown
+- [ ] Render-blocking resources
+- [ ] JS bundle size
+- [ ] Image format audit (WebP/AVIF)
+- [ ] HTTP/2 or HTTP/3
+- [ ] CDN detection
+- [ ] Cache-Control audit
+- [ ] Font loading strategy
+- [ ] Third-party script count
+
+### SEO (expand 4 → 15+ checks)
+- [ ] Open Graph + Twitter Card tags
+- [ ] JSON-LD structured data
+- [ ] Social preview simulation
+- [ ] robots.txt + sitemap.xml validation
+- [ ] noindex detection
+- [ ] Image alt coverage
+- [ ] Hreflang, canonical, viewport meta
+- [ ] Thin content detection
+
+### Accessibility — 4th Pillar (nobody else does this free)
+- [ ] Color contrast ratio (WCAG AA/AAA)
+- [ ] Images without alt
+- [ ] Form inputs without labels
+- [ ] Buttons with no accessible name
+- [ ] lang attribute on html
+- [ ] Focus visible
+- [ ] Heading hierarchy
+- [ ] ARIA landmarks
+- [ ] Non-descriptive link text
+
+### AI Layer
+- [ ] Technology stack detection (WordPress, Next.js, Nginx, etc.)
+- [ ] Platform-aware fix recommendations with copy-paste code
+- [ ] Priority ranking by impact × ease
+- [ ] Plain-English summary of top issues
+
+### Score Intelligence
+- [ ] Score history per URL with trend chart
+- [ ] Regression alerts (score drops >10 pts)
+- [ ] Competitor side-by-side scan
+- [ ] Industry benchmarking percentile
 
 ---
 
@@ -252,6 +307,6 @@ Scores: `(passing / total) × 100`. Overall = average of three pillars.
 - Updated `docs/PLAN.md` with phase checkmarks
 - Created this memory file
 
-**Where we left off**: Phase 2 Auth & User is done. Next up is any remaining Phase 2 item — suggested priorities are real-time dashboard (Convex subscriptions) or more scan checks.
+**Where we left off**: Phase 2 Auth & User is done. Phase 2.5 (Best-in-Class Scan Engine) has been planned — 4 pillars (Security, Performance, SEO, Accessibility), AI recommendations, score history, competitor benchmarking. Ready to start implementing Phase 2.5.
 
 **Branch**: `main` (all work committed directly, no open branches)
