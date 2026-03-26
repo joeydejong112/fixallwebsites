@@ -5,18 +5,30 @@ useSeoMeta({ title: 'Dashboard — ScanPulse' })
 const { userId } = useAuth()
 const { client, api } = useConvex()
 
-const scans    = ref<any[]>([])
-const loading  = ref(true)
-const scanning = ref(false)
-const router   = useRouter()
+const scans       = ref<any[]>([])
+const convexUser  = ref<{ plan: 'free' | 'pro'; scanCount: number } | null>(null)
+const loading     = ref(true)
+const scanning    = ref(false)
+const router      = useRouter()
 
-onMounted(async () => {
-  if (!userId.value) return
+async function loadUserData(id: string) {
+  loading.value = true
   try {
-    scans.value = await client.query(api.scans.getScansByUser, { userId: userId.value })
-  } catch { scans.value = [] }
-  finally  { loading.value = false }
-})
+    const [userScans, user] = await Promise.all([
+      client.query(api.scans.getScansByUser, { userId: id }),
+      client.query(api.users.getUserByClerkId, { clerkId: id }),
+    ])
+    scans.value      = userScans
+    convexUser.value = user
+  } catch {
+    scans.value = []
+  } finally {
+    loading.value = false
+  }
+}
+
+// Watch userId so we load correctly even if Clerk hydrates after mount
+watch(userId, id => { if (id) loadUserData(id) }, { immediate: true })
 
 async function handleScan(url: string) {
   scanning.value = true
@@ -88,10 +100,22 @@ function relativeTime(ts: number) {
         </div>
 
         <div class="flex items-end justify-between gap-8">
-          <h1
-            class="font-display font-bold text-white leading-none tracking-[-0.04em]"
-            style="font-size: clamp(2.8rem, 5vw, 4rem)"
-          >Dashboard</h1>
+          <div class="flex items-center gap-4">
+            <h1
+              class="font-display font-bold text-white leading-none tracking-[-0.04em]"
+              style="font-size: clamp(2.8rem, 5vw, 4rem)"
+            >Dashboard</h1>
+
+            <!-- Plan badge -->
+            <div
+              v-if="convexUser"
+              class="plan-badge"
+              :class="convexUser.plan === 'pro' ? 'plan-badge--pro' : 'plan-badge--free'"
+            >
+              <span v-if="convexUser.plan === 'pro'">Pro</span>
+              <span v-else>{{ convexUser.scanCount }} / 10 free</span>
+            </div>
+          </div>
 
           <!-- Stat strip -->
           <div v-if="!loading" class="flex items-center gap-0 flex-shrink-0">
@@ -257,6 +281,30 @@ function relativeTime(ts: number) {
 </template>
 
 <style scoped>
+/* ── Plan badge ──────────────────────────────────────── */
+.plan-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin-bottom: 2px;
+}
+.plan-badge--free {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.4);
+}
+.plan-badge--pro {
+  background: rgba(236, 53, 134, 0.12);
+  border: 1px solid rgba(236, 53, 134, 0.3);
+  color: #ec3586;
+}
+
 /* ── Stat chips ──────────────────────────────────────── */
 .stat-chip {
   display: flex;
