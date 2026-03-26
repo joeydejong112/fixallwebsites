@@ -4,11 +4,27 @@ import { v } from 'convex/values'
 export const createScan = mutation({
   args: { userId: v.string(), url: v.string() },
   handler: async (ctx, { userId, url }) => {
-    return await ctx.db.insert('scans', {
+    // Atomic: check free-tier limit, insert scan, and increment count in one transaction
+    const user = await ctx.db
+      .query('users')
+      .withIndex('by_clerk', q => q.eq('clerkId', userId))
+      .unique()
+
+    if (user && user.plan === 'free' && user.scanCount >= 10) {
+      throw new Error('Free plan limit reached. Upgrade to Pro for unlimited scans.')
+    }
+
+    const scanId = await ctx.db.insert('scans', {
       userId,
       url,
       status: 'pending',
     })
+
+    if (user) {
+      await ctx.db.patch(user._id, { scanCount: user.scanCount + 1 })
+    }
+
+    return scanId
   },
 })
 

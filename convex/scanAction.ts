@@ -113,11 +113,16 @@ export const runScan = action({
       })
     }
     catch (err) {
-      await ctx.runMutation(internal.scans.updateScan, {
-        scanId,
-        status: 'error',
-        errorMessage: err instanceof Error ? err.message : 'Unknown error occurred',
-      })
+      try {
+        await ctx.runMutation(internal.scans.updateScan, {
+          scanId,
+          status: 'error',
+          errorMessage: err instanceof Error ? err.message : 'Unknown error occurred',
+        })
+      } catch {
+        // Error mutation failed — scan stays in 'running' but there's nothing more we can do
+        console.error('Failed to mark scan as errored:', scanId)
+      }
     }
   },
 })
