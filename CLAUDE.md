@@ -2,6 +2,11 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## ⚠️ FIRST THING TO DO IN EVERY SESSION
+
+**Read `memory/MEMORY.md` before doing anything else.**
+It contains the full project history, current phase status, known issues, and where the last session left off. After completing any work, update the "Last Session" section in that file so the next Claude instance is fully up to date.
+
 ## Project Overview
 
 **ScanPulse** — A Next.js website health scanner SaaS that analyzes sites across three pillars: Security, Performance, and SEO. Built with Next.js 14 App Router, TypeScript, Tailwind CSS, Clerk auth, and anime.js for animations.
