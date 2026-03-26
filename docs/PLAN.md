@@ -182,12 +182,14 @@ Scores are `(passing checks / total checks) × 100`. Overall = average of three 
 
 ---
 
-## Phase 2 — Polish & Features (Next)
+## Phase 2 — Polish & Features (In Progress)
 
-### Auth & User
-- [ ] Clerk webhook → sync user to Convex `users` table on sign-up
-- [ ] User plan tracking (free/pro)
-- [ ] Scan count enforcement for free tier
+### Auth & User ✅ Complete
+- [x] Clerk webhook → sync user to Convex `users` table on sign-up
+- [x] User plan tracking (free/pro)
+- [x] Scan count enforcement for free tier (atomic mutation, race-safe)
+- [x] Native HMAC-SHA256 webhook verification (no svix dependency)
+- [x] Dashboard queries decoupled with Promise.allSettled
 
 ### Scan Improvements
 - [ ] More checks: Open Graph tags, robots.txt, sitemap.xml, redirect chains
@@ -257,4 +259,4 @@ NUXT_PUBLIC_CONVEX_URL=https://your-deployment.convex.cloud
 
 ---
 
-_Last updated: 2026-03-25_
+_Last updated: 2026-03-26_
