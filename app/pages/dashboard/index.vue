@@ -14,14 +14,12 @@ const router      = useRouter()
 async function loadUserData(id: string) {
   loading.value = true
   try {
-    const [userScans, user] = await Promise.all([
+    const [userScans, user] = await Promise.allSettled([
       client.query(api.scans.getScansByUser, { userId: id }),
       client.query(api.users.getUserByClerkId, { clerkId: id }),
     ])
-    scans.value      = userScans
-    convexUser.value = user
-  } catch {
-    scans.value = []
+    scans.value      = userScans.status === 'fulfilled' ? userScans.value : []
+    convexUser.value = user.status === 'fulfilled' ? user.value : null
   } finally {
     loading.value = false
   }
