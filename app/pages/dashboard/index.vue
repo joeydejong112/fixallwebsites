@@ -1,29 +1,61 @@
 <script setup lang="ts">
+import type { Id } from '~~/convex/_generated/dataModel'
+import { useAppToast } from '~/composables/useAppToast'
 definePageMeta({ middleware: 'auth' })
 useSeoMeta({ title: 'Dashboard — ScanPulse' })
 
 const { userId } = useAuth()
 const { client, api } = useConvex()
+const { client: wsClient } = useConvexWs()
+const { toast, confirm } = useAppToast()
 
 const scans       = ref<any[]>([])
+const monitors    = ref<any[]>([])
 const convexUser  = ref<{ plan: 'free' | 'pro'; scanCount: number } | null>(null)
 const loading     = ref(true)
 const scanning    = ref(false)
+const filterStatus = ref<'all' | 'pass' | 'warning' | 'critical'>('all')
 const router      = useRouter()
+let unsubscribeScans: (() => void) | null = null
+let unsubscribeMonitors: (() => void) | null = null
 
 async function loadUserData(id: string) {
   loading.value = true
   try {
-    const [userScans, user] = await Promise.allSettled([
+    const [userScans, user, userMonitors] = await Promise.allSettled([
       client.query(api.scans.getScansByUser, { userId: id }),
       client.query(api.users.getUserByClerkId, { clerkId: id }),
+      client.query(api.monitors.getMonitors, { userId: id })
     ])
     scans.value      = userScans.status === 'fulfilled' ? userScans.value : []
     convexUser.value = user.status === 'fulfilled' ? user.value : null
+    monitors.value   = userMonitors.status === 'fulfilled' ? userMonitors.value : []
+
+    if (wsClient) {
+      if (unsubscribeScans) unsubscribeScans()
+      if (unsubscribeMonitors) unsubscribeMonitors()
+      
+      unsubscribeScans = wsClient.onUpdate(
+        api.scans.getScansByUser,
+        { userId: id },
+        (updatedScans) => { scans.value = updatedScans }
+      )
+      
+      unsubscribeMonitors = wsClient.onUpdate(
+        api.monitors.getMonitors,
+        { userId: id },
+        (updated) => { monitors.value = updated }
+      )
+    }
   } finally {
     loading.value = false
   }
 }
+
+onUnmounted(() => {
+  if (unsubscribeScans) unsubscribeScans()
+  if (unsubscribeMonitors) unsubscribeMonitors()
+})
 
 // Watch userId so we load correctly even if Clerk hydrates after mount
 watch(userId, id => { if (id) loadUserData(id) }, { immediate: true })
@@ -31,6 +63,45 @@ watch(userId, id => { if (id) loadUserData(id) }, { immediate: true })
 async function handleScan(url: string) {
   scanning.value = true
   await router.push(`/results?url=${encodeURIComponent(url)}`)
+}
+
+async function deleteScan(scanId: Id<'scans'>, e: Event) {
+  e.preventDefault()
+  const ok = await confirm({ message: 'This scan will be permanently removed from your history.', confirmLabel: 'Delete', cancelLabel: 'Keep' })
+  if (!ok) return
+  await client.mutation(api.scans.deleteScan, { scanId, userId: userId.value! })
+  if (!wsClient) {
+    scans.value = scans.value.filter(s => s._id !== scanId)
+  }
+}
+
+async function reScan(url: string, e: Event) {
+  e.preventDefault()
+  await handleScan(url)
+}
+
+async function toggleMonitor(url: string, e: Event) {
+  e.preventDefault()
+  if (convexUser.value?.plan !== 'pro') {
+    toast.warning('Monitoring is a Pro feature. Upgrade to watch your sites automatically.')
+    return
+  }
+  
+  const existing = monitors.value.find(m => m.url === url)
+  if (existing) {
+    const ok = await confirm({ message: `Stop monitoring ${url}?`, confirmLabel: 'Stop', cancelLabel: 'Keep' })
+    if (ok) {
+      await client.mutation(api.monitors.removeMonitor, { monitorId: existing._id, userId: userId.value! })
+      toast.info(`Stopped monitoring ${url}`)
+    }
+  } else {
+    await client.mutation(api.monitors.addMonitor, { userId: userId.value!, url, frequency: 'daily' })
+    toast.success(`Started monitoring ${url} daily!`)
+  }
+}
+
+function isMonitored(url: string) {
+  return monitors.value.some(m => m.url === url && m.isActive)
 }
 
 // ── Derived stats ──────────────────────────────────────
@@ -44,6 +115,17 @@ const bestScore    = computed(() => doneScans.value.length
   ? Math.max(...doneScans.value.map(s => s.overallScore ?? 0))
   : null
 )
+
+const filteredScans = computed(() => {
+  if (filterStatus.value === 'all') return scans.value
+  return scans.value.filter(s => {
+    const score = s.overallScore ?? 0
+    if (filterStatus.value === 'pass') return s.status === 'done' && score >= 80
+    if (filterStatus.value === 'warning') return s.status === 'done' && score >= 60 && score < 80
+    if (filterStatus.value === 'critical') return s.status === 'error' || (s.status === 'done' && score < 60)
+    return true
+  })
+})
 
 // ── Helpers ────────────────────────────────────────────
 function scoreColor(score?: number) {
@@ -155,16 +237,47 @@ function relativeTime(ts: number) {
         </div>
       </div>
 
+      <!-- ── Monitored Sites Widget ───────────────────────────── -->
+      <div v-if="monitors.length > 0" class="mb-12">
+        <div class="flex items-center gap-3 mb-5">
+          <svg class="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+          <span class="text-[11px] font-display font-semibold tracking-[0.18em] uppercase text-white/30 hidden sm:inline-block">Monitored Sites</span>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div v-for="m in monitors" :key="m._id" class="p-5 rounded-xl bg-white/[0.02] border border-white/[0.05] hover:border-white/[0.1] transition-colors flex flex-col relative overflow-hidden group">
+            <div class="absolute top-0 right-0 p-3 opacity-0 group-hover:opacity-100 transition-opacity">
+              <button @click.prevent="(e) => toggleMonitor(m.url, e)" class="text-white/30 hover:text-danger text-xs font-display flex items-center gap-1">
+                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg> Stop
+              </button>
+            </div>
+            <p class="font-display font-bold text-white/90 text-sm mb-1 truncate pr-8">{{ m.url }}</p>
+            <div class="flex items-center gap-2 mt-auto pt-4">
+              <span class="text-[9px] font-display font-bold tracking-[0.14em] uppercase text-white/30 bg-white/[0.05] px-2 py-0.5 rounded">{{ m.frequency }}</span>
+              <span class="text-xs font-body text-white/40">Last target score: <strong :class="scoreColor(m.lastScore)">{{ m.lastScore ?? 'none' }}</strong></span>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- ── Scan history ────────────────────────────────────── -->
       <div>
-        <!-- Section label -->
+        <!-- Section label & Filter -->
         <div class="flex items-center justify-between mb-5">
           <div class="flex items-center gap-3">
-            <span class="text-[11px] font-display font-semibold tracking-[0.18em] uppercase text-white/30">Recent scans</span>
+            <span class="text-[11px] font-display font-semibold tracking-[0.18em] uppercase text-white/30 hidden sm:inline-block">Recent scans</span>
           </div>
-          <span v-if="scans.length" class="text-[11px] font-body text-white/20">
-            {{ scans.length }} scan{{ scans.length !== 1 ? 's' : '' }}
-          </span>
+          
+          <div class="flex items-center gap-1 bg-white/[0.03] p-1 rounded-lg border border-white/[0.04]">
+            <button
+              v-for="f in ['all', 'pass', 'warning', 'critical']"
+              :key="f"
+              @click="filterStatus = f as any"
+              class="px-3 py-1.5 rounded-md text-[11px] font-display font-semibold tracking-[0.1em] uppercase transition-colors"
+              :class="filterStatus === f ? 'bg-primary text-white shadow-sm' : 'text-white/40 hover:text-white/80'"
+            >
+              {{ f }}
+            </button>
+          </div>
         </div>
 
         <!-- Loading skeleton -->
@@ -174,19 +287,23 @@ function relativeTime(ts: number) {
 
         <!-- Empty state -->
         <div
-          v-else-if="!scans.length"
+          v-else-if="!filteredScans.length"
           class="flex flex-col items-center justify-center py-24 border border-dashed border-white/[0.06] rounded-2xl"
           style="background: rgba(255,255,255,0.01)"
         >
           <Logo :animate="false" class="w-12 h-12 mb-5 opacity-20" />
-          <p class="font-display font-semibold text-white/30 mb-1.5">No scans yet</p>
-          <p class="text-white/20 text-sm font-body">Enter a URL above to scan your first site.</p>
+          <p class="font-display font-semibold text-white/30 mb-1.5">No scans found</p>
+          <p v-if="scans.length" class="text-white/20 text-sm font-body">No scans match the current filter.</p>
+          <p v-else class="text-white/20 text-sm font-body">Enter a URL above to scan your first site.</p>
+          <button v-if="scans.length" @click="filterStatus = 'all'" class="mt-4 text-[12px] font-display text-primary hover:text-primary-hover">
+            Clear filter
+          </button>
         </div>
 
         <!-- Scan rows -->
         <div v-else class="space-y-2">
           <NuxtLink
-            v-for="scan in scans"
+            v-for="scan in filteredScans"
             :key="scan._id"
             :to="`/results?scanId=${scan._id}`"
             class="scan-row group"
@@ -266,8 +383,45 @@ function relativeTime(ts: number) {
                 >{{ scan.status === 'done' ? (scan.overallScore ?? '—') : '—' }}</span>
               </div>
 
+              <!-- Hover Actions -->
+              <div class="hidden group-hover:flex items-center gap-2 mr-2">
+                <button
+                  v-if="scan.status === 'done'"
+                  @click.prevent="(e) => toggleMonitor(scan.url, e)"
+                  class="p-2 rounded-md transition-colors group/btn relative"
+                  :class="isMonitored(scan.url) ? 'text-primary hover:bg-primary/20' : 'text-white/40 hover:text-white hover:bg-white/10'"
+                  :title="isMonitored(scan.url) ? 'Stop watching' : 'Watch this site'"
+                >
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" v-if="!isMonitored(scan.url)">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                  </svg>
+                  <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24" v-else>
+                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm3.88-11.71L10 14.17l-1.88-1.88a.996.996 0 10-1.41 1.41l2.59 2.59c.39.39 1.02.39 1.41 0L17.3 9.7a.996.996 0 10-1.41-1.41z"/>
+                  </svg>
+                </button>
+                <button
+                  @click.prevent="(e) => reScan(scan.url, e)"
+                  class="p-2 rounded-md hover:bg-white/10 text-white/40 hover:text-white transition-colors group/btn relative"
+                  title="Scan again"
+                >
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  </svg>
+                </button>
+                <button
+                  @click.prevent="(e) => deleteScan(scan._id, e)"
+                  class="p-2 rounded-md hover:bg-danger/20 text-white/40 hover:text-danger transition-colors group/btn relative"
+                  title="Delete scan"
+                >
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
+                </button>
+              </div>
+
               <!-- Chevron -->
-              <svg class="w-3.5 h-3.5 text-white/15 group-hover:text-white/35 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg class="w-3.5 h-3.5 text-white/15 group-hover:text-white/35 transition-colors hidden sm:block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
               </svg>
             </div>

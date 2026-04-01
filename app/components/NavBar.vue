@@ -44,17 +44,13 @@ const clerkAppearance = useClerkAppearance()
         <!-- ── Right: actions ── -->
         <div class="flex items-center gap-5 shrink-0">
           <template v-if="isSignedIn">
-            <NuxtLink
-              to="/dashboard"
-              class="nav-link"
-            >Dashboard</NuxtLink>
+            <NuxtLink to="/pricing" class="nav-link">Pricing</NuxtLink>
+            <NuxtLink to="/dashboard" class="nav-link">Dashboard</NuxtLink>
             <UserButton :appearance="clerkAppearance" :user-profile-props="{ appearance: clerkAppearance }" />
           </template>
           <template v-else>
-            <NuxtLink
-              to="/sign-in"
-              class="nav-link"
-            >Sign in</NuxtLink>
+            <NuxtLink to="/pricing" class="nav-link">Pricing</NuxtLink>
+            <NuxtLink to="/sign-in" class="nav-link">Sign in</NuxtLink>
             <NuxtLink
               to="/sign-up"
               class="scan-btn"

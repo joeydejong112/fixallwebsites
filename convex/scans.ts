@@ -46,6 +46,23 @@ export const getScan = query({
   },
 })
 
+export const getPreviousScan = query({
+  args: { url: v.string(), beforeTs: v.number() },
+  handler: async (ctx, { url, beforeTs }) => {
+    const scans = await ctx.db
+      .query('scans')
+      .filter(q => q.and(
+        q.eq(q.field('url'), url),
+        q.eq(q.field('status'), 'done'),
+        q.lt(q.field('_creationTime'), beforeTs)
+      ))
+      .order('desc')
+      .take(1)
+    
+    return scans[0] ?? null
+  }
+})
+
 export const updateScan = internalMutation({
   args: {
     scanId: v.id('scans'),
@@ -70,4 +87,14 @@ export const updateScan = internalMutation({
   handler: async (ctx, { scanId, ...updates }) => {
     await ctx.db.patch(scanId, updates)
   },
+})
+
+export const deleteScan = mutation({
+  args: { scanId: v.id('scans'), userId: v.string() },
+  handler: async (ctx, { scanId, userId }) => {
+    const scan = await ctx.db.get(scanId)
+    if (!scan) throw new Error("Scan not found")
+    if (scan.userId !== userId) throw new Error("Unauthorized")
+    await ctx.db.delete(scanId)
+  }
 })

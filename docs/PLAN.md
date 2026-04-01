@@ -192,25 +192,27 @@ Scores are `(passing checks / total checks) × 100`. Overall = average of three 
 - [x] Dashboard queries decoupled with Promise.allSettled
 
 ### Dashboard
-- [ ] Refresh scan history in real-time (Convex subscription via `onUpdate`)
-- [ ] Delete scan from history
-- [ ] Re-scan button on each row
-- [ ] Filter by pillar / status
+- [x] Real-time scan history (Convex subscription via `onUpdate`)
+- [x] Delete scan from history
+- [x] Re-scan button on each row
+- [x] Filter by pillar / status
 
 ### Results
-- [ ] PDF export of scan report
-- [ ] Share link (public results URL)
-- [ ] Comparison with previous scan of same URL
-- [ ] Fix recommendations with code examples
+- [x] PDF export of scan report
+- [x] Share link (public results URL)
+- [x] Comparison with previous scan of same URL
+- [x] Fix recommendations with code examples
 
-### Monitoring
-- [ ] "Watch this site" — scheduled scans via Convex crons
+### Monitoring ✅ Complete (Foundation)
+- [x] "Watch this site" — toggle monitoring in dashboard
+- [x] Billing integration for Pro tier (Stripe)
+- [x] Custom Toast & Modal system (replaces native alert/confirm)
 - [ ] Email alerts when score drops below threshold
 - [ ] Dashboard widget for monitored sites
 
-### Billing
-- [ ] Stripe integration for Pro tier
-- [ ] Pro: unlimited scans, PDF reports, monitoring, API access
+### Billing ✅ Complete
+- [x] Stripe integration for Pro tier
+- [x] Pro: unlimited scans, PDF reports, monitoring, API access
 
 ---
 

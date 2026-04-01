@@ -8,7 +8,12 @@ export default defineSchema({
     name: v.optional(v.string()),
     plan: v.union(v.literal('free'), v.literal('pro')),
     scanCount: v.number(),
-  }).index('by_clerk', ['clerkId']),
+    stripeCustomerId: v.optional(v.string()),
+    stripeSubscriptionId: v.optional(v.string()),
+    stripePriceId: v.optional(v.string()),
+  })
+    .index('by_clerk', ['clerkId'])
+    .index('by_stripe_customer', ['stripeCustomerId']),
 
   scans: defineTable({
     userId: v.string(),
@@ -33,4 +38,13 @@ export default defineSchema({
   })
     .index('by_user', ['userId'])
     .index('by_user_status', ['userId', 'status']),
+
+  monitoredSites: defineTable({
+    userId: v.string(),
+    url: v.string(),
+    isActive: v.boolean(),
+    frequency: v.union(v.literal('daily'), v.literal('weekly')),
+    lastRunTime: v.optional(v.number()),
+    lastScore: v.optional(v.number()),
+  }).index('by_user', ['userId']).index('by_active', ['isActive']),
 })

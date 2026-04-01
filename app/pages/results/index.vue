@@ -7,12 +7,42 @@ const { userId } = useAuth()
 const { client, api } = useConvex()
 
 const scan    = ref<any>(null)
+const previousScan = ref<any>(null)
 const loading = ref(true)
 const error   = ref('')
+const copied  = ref(false)
 let pollInterval: ReturnType<typeof setInterval> | null = null
 
 async function fetchScan(id: string) {
-  scan.value = await client.query(api.scans.getScan, { scanId: id })
+  scan.value = await client.query(api.scans.getScan, { scanId: id as any })
+  if (scan.value && scan.value.status === 'done' && scan.value._creationTime) {
+    try {
+      previousScan.value = await client.query(api.scans.getPreviousScan, {
+        url: scan.value.url,
+        beforeTs: scan.value._creationTime
+      })
+    } catch(e) {}
+  }
+}
+
+function shareLink() {
+  const shareUrl = `${window.location.origin}/share/${scan.value._id}`
+  navigator.clipboard.writeText(shareUrl)
+  copied.value = true
+  setTimeout(() => copied.value = false, 2000)
+}
+
+function printPDF() {
+  window.print()
+}
+
+const FIX_SNIPPETS: Record<string, { label: string, code: string }> = {
+  'HTTPS enforced': { label: 'Nginx', code: 'server {\n  listen 80;\n  return 301 https://$host$request_uri;\n}' },
+  'Strict-Transport-Security header present': { label: 'Apache .htaccess', code: 'Header always set Strict-Transport-Security "max-age=31536000"' },
+  'Content-Security-Policy header present': { label: 'Next.js', code: 'async headers() {\n  return [{ key: "Content-Security-Policy", value: "default-src \'self\'" }]\n}' },
+  'Compression enabled (gzip or Brotli)': { label: 'Express', code: 'const compression = require("compression");\napp.use(compression());' },
+  'Images have width/height attributes': { label: 'HTML', code: '<img src="/img.jpg" width="800" height="600" />' },
+  '<meta name="description"> present': { label: 'HTML', code: '<meta name="description" content="Your search snippet" />' }
 }
 
 onMounted(async () => {
@@ -153,16 +183,30 @@ function arcPath(score: number, r = 42) {
     <!-- ── Results ───────────────────────────────────────────────── -->
     <div v-else-if="scan?.status === 'done'" class="relative z-10 max-w-5xl mx-auto px-8 pt-28 pb-24">
 
-      <!-- Back -->
-      <NuxtLink
-        to="/dashboard"
-        class="inline-flex items-center gap-2 text-white/25 hover:text-white/55 transition-colors mb-10 group"
-      >
-        <svg class="w-3.5 h-3.5 group-hover:-translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
-        </svg>
-        <span class="text-[10px] font-display font-semibold tracking-[0.16em] uppercase">Dashboard</span>
-      </NuxtLink>
+      <!-- Action Bar (Back + Print + Share) -->
+      <div class="flex items-center justify-between mb-10 print:hidden">
+        <NuxtLink
+          to="/dashboard"
+          class="inline-flex items-center gap-2 text-white/25 hover:text-white/55 transition-colors group"
+        >
+          <svg class="w-3.5 h-3.5 group-hover:-translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+          </svg>
+          <span class="text-[10px] font-display font-semibold tracking-[0.16em] uppercase">Dashboard</span>
+        </NuxtLink>
+
+        <!-- Right actions -->
+        <div class="flex items-center gap-3">
+          <button @click="printPDF" class="flex items-center gap-2 px-3 py-1.5 rounded-md bg-white/[0.03] hover:bg-white/[0.08] border border-white/[0.05] transition-colors text-white/50 hover:text-white text-xs font-display font-medium">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+            Save PDF
+          </button>
+          <button @click="shareLink" class="flex items-center gap-2 px-3 py-1.5 rounded-md bg-primary/10 hover:bg-primary/20 border border-primary/20 transition-colors text-primary text-xs font-display font-medium">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/></svg>
+            {{ copied ? 'Copied!' : 'Share' }}
+          </button>
+        </div>
+      </div>
 
       <!-- ── Hero row: URL + overall score ── -->
       <div class="flex items-start justify-between gap-12 mb-14">
@@ -194,13 +238,22 @@ function arcPath(score: number, r = 42) {
                 style="transition: stroke-dasharray 0.8s cubic-bezier(0.4,0,0.2,1)"
               />
             </svg>
+            <!-- Score display & Indicator -->
             <div class="absolute inset-0 flex flex-col items-center justify-center">
               <span
                 class="font-display font-bold leading-none"
                 :class="scoreColor(scan.overallScore)"
                 style="font-size: 2.8rem; letter-spacing: -0.06em"
-              >{{ scan.overallScore }}</span>
-              <span class="text-[9px] font-display font-semibold tracking-[0.14em] uppercase text-white/25 mt-1">Overall</span>
+              >{{ scan.overallScore ?? '—' }}</span>
+
+              <div class="flex items-center gap-2 mt-1">
+                <span class="text-[9px] font-display font-semibold tracking-[0.14em] uppercase text-white/25">Overall</span>
+                <span v-if="previousScan && previousScan.overallScore != null && scan.overallScore != null" 
+                      class="text-[10px] font-display font-semibold leading-none rounded-sm px-1"
+                      :class="scan.overallScore > previousScan.overallScore ? 'text-success bg-success/10' : (scan.overallScore < previousScan.overallScore ? 'text-danger bg-danger/10' : 'text-white/40 bg-white/5')">
+                  {{ scan.overallScore > previousScan.overallScore ? `+${scan.overallScore - previousScan.overallScore}` : (scan.overallScore < previousScan.overallScore ? scan.overallScore - previousScan.overallScore : '=') }}
+                </span>
+              </div>
             </div>
           </div>
         </div>
@@ -283,7 +336,18 @@ function arcPath(score: number, r = 42) {
                   }"
                 >{{ issue.severity }}</span>
               </div>
-              <p class="text-white/35 text-xs font-body leading-relaxed">{{ issue.description }}</p>
+              <p class="text-white/35 text-xs font-body leading-relaxed max-w-2xl">{{ issue.description }}</p>
+              
+              <!-- Fix recommendation -->
+              <div v-if="issue.severity !== 'pass' && FIX_SNIPPETS[issue.title]" class="mt-3 pt-3 border-t border-white/[0.04] max-w-2xl">
+                <div class="flex items-center gap-2 mb-2">
+                  <svg class="w-3.5 h-3.5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+                  <span class="text-[10px] font-display font-semibold uppercase tracking-wider text-white/40">How to fix ({{ FIX_SNIPPETS[issue.title]?.label }})</span>
+                </div>
+                <div class="bg-[#07070a] border border-white/[0.05] rounded-lg p-3 overflow-x-auto">
+                  <pre class="text-[11px] font-mono text-white/70 whitespace-pre-wrap"><code v-html="FIX_SNIPPETS[issue.title]?.code"></code></pre>
+                </div>
+              </div>
             </div>
 
             <span class="flex-shrink-0 text-[9px] font-display font-bold uppercase tracking-[0.14em] text-white/15">
@@ -374,4 +438,16 @@ function arcPath(score: number, r = 42) {
 .issue-row--critical { border-left-color: #ff4757; }
 .issue-row--warning  { border-left-color: #ffaa00; }
 .issue-row--pass     { border-left-color: #00d4aa; }
+
+/* ── Print Styles ────────────────────────────────────── */
+@media print {
+  @page { margin: 1.5cm; }
+  .min-h-screen { min-height: auto; background: #07070a !important; color: white !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .btn-secondary, .btn-ghost, header { display: none !important; }
+  .border-b, .border-t { border-color: rgba(255,255,255,0.1) !important; }
+  .bg-dark { background: #07070a !important; }
+  .issue-row { break-inside: avoid; border-color: rgba(255,255,255,0.1) !important; padding: 10px; margin-bottom: 6px; }
+  .pillar-card { break-inside: avoid; border-color: rgba(255,255,255,0.1) !important; }
+  .print\:hidden { display: none !important; }
+}
 </style>

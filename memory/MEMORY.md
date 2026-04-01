@@ -190,16 +190,16 @@ Scores: `(passing / total) × 100`. Overall = average of three pillars.
 ## Phase 2 — Remaining Work
 
 ### Dashboard
-- [ ] Real-time scan history (Convex subscription via `onUpdate`)
-- [ ] Delete scan from history
-- [ ] Re-scan button on each row
-- [ ] Filter by pillar / status
+- [x] Real-time scan history (Convex subscription via `onUpdate`)
+- [x] Delete scan from history
+- [x] Re-scan button on each row
+- [x] Filter by pillar / status
 
 ### Results
-- [ ] PDF export
-- [ ] Share link (public results URL)
-- [ ] Compare with previous scan of same URL
-- [ ] Fix recommendations with code examples
+- [x] PDF export
+- [x] Share link (public results URL)
+- [x] Compare with previous scan of same URL
+- [x] Fix recommendations with code examples
 
 ### Monitoring
 - [ ] Scheduled scans via Convex crons
@@ -297,16 +297,20 @@ Scores: `(passing / total) × 100`. Overall = average of three pillars.
 
 ## Last Session
 
-**Date**: 2026-03-26
+**Date**: 2026-04-01
 **What was done**:
-- Completed Phase 2 Auth & User entirely
-- Fixed 3 critical bugs from code review (race condition, Clerk hydration, missing `'use node'`)
-- Fixed svix bundling issue — replaced with native HMAC using `crypto.subtle`
-- Deployed all Convex functions to prod (`hip-bass-536`)
-- Pushed all changes to `main` on GitHub
-- Updated `docs/PLAN.md` with phase checkmarks
-- Created this memory file
+- Completed Phase 2 Dashboard features:
+  - Switched user scan history from static fetch to real-time sync (`ConvexClient.onUpdate`)
+  - Implemented `deleteScan` internal mutation and connected to UI
+  - Added Re-scan capability
+  - Added frontend grouping/filtering by passing/warning/critical states
+- Completed Phase 2 Results features:
+  - Added PDF Native Print Export (using `@media print`)
+  - Created a public shareable unauthenticated route (`/share/[id]`) and added a copy-to-clipboard Share button.
+  - Linked previous scan comparison (added frontend query for `getPreviousScan`).
+  - Implemented a code snippet guide for common failing checks mapped statically in `FIX_SNIPPETS`.
+- Deployed schema and function updates to Convex
 
-**Where we left off**: Phase 2 Auth & User is done. Phase 2.5 (Best-in-Class Scan Engine) has been planned — 4 pillars (Security, Performance, SEO, Accessibility), AI recommendations, score history, competitor benchmarking. Ready to start implementing Phase 2.5.
+**Where we left off**: Finished the Phase 2 Results features. Ready to tackle Monitoring or Billing, or move to Phase 2.5 Best-in-Class Scan Engine.
 
 **Branch**: `main` (all work committed directly, no open branches)

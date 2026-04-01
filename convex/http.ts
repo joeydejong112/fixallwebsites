@@ -1,6 +1,7 @@
 import { httpRouter } from 'convex/server'
 import { httpAction } from './_generated/server'
 import { internal } from './_generated/api'
+import Stripe from 'stripe'
 
 const http = httpRouter()
 
@@ -86,6 +87,83 @@ http.route({
 
     return new Response(null, { status: 200 })
   }),
+})
+
+http.route({
+  path: '/stripe',
+  method: 'POST',
+  handler: httpAction(async (ctx, request) => {
+    const signature = request.headers.get('stripe-signature') as string
+    let event: Stripe.Event
+
+    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string)
+
+    try {
+      const payload = await request.text()
+      event = await stripe.webhooks.constructEventAsync(
+        payload,
+        signature,
+        process.env.STRIPE_WEBHOOK_SECRET as string
+      )
+    } catch (err: any) {
+      console.error(`Webhook Error: ${err.message}`)
+      return new Response(`Webhook Error: ${err.message}`, { status: 400 })
+    }
+
+    try {
+      switch (event.type) {
+        case 'checkout.session.completed': {
+          const session = event.data.object as Stripe.Checkout.Session
+          const clerkId = session.client_reference_id
+          
+          if (clerkId && session.subscription && session.customer) {
+            await ctx.runMutation(internal.users.updateStripe, {
+              clerkId,
+              plan: 'pro',
+              stripeCustomerId: session.customer as string,
+              stripeSubscriptionId: session.subscription as string,
+            })
+          }
+          break
+        }
+        
+        case 'customer.subscription.deleted': {
+          const subscription = event.data.object as Stripe.Subscription
+          await ctx.runMutation(internal.users.updateStripe, {
+            stripeCustomerId: subscription.customer as string,
+            plan: 'free',
+            stripeSubscriptionId: '',
+            stripePriceId: '',
+          })
+          break
+        }
+
+        case 'customer.subscription.updated': {
+          const subscription = event.data.object as Stripe.Subscription
+          
+          if (subscription.status !== 'active' && subscription.status !== 'trialing' && subscription.status !== 'past_due') {
+            await ctx.runMutation(internal.users.updateStripe, {
+              stripeCustomerId: subscription.customer as string,
+              plan: 'free',
+            })
+          } else {
+            await ctx.runMutation(internal.users.updateStripe, {
+              stripeCustomerId: subscription.customer as string,
+              plan: 'pro',
+              stripeSubscriptionId: subscription.id,
+              stripePriceId: subscription.items.data[0]?.price.id,
+            })
+          }
+          break
+        }
+      }
+    } catch (e: any) {
+      console.error('Failed to process stripe payload inside mutation', e)
+      return new Response('Internal Server Error', { status: 500 })
+    }
+
+    return new Response(null, { status: 200 })
+  })
 })
 
 export default http
