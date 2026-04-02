@@ -3,12 +3,97 @@
 import { action } from './_generated/server'
 import { v } from 'convex/values'
 import { internal } from './_generated/api'
+import * as nodeDns from 'dns/promises'
+import * as nodeTls from 'tls'
+import { runSecurityChecks } from './checks/security'
+import { runPerformanceChecks } from './checks/performance'
+import { runSeoChecks } from './checks/seo'
+import { runAccessibilityChecks } from './checks/accessibility'
+import { runDnsChecks } from './checks/dns'
+import { runTrustChecks } from './checks/trust'
+import { detectTechStack } from './checks/techDetect'
+import type { TlsInfo, CwvData, DnsData } from './checks/types'
 
-interface ScanIssue {
-  pillar: string
-  severity: 'critical' | 'warning' | 'pass'
-  title: string
-  description: string
+const DKIM_SELECTORS = ['google', 'default', 'selector1', 'selector2', 'k1', 'ses', 'mandrill', 'dkim']
+
+async function headStatus(url: string): Promise<number | null> {
+  try {
+    const r = await fetch(url, { method: 'HEAD', signal: AbortSignal.timeout(5000), redirect: 'manual' })
+    return r.status
+  } catch { return null }
+}
+
+async function fetchTlsInfo(hostname: string): Promise<TlsInfo> {
+  return new Promise((resolve) => {
+    const socket = nodeTls.connect({ host: hostname, port: 443, servername: hostname }, () => {
+      const cert = socket.getPeerCertificate()
+      const protocol = socket.getProtocol() ?? null
+      socket.destroy()
+      resolve({ validTo: cert?.valid_to ?? null, protocol, issuer: (cert?.issuer as { O?: string })?.O ?? null })
+    })
+    socket.setTimeout(5000)
+    socket.on('error', () => resolve({ validTo: null, protocol: null, issuer: null }))
+    socket.on('timeout', () => { socket.destroy(); resolve({ validTo: null, protocol: null, issuer: null }) })
+  })
+}
+
+async function fetchDnsData(domain: string): Promise<DnsData> {
+  const t0 = Date.now()
+  const aResult = await nodeDns.resolve4(domain).catch(() => [] as string[])
+  const resolveTimeMs = Date.now() - t0
+
+  const results = await Promise.allSettled([
+    nodeDns.resolve6(domain),
+    nodeDns.resolveMx(domain),
+    nodeDns.resolveTxt(domain),
+    nodeDns.resolveTxt('_dmarc.' + domain),
+    fetch(`https://dns.google/resolve?name=${encodeURIComponent(domain)}&type=A&do=1`, { signal: AbortSignal.timeout(4000) }).then(r => r.json()),
+    ...DKIM_SELECTORS.map(sel => nodeDns.resolveTxt(`${sel}._domainkey.${domain}`)),
+  ])
+
+  const [aaaaR, mxR, txtR, dmarcR, dnssecR, ...dkimRs] = results
+  const txt = (txtR.status === 'fulfilled' ? (txtR.value as string[][]).flat() : [])
+  const dmarc = (dmarcR.status === 'fulfilled' ? (dmarcR.value as string[][]).flat() : [])
+
+  return {
+    hasA: aResult.length > 0,
+    hasAAAA: aaaaR.status === 'fulfilled' && (aaaaR.value as string[]).length > 0,
+    mx: mxR.status === 'fulfilled' ? (mxR.value as { exchange: string }[]).map(r => r.exchange) : [],
+    spf: txt.find(r => r.startsWith('v=spf1')) ?? null,
+    dmarc: dmarc.find(r => r.startsWith('v=DMARC1')) ?? null,
+    dkimFound: DKIM_SELECTORS.filter((_, i) => dkimRs[i]?.status === 'fulfilled'),
+    dnssecValid: dnssecR.status === 'fulfilled' ? (dnssecR.value as Record<string, unknown>).AD === true : null,
+    resolveTimeMs,
+  }
+}
+
+async function fetchCwv(url: string): Promise<CwvData> {
+  const key = process.env.GOOGLE_PSI_API_KEY
+  if (!key) return { lcp: null, inp: null, cls: null, available: false }
+  try {
+    const r = await fetch(`https://www.googleapis.com/pagespeedonline/v5/runPagespeed?url=${encodeURIComponent(url)}&strategy=mobile&key=${key}`, { signal: AbortSignal.timeout(10000) })
+    const d = await r.json() as Record<string, unknown>
+    const m = ((d?.loadingExperience as Record<string, unknown>)?.metrics ?? {}) as Record<string, { percentile: number }>
+    if (!Object.keys(m).length) return { lcp: null, inp: null, cls: null, available: false }
+    return { lcp: m.LARGEST_CONTENTFUL_PAINT_MS?.percentile ?? null, inp: m.INTERACTION_TO_NEXT_PAINT?.percentile ?? null, cls: m.CUMULATIVE_LAYOUT_SHIFT_SCORE?.percentile ?? null, available: true }
+  } catch { return { lcp: null, inp: null, cls: null, available: false } }
+}
+
+async function fetchDomainExpiry(domain: string): Promise<string | null> {
+  try {
+    const r = await fetch(`https://rdap.org/domain/${encodeURIComponent(domain)}`, { signal: AbortSignal.timeout(5000) })
+    const d = await r.json() as Record<string, unknown>
+    const events = (d?.events as Array<{ eventAction: string; eventDate: string }>) ?? []
+    return events.find(e => e.eventAction === 'expiration')?.eventDate ?? null
+  } catch { return null }
+}
+
+async function fetchGreenHosting(domain: string): Promise<boolean | null> {
+  try {
+    const r = await fetch(`https://api.thegreenwebfoundation.org/api/v3/greencheck/${encodeURIComponent(domain)}`, { signal: AbortSignal.timeout(5000) })
+    const d = await r.json() as Record<string, unknown>
+    return d?.green === true
+  } catch { return null }
 }
 
 export const runScan = action({
@@ -18,101 +103,87 @@ export const runScan = action({
 
     try {
       const controller = new AbortController()
-      const timeout = setTimeout(() => controller.abort(), 15000)
-
-      const start = Date.now()
-      const res = await fetch(url, {
-        signal: controller.signal,
-        headers: { 'User-Agent': 'ScanPulse/1.0' },
-      })
-      const ttfb = Date.now() - start
-      clearTimeout(timeout)
+      const fetchTimeout = setTimeout(() => controller.abort(), 15000)
+      const t0 = Date.now()
+      const res = await fetch(url, { signal: controller.signal, headers: { 'User-Agent': 'ScanPulse/1.0' } })
+      const ttfb = Date.now() - t0
+      clearTimeout(fetchTimeout)
 
       const html = await res.text()
       const headers = Object.fromEntries(res.headers.entries())
-      const issues: ScanIssue[] = []
+      const parsed = new URL(url)
+      const { hostname, origin } = parsed
+      const domain = hostname.replace(/^www\./, '')
+      const wwwVariant = hostname.startsWith('www.')
+        ? `${parsed.protocol}//${hostname.slice(4)}${parsed.pathname}`
+        : `${parsed.protocol}//www.${hostname}${parsed.pathname}`
 
-      // ── Security ─────────────────────────────────────────────
-      const isHttps = url.startsWith('https://')
-      if (!isHttps) {
-        issues.push({ pillar: 'security', severity: 'critical', title: 'No HTTPS', description: 'Site is not served over HTTPS. All traffic is unencrypted.' })
-      }
-      if (!headers['strict-transport-security']) {
-        issues.push({ pillar: 'security', severity: 'warning', title: 'Missing HSTS header', description: 'Add Strict-Transport-Security to enforce HTTPS connections.' })
-      }
-      if (!headers['content-security-policy']) {
-        issues.push({ pillar: 'security', severity: 'warning', title: 'Missing Content-Security-Policy', description: 'CSP headers help prevent XSS and data injection attacks.' })
-      }
-      if (!headers['x-frame-options'] && !headers['content-security-policy']?.includes('frame-ancestors')) {
-        issues.push({ pillar: 'security', severity: 'warning', title: 'Missing X-Frame-Options', description: 'Site may be vulnerable to clickjacking attacks.' })
-      }
-      if (!headers['x-content-type-options']) {
-        issues.push({ pillar: 'security', severity: 'warning', title: 'Missing X-Content-Type-Options', description: 'Add "nosniff" to prevent MIME-type sniffing attacks.' })
-      }
-      const secChecks = [isHttps, !!headers['strict-transport-security'], !!headers['content-security-policy'], !!headers['x-frame-options'] || headers['content-security-policy']?.includes('frame-ancestors'), !!headers['x-content-type-options']]
-      const securityScore = Math.round((secChecks.filter(Boolean).length / secChecks.length) * 100)
+      const [cwvR, tlsR, dnsR, rdapR, greenR, envR, gitR, phpR, robotsR, sitemapR, gpcR, notFoundR, wwwR, faviconR] = await Promise.allSettled([
+        fetchCwv(url),
+        url.startsWith('https') ? fetchTlsInfo(hostname) : Promise.resolve<TlsInfo>({ validTo: null, protocol: null, issuer: null }),
+        fetchDnsData(domain),
+        fetchDomainExpiry(domain),
+        fetchGreenHosting(domain),
+        headStatus(origin + '/.env'),
+        headStatus(origin + '/.git/HEAD'),
+        headStatus(origin + '/phpinfo.php'),
+        headStatus(origin + '/robots.txt'),
+        headStatus(origin + '/sitemap.xml'),
+        headStatus(origin + '/.well-known/gpc.json'),
+        fetch(origin + '/this-path-does-not-exist-scanpulse-probe', { signal: AbortSignal.timeout(5000) }).then(r => r.text().then(b => ({ status: r.status, body: b }))),
+        fetch(wwwVariant, { method: 'HEAD', signal: AbortSignal.timeout(5000), redirect: 'manual' }).then(r => r.status >= 301 && r.status <= 308),
+        headStatus(origin + '/favicon.ico'),
+      ])
 
-      // ── Performance ───────────────────────────────────────────
-      if (ttfb > 800) {
-        issues.push({ pillar: 'performance', severity: 'critical', title: 'Slow TTFB', description: `Time to first byte was ${ttfb}ms. Aim for under 200ms for optimal performance.` })
-      } else if (ttfb > 400) {
-        issues.push({ pillar: 'performance', severity: 'warning', title: 'High TTFB', description: `TTFB is ${ttfb}ms. Consider server-side caching to improve response times.` })
-      } else {
-        issues.push({ pillar: 'performance', severity: 'pass', title: 'Good TTFB', description: `Excellent! TTFB is ${ttfb}ms.` })
-      }
-      const encoding = headers['content-encoding'] ?? ''
-      const hasCompression = encoding.includes('gzip') || encoding.includes('br')
-      if (!hasCompression) {
-        issues.push({ pillar: 'performance', severity: 'warning', title: 'No compression', description: 'Enable gzip or Brotli compression to reduce page transfer size.' })
-      }
-      const imgWithoutDims = (html.match(/<img(?![^>]*width)[^>]*>/gi) ?? []).length
-      if (imgWithoutDims > 0) {
-        issues.push({ pillar: 'performance', severity: 'warning', title: 'Images without dimensions', description: `${imgWithoutDims} image(s) are missing width/height attributes, causing layout shifts.` })
-      }
-      const perfChecks = [ttfb <= 400, hasCompression, imgWithoutDims === 0]
-      const performanceScore = Math.round((perfChecks.filter(Boolean).length / perfChecks.length) * 100)
+      const cwvData = cwvR.status === 'fulfilled' ? cwvR.value as CwvData : null
+      const tlsInfo = tlsR.status === 'fulfilled' ? tlsR.value as TlsInfo : null
+      const dnsData = dnsR.status === 'fulfilled' ? dnsR.value as DnsData : null
+      const domainExpiry = rdapR.status === 'fulfilled' ? rdapR.value as string | null : null
+      const greenHosting = greenR.status === 'fulfilled' ? greenR.value as boolean | null : null
+      const gpcResult = gpcR.status === 'fulfilled' && gpcR.value === 200
+      const custom404Result = notFoundR.status === 'fulfilled'
+        ? notFoundR.value as { status: number; body: string }
+        : { status: 0, body: '' }
+      const wwwRedirects = wwwR.status === 'fulfilled' ? wwwR.value as boolean : null
+      const robotsTxtOk = robotsR.status === 'fulfilled' && robotsR.value === 200
+      const sitemapOk = sitemapR.status === 'fulfilled' && sitemapR.value === 200
+      const faviconOk = faviconR.status === 'fulfilled' && (faviconR.value === 200 || faviconR.value === 304)
+      const exposureResults = [
+        { path: '/.env', status: envR.status === 'fulfilled' ? envR.value as number | null : null },
+        { path: '/.git/HEAD', status: gitR.status === 'fulfilled' ? gitR.value as number | null : null },
+        { path: '/phpinfo.php', status: phpR.status === 'fulfilled' ? phpR.value as number | null : null },
+      ]
 
-      // ── SEO ───────────────────────────────────────────────────
-      const titleMatch = html.match(/<title[^>]*>([^<]+)<\/title>/i)
-      if (!titleMatch) {
-        issues.push({ pillar: 'seo', severity: 'critical', title: 'Missing <title> tag', description: 'Every page needs a unique, descriptive title tag for search engines.' })
-      } else if (titleMatch[1].length < 10 || titleMatch[1].length > 60) {
-        issues.push({ pillar: 'seo', severity: 'warning', title: 'Title length suboptimal', description: `Title is ${titleMatch[1].length} chars. Aim for 30–60 characters for best results.` })
-      } else {
-        issues.push({ pillar: 'seo', severity: 'pass', title: 'Good title tag', description: `Title length is ${titleMatch[1].length} characters — well optimised.` })
-      }
-      const descMatch = html.match(/<meta[^>]*name=["']description["'][^>]*content=["']([^"']+)["']/i)
-      if (!descMatch) {
-        issues.push({ pillar: 'seo', severity: 'critical', title: 'Missing meta description', description: 'Add a meta description to improve click-through rates from search results.' })
-      }
-      const h1Count = (html.match(/<h1[^>]*>/gi) ?? []).length
-      if (h1Count === 0) {
-        issues.push({ pillar: 'seo', severity: 'critical', title: 'Missing H1 tag', description: 'Every page should have exactly one H1 heading.' })
-      } else if (h1Count > 1) {
-        issues.push({ pillar: 'seo', severity: 'warning', title: 'Multiple H1 tags', description: `Found ${h1Count} H1 tags. Use only one per page for clear hierarchy.` })
-      } else {
-        issues.push({ pillar: 'seo', severity: 'pass', title: 'H1 tag present', description: 'Page has exactly one H1 heading — good structure.' })
-      }
-      const hasCanonical = /<link[^>]*rel=["']canonical["']/i.test(html)
-      if (!hasCanonical) {
-        issues.push({ pillar: 'seo', severity: 'warning', title: 'Missing canonical URL', description: 'Add a canonical link element to prevent duplicate content issues.' })
-      }
-      const seoChecks = [!!titleMatch && titleMatch[1].length >= 10 && titleMatch[1].length <= 60, !!descMatch, h1Count === 1, hasCanonical]
-      const seoScore = Math.round((seoChecks.filter(Boolean).length / seoChecks.length) * 100)
+      const security = runSecurityChecks(headers, html, url, tlsInfo, exposureResults)
+      const performance = runPerformanceChecks(headers, html, url, ttfb, cwvData, greenHosting)
+      const seo = runSeoChecks(headers, html, url, { robotsTxtOk, sitemapOk, wwwRedirects, httpStatus: res.status, faviconOk })
+      const accessibility = runAccessibilityChecks(html)
+      const dns = dnsData ? runDnsChecks(dnsData, domainExpiry) : null
+      const trust = runTrustChecks(html, headers, gpcResult, custom404Result)
+      const detectedTech = detectTechStack(headers, html)
 
-      const overallScore = Math.round((securityScore + performanceScore + seoScore) / 3)
+      const carbonGrams = parseFloat((html.length / (1024 * 1024) * 0.81).toFixed(3))
+      const overallScore = Math.round((security.score + performance.score + seo.score + accessibility.score) / 4)
+      const allIssues = [...security.issues, ...performance.issues, ...seo.issues, ...accessibility.issues, ...(dns?.issues ?? []), ...trust.issues]
 
       await ctx.runMutation(internal.scans.updateScan, {
         scanId,
         status: 'done',
-        securityScore,
-        performanceScore,
-        seoScore,
+        securityScore: security.score,
+        performanceScore: performance.score,
+        seoScore: seo.score,
+        accessibilityScore: accessibility.score,
+        dnsScore: dns?.score,
+        trustScore: trust.score,
         overallScore,
-        issues,
+        issues: allIssues,
+        detectedTech,
+        carbonGrams,
+        greenHosting: greenHosting ?? undefined,
+        domainExpiry: domainExpiry ?? undefined,
+        certExpiry: tlsInfo?.validTo ?? undefined,
       })
-    }
-    catch (err) {
+    } catch (err) {
       try {
         await ctx.runMutation(internal.scans.updateScan, {
           scanId,
@@ -120,7 +191,6 @@ export const runScan = action({
           errorMessage: err instanceof Error ? err.message : 'Unknown error occurred',
         })
       } catch {
-        // Error mutation failed — scan stays in 'running' but there's nothing more we can do
         console.error('Failed to mark scan as errored:', scanId)
       }
     }

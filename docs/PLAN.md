@@ -379,18 +379,18 @@ Scores are `(passing checks / total checks) × 100`. Overall = average of three 
 
 ---
 
-### Task 10 — Orchestrator refactor
+### Task 10 — Orchestrator refactor ✅ Complete
 > Spec ref: [Orchestrator Flow](superpowers/specs/2026-04-01-phase-2.5-scan-engine-design.md#orchestrator-flow)
 
-- [ ] Refactor `convex/scanAction.ts` to thin orchestrator (~100 lines)
-- [ ] Initial fetch with 15s timeout and `ScanPulse/1.0` User-Agent
-- [ ] `Promise.allSettled` parallel calls: PageSpeed API, `tls.connect`, DNS, RDAP, Green Web Foundation API
-- [ ] Parallel HEAD requests: `/.env`, `/.git/HEAD`, `/phpinfo.php`, `/robots.txt`, `/sitemap.xml`, `/.well-known/gpc.json`
-- [ ] Parallel GET: nonexistent path (custom 404 check), www vs non-www variant
-- [ ] Fan out to all 6 pillar modules with correct arguments
-- [ ] Compute per-pillar scores: `(passing / total) * 100`
-- [ ] Compute overall score: `avg(security, performance, seo, accessibility)` — DNS and Trust excluded
-- [ ] Save all new fields via `updateScan`
+- [x] Refactor `convex/scanAction.ts` to thin orchestrator (~100 lines)
+- [x] Initial fetch with 15s timeout and `ScanPulse/1.0` User-Agent
+- [x] `Promise.allSettled` parallel calls: PageSpeed API, `tls.connect`, DNS, RDAP, Green Web Foundation API
+- [x] Parallel HEAD requests: `/.env`, `/.git/HEAD`, `/phpinfo.php`, `/robots.txt`, `/sitemap.xml`, `/.well-known/gpc.json`
+- [x] Parallel GET: nonexistent path (custom 404 check), www vs non-www variant
+- [x] Fan out to all 6 pillar modules with correct arguments
+- [x] Compute per-pillar scores: `(passing / total) * 100`
+- [x] Compute overall score: `avg(security, performance, seo, accessibility)` — DNS and Trust excluded
+- [x] Save all new fields via `updateScan`
 - [ ] Add `GOOGLE_PSI_API_KEY` env var to Convex dashboard docs
 
 ---
@@ -447,4 +447,4 @@ NUXT_PUBLIC_CONVEX_URL=https://your-deployment.convex.cloud
 
 ---
 
-_Last updated: 2026-04-02 — Task 9 (Tech stack detection) complete_
+_Last updated: 2026-04-02 — Task 10 (Orchestrator refactor) complete_
