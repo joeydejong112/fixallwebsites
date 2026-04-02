@@ -354,16 +354,16 @@ Scores are `(passing checks / total checks) × 100`. Overall = average of three 
 
 ---
 
-### Task 8 — Trust & Compliance checks module (6 checks)
+### Task 8 — Trust & Compliance checks module (6 checks) ✅ Complete
 > Spec ref: [Trust & Compliance](superpowers/specs/2026-04-01-phase-2.5-scan-engine-design.md#trust--compliance-6-checks)
 
-- [ ] Create `convex/checks/trust.ts` exporting `runTrustChecks(html, headers, gpcResult, custom404Result): PillarResult`
-- [ ] Check 1: Privacy policy link — regex links with "privacy" in href/text
-- [ ] Check 2: Terms of service link — regex links with "terms"
-- [ ] Check 3: Cookie consent — search for OneTrust, Cookiebot, CookieYes, Osano, Civic signatures
-- [ ] Check 4: Contact information — `tel:`, `mailto:`, or `/contact` links
-- [ ] Check 5: GPC support — HEAD `/.well-known/gpc.json`, 200 = pass (info)
-- [ ] Check 6: Custom 404 page — fetch nonexistent path, check for branded content vs bare server error
+- [x] Create `convex/checks/trust.ts` exporting `runTrustChecks(html, headers, gpcResult, custom404Result): PillarResult`
+- [x] Check 1: Privacy policy link — regex links with "privacy" in href/text
+- [x] Check 2: Terms of service link — regex links with "terms"
+- [x] Check 3: Cookie consent — search for OneTrust, Cookiebot, CookieYes, Osano, Civic signatures
+- [x] Check 4: Contact information — `tel:`, `mailto:`, or `/contact` links
+- [x] Check 5: GPC support — HEAD `/.well-known/gpc.json`, 200 = pass (info)
+- [x] Check 6: Custom 404 page — fetch nonexistent path, check for branded content vs bare server error
 
 ---
 
@@ -447,4 +447,4 @@ NUXT_PUBLIC_CONVEX_URL=https://your-deployment.convex.cloud
 
 ---
 
-_Last updated: 2026-04-02 — Task 7 (DNS & Email checks module) complete_
+_Last updated: 2026-04-02 — Task 8 (Trust & Compliance checks module) complete_
