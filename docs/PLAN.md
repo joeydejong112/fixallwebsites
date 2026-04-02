@@ -323,19 +323,19 @@ Scores are `(passing checks / total checks) × 100`. Overall = average of three 
 ### Task 6 — Accessibility checks module (12 checks)
 > Spec ref: [Accessibility](superpowers/specs/2026-04-01-phase-2.5-scan-engine-design.md#accessibility-12-checks)
 
-- [ ] Create `convex/checks/accessibility.ts` exporting `runAccessibilityChecks(html): PillarResult`
-- [ ] Check 1: `lang` attribute on `<html>`
-- [ ] Check 2: Images without `alt` — count offenders, critical if any
-- [ ] Check 3: Form `<input>` without associated `<label>` (via `for`/`id` or nesting)
-- [ ] Check 4: `<button>` with no text content and no `aria-label`
-- [ ] Check 5: Heading hierarchy — parse h1–h6, flag skipped levels
-- [ ] Check 6: ARIA landmarks — `<main>`, `<nav>`, `<footer>` or `role=` equivalents
-- [ ] Check 7: Non-descriptive link text — "click here", "read more", "here"
-- [ ] Check 8: Auto-playing media — `<video autoplay>`, `<audio autoplay>`
-- [ ] Check 9: Skip-navigation link — first `<a>` targeting `#main` or similar
-- [ ] Check 10: Tabindex abuse — any `tabindex` value > 0
-- [ ] Check 11: Duplicate IDs — collect all `id=` values, flag duplicates
-- [ ] Check 12: Focus killer — `outline: none` on `:focus` in inline `<style>` without `:focus-visible`
+- [x] Create `convex/checks/accessibility.ts` exporting `runAccessibilityChecks(html): PillarResult`
+- [x] Check 1: `lang` attribute on `<html>`
+- [x] Check 2: Images without `alt` — count offenders, critical if any
+- [x] Check 3: Form `<input>` without associated `<label>` (via `for`/`id` or nesting)
+- [x] Check 4: `<button>` with no text content and no `aria-label`
+- [x] Check 5: Heading hierarchy — parse h1–h6, flag skipped levels
+- [x] Check 6: ARIA landmarks — `<main>`, `<nav>`, `<footer>` or `role=` equivalents
+- [x] Check 7: Non-descriptive link text — "click here", "read more", "here"
+- [x] Check 8: Auto-playing media — `<video autoplay>`, `<audio autoplay>`
+- [x] Check 9: Skip-navigation link — first `<a>` targeting `#main` or similar
+- [x] Check 10: Tabindex abuse — any `tabindex` value > 0
+- [x] Check 11: Duplicate IDs — collect all `id=` values, flag duplicates
+- [x] Check 12: Focus killer — `outline: none` on `:focus` in inline `<style>` without `:focus-visible`
 
 ---
 
