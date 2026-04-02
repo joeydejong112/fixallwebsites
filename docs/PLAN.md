@@ -300,23 +300,23 @@ Scores are `(passing checks / total checks) × 100`. Overall = average of three 
 ### Task 5 — SEO checks module (19 checks)
 > Spec ref: [SEO](superpowers/specs/2026-04-01-phase-2.5-scan-engine-design.md#seo-19-checks)
 
-- [ ] Create `convex/checks/seo.ts` exporting `runSeoChecks(headers, html, url, robotsTxt, sitemap, wwwCheck): PillarResult`
-- [ ] Checks 1–4: keep existing title, meta description, H1 count, canonical
-- [ ] Check 5: Viewport meta tag present
-- [ ] Check 6: Open Graph tags — `og:title`, `og:description`, `og:image`
-- [ ] Check 7: Twitter Card tags — `twitter:card`, `twitter:title`
-- [ ] Check 8: JSON-LD structured data — detect and identify type
-- [ ] Check 9: Favicon present — `<link rel="icon">` or HEAD `/favicon.ico`
-- [ ] Check 10: `robots.txt` reachable — 200 status from parallel HEAD request
-- [ ] Check 11: `sitemap.xml` reachable — 200 status from parallel HEAD request
-- [ ] Check 12: `noindex` detection — `<meta name="robots" content="noindex">` or `X-Robots-Tag` header
-- [ ] Check 13: WWW vs non-WWW — one should 301 to the other
-- [ ] Check 14: Image alt text coverage — >80% of `<img>` tags have `alt`
-- [ ] Check 15: Page word count — strip tags, count words, warn <300
-- [ ] Check 16: Charset declaration — `<meta charset>` or `Content-Type` header
-- [ ] Check 17: HTTP status is 200 — flag 3xx/4xx/5xx
-- [ ] Check 18: Author attribution — `meta author`, `Person` schema, or byline patterns
-- [ ] Check 19: Publication dates — `datePublished`/`dateModified` in JSON-LD
+- [x] Create `convex/checks/seo.ts` exporting `runSeoChecks(headers, html, url, robotsTxt, sitemap, wwwCheck): PillarResult`
+- [x] Checks 1–4: keep existing title, meta description, H1 count, canonical
+- [x] Check 5: Viewport meta tag present
+- [x] Check 6: Open Graph tags — `og:title`, `og:description`, `og:image`
+- [x] Check 7: Twitter Card tags — `twitter:card`, `twitter:title`
+- [x] Check 8: JSON-LD structured data — detect and identify type
+- [x] Check 9: Favicon present — `<link rel="icon">` or HEAD `/favicon.ico`
+- [x] Check 10: `robots.txt` reachable — 200 status from parallel HEAD request
+- [x] Check 11: `sitemap.xml` reachable — 200 status from parallel HEAD request
+- [x] Check 12: `noindex` detection — `<meta name="robots" content="noindex">` or `X-Robots-Tag` header
+- [x] Check 13: WWW vs non-WWW — one should 301 to the other
+- [x] Check 14: Image alt text coverage — >80% of `<img>` tags have `alt`
+- [x] Check 15: Page word count — strip tags, count words, warn <300
+- [x] Check 16: Charset declaration — `<meta charset>` or `Content-Type` header
+- [x] Check 17: HTTP status is 200 — flag 3xx/4xx/5xx
+- [x] Check 18: Author attribution — `meta author`, `Person` schema, or byline patterns
+- [x] Check 19: Publication dates — `datePublished`/`dateModified` in JSON-LD
 
 ---
 
