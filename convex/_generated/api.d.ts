@@ -9,6 +9,7 @@
  */
 
 import type * as alerts from "../alerts.js";
+import type * as checks_performance from "../checks/performance.js";
 import type * as checks_security from "../checks/security.js";
 import type * as checks_types from "../checks/types.js";
 import type * as crons from "../crons.js";
@@ -27,6 +28,7 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   alerts: typeof alerts;
+  "checks/performance": typeof checks_performance;
   "checks/security": typeof checks_security;
   "checks/types": typeof checks_types;
   crons: typeof crons;

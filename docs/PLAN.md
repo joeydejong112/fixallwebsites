@@ -275,25 +275,25 @@ Scores are `(passing checks / total checks) × 100`. Overall = average of three 
 ### Task 4 — Performance checks module (18 checks)
 > Spec ref: [Performance](superpowers/specs/2026-04-01-phase-2.5-scan-engine-design.md#performance-18-checks)
 
-- [ ] Create `convex/checks/performance.ts` exporting `runPerformanceChecks(headers, html, url, cwvData, greenHosting): PillarResult`
-- [ ] Check 1: TTFB ≤ 400ms (>800ms critical) — keep existing
-- [ ] Check 2: Compression enabled (gzip/Brotli) — keep existing
-- [ ] Check 3: Images have `width`/`height` attributes — keep existing
-- [ ] Check 4: HTTP/2+ support — `alt-svc` header or response protocol
-- [ ] Check 5: LCP from `cwvData` — ≤2.5s pass, >4s critical (skip if `cwvData.available = false`)
-- [ ] Check 6: INP from `cwvData` — ≤200ms pass, >500ms critical
-- [ ] Check 7: CLS from `cwvData` — ≤0.1 pass, >0.25 critical
-- [ ] Check 8: Total HTML size — warn if >100KB
-- [ ] Check 9: Render-blocking scripts in `<head>` without async/defer
-- [ ] Check 10: Image format audit — flag PNG/JPEG/BMP in `<img src>` URLs
-- [ ] Check 11: Third-party script count — count `<script src>` with different origin, warn >10
-- [ ] Check 12: Image lazy loading — count `<img>` without `loading="lazy"`, warn if majority missing
-- [ ] Check 13: Cache-Control header — warn if absent or no `max-age`
-- [ ] Check 14: CDN detection — `cf-ray`, `x-vercel-id`, `x-amz-cf-id`, `x-fastly-request-id` (info)
-- [ ] Check 15: `fetchpriority="high"` usage — warn if absent on any resource
-- [ ] Check 16: Resource hints — `<link rel="preconnect|preload">` for third-party origins
-- [ ] Check 17: Carbon footprint — calculate grams CO2/pageview from transfer size, warn >0.5g
-- [ ] Check 18: Green hosting — from `greenHosting` boolean passed in (info)
+- [x] Create `convex/checks/performance.ts` exporting `runPerformanceChecks(headers, html, url, cwvData, greenHosting): PillarResult`
+- [x] Check 1: TTFB ≤ 400ms (>800ms critical) — keep existing
+- [x] Check 2: Compression enabled (gzip/Brotli) — keep existing
+- [x] Check 3: Images have `width`/`height` attributes — keep existing
+- [x] Check 4: HTTP/2+ support — `alt-svc` header or response protocol
+- [x] Check 5: LCP from `cwvData` — ≤2.5s pass, >4s critical (skip if `cwvData.available = false`)
+- [x] Check 6: INP from `cwvData` — ≤200ms pass, >500ms critical
+- [x] Check 7: CLS from `cwvData` — ≤0.1 pass, >0.25 critical
+- [x] Check 8: Total HTML size — warn if >100KB
+- [x] Check 9: Render-blocking scripts in `<head>` without async/defer
+- [x] Check 10: Image format audit — flag PNG/JPEG/BMP in `<img src>` URLs
+- [x] Check 11: Third-party script count — count `<script src>` with different origin, warn >10
+- [x] Check 12: Image lazy loading — count `<img>` without `loading="lazy"`, warn if majority missing
+- [x] Check 13: Cache-Control header — warn if absent or no `max-age`
+- [x] Check 14: CDN detection — `cf-ray`, `x-vercel-id`, `x-amz-cf-id`, `x-fastly-request-id` (info)
+- [x] Check 15: `fetchpriority="high"` usage — warn if absent on any resource
+- [x] Check 16: Resource hints — `<link rel="preconnect|preload">` for third-party origins
+- [x] Check 17: Carbon footprint — calculate grams CO2/pageview from transfer size, warn >0.5g
+- [x] Check 18: Green hosting — from `greenHosting` boolean passed in (info)
 
 ---
 
