@@ -408,14 +408,14 @@ Scores are `(passing checks / total checks) × 100`. Overall = average of three 
 
 ---
 
-### Task 12 — UI updates for new pillars and scores
-- [ ] Add Accessibility pillar card (color: pick from design system — e.g. `#a29bfe`) to results page
-- [ ] Add DNS & Email and Trust scores as "bonus" category cards (not in overall ring)
-- [ ] Display `detectedTech` stack badges on results page
-- [ ] Display `certExpiry` and `domainExpiry` prominently on results (days remaining)
-- [ ] Display `carbonGrams` and `greenHosting` badge on results
-- [ ] Update overall score ring calculation to average 4 pillars when `accessibilityScore` is present
-- [ ] Update landing page pillar strip to show 6 categories and 84 check count
+### Task 12 — UI updates for new pillars and scores ✅ Complete
+- [x] Add Accessibility pillar card (color: `#a29bfe`) to results page — 4-col grid
+- [x] Add DNS & Email and Trust scores as "bonus" category cards (not in overall ring)
+- [x] Display `detectedTech` stack badges on results page
+- [x] Display `certExpiry` and `domainExpiry` prominently on results (days remaining)
+- [x] Display `carbonGrams` and `greenHosting` badge on results
+- [x] Update overall score ring reads `scan.overallScore` (orchestrator averages 4 pillars)
+- [x] Update landing page pillar strip to show 6 categories and 84 check count
 
 ---
 
@@ -447,4 +447,4 @@ NUXT_PUBLIC_CONVEX_URL=https://your-deployment.convex.cloud
 
 ---
 
-_Last updated: 2026-04-02 — Task 11 (FIX_SNIPPETS expansion) complete_
+_Last updated: 2026-04-02 — Task 12 (UI updates for new pillars) complete_

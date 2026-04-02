@@ -33,7 +33,7 @@ const steps = [
   {
     num: '02',
     title: 'We scan in seconds',
-    desc: '15+ checks fire simultaneously across security, performance, and SEO pillars.',
+    desc: '84 checks fire simultaneously across security, performance, SEO, accessibility, DNS, and trust pillars.',
     color: '#ffaa00',
   },
   {
@@ -142,25 +142,49 @@ const pillars = [
     id: 'security',
     color: '#00d4aa',
     label: 'Security',
-    count: 5,
+    count: 21,
     desc: 'Spot vulnerabilities before attackers do.',
-    checks: ['HTTPS & SSL enforcement', 'Security headers', 'X-Frame-Options', 'Content-Security-Policy', 'HSTS header'],
+    checks: ['HTTPS & TLS 1.3', 'HSTS + CSP headers', 'Cookie flags audit', 'SRI on external scripts', 'Sensitive file exposure'],
   },
   {
     id: 'performance',
     color: '#ffaa00',
     label: 'Performance',
-    count: 3,
+    count: 18,
     desc: 'Every millisecond affects your conversion rate.',
-    checks: ['Time to first byte', 'Gzip / Brotli compression', 'Image dimensions', 'Cache-Control headers', 'Transfer size'],
+    checks: ['Core Web Vitals (LCP, INP, CLS)', 'Gzip / Brotli compression', 'Image format audit (WebP/AVIF)', 'Cache-Control headers', 'Carbon footprint estimate'],
   },
   {
     id: 'seo',
     color: '#6c5ce7',
     label: 'SEO',
-    count: 4,
+    count: 19,
     desc: 'Rank higher with signals search engines reward.',
-    checks: ['Title & meta description', 'H1 structure', 'Canonical URL', 'Open Graph tags', 'Robots meta'],
+    checks: ['Title & meta description', 'Open Graph + Twitter Card', 'JSON-LD structured data', 'Canonical + sitemap.xml', 'E-E-A-T signals'],
+  },
+  {
+    id: 'accessibility',
+    color: '#a29bfe',
+    label: 'Accessibility',
+    count: 12,
+    desc: 'Reach every user — and pass WCAG audits.',
+    checks: ['Alt text coverage', 'Form labels & ARIA', 'Heading hierarchy', 'Skip-nav & landmarks', 'Focus visibility'],
+  },
+  {
+    id: 'dns',
+    color: '#74b9ff',
+    label: 'DNS & Email',
+    count: 8,
+    desc: 'Protect your domain and email reputation.',
+    checks: ['SPF, DKIM & DMARC', 'MX records present', 'DNSSEC enabled', 'Domain expiry warning', 'IPv6 support'],
+  },
+  {
+    id: 'trust',
+    color: '#fd79a8',
+    label: 'Trust',
+    count: 6,
+    desc: 'Build credibility and meet legal requirements.',
+    checks: ['Privacy policy link', 'Cookie consent (GDPR)', 'Contact information', 'GPC support', 'Custom 404 page'],
   },
 ]
 </script>
@@ -234,18 +258,18 @@ const pillars = [
         </p>
 
         <!-- Stats -->
-        <div class="flex gap-11 mb-12">
+        <div class="flex gap-8 mb-12 flex-wrap">
           <div>
-            <div class="font-display font-bold leading-none mb-1.5" style="font-size:2.6rem; color:#00d4aa">5</div>
-            <div class="text-[10px] font-display uppercase tracking-[0.12em] text-white/28">Security</div>
+            <div class="font-display font-bold leading-none mb-1.5" style="font-size:2.6rem; color:#00d4aa">84</div>
+            <div class="text-[10px] font-display uppercase tracking-[0.12em] text-white/28">Total checks</div>
           </div>
           <div>
-            <div class="font-display font-bold leading-none mb-1.5" style="font-size:2.6rem; color:#ffaa00">3</div>
-            <div class="text-[10px] font-display uppercase tracking-[0.12em] text-white/28">Performance</div>
+            <div class="font-display font-bold leading-none mb-1.5" style="font-size:2.6rem; color:#ffaa00">6</div>
+            <div class="text-[10px] font-display uppercase tracking-[0.12em] text-white/28">Categories</div>
           </div>
           <div>
-            <div class="font-display font-bold leading-none mb-1.5" style="font-size:2.6rem; color:#6c5ce7">4</div>
-            <div class="text-[10px] font-display uppercase tracking-[0.12em] text-white/28">SEO checks</div>
+            <div class="font-display font-bold leading-none mb-1.5" style="font-size:2.6rem; color:#6c5ce7">~10s</div>
+            <div class="text-[10px] font-display uppercase tracking-[0.12em] text-white/28">Per scan</div>
           </div>
         </div>
 
@@ -260,7 +284,7 @@ const pillars = [
 
         <!-- Trust chips -->
         <div class="flex items-center gap-5 mt-8 flex-wrap">
-          <div v-for="s in ['Free forever', '~10s results', '15+ checks']" :key="s" class="flex items-center gap-1.5">
+          <div v-for="s in ['Free forever', '~10s results', '84 checks']" :key="s" class="flex items-center gap-1.5">
             <div class="w-1 h-1 rounded-full bg-success" />
             <span class="text-white/25 text-[11px] font-body">{{ s }}</span>
           </div>
@@ -341,8 +365,8 @@ const pillars = [
             class="font-display font-bold text-white leading-[0.9] tracking-[-0.03em] mb-8"
             style="font-size: clamp(2.8rem, 4.5vw, 4.2rem)"
           >
-            15+ checks.<br />
-            <span class="text-white/30">Three pillars.</span><br />
+            84 checks.<br />
+            <span class="text-white/30">Six pillars.</span><br />
             One score.
           </h2>
           <p class="font-body text-white/35 leading-relaxed mb-12" style="max-width: 36ch; font-size: 0.95rem">
@@ -368,50 +392,47 @@ const pillars = [
         </div>
       </div>
 
-      <!-- RIGHT: Three pillar columns -->
-      <div class="flex-1 flex overflow-hidden">
+      <!-- RIGHT: Six pillar grid (2 rows × 3 cols) -->
+      <div class="flex-1 grid grid-cols-3 grid-rows-2 overflow-hidden">
         <div
           v-for="(pillar, i) in pillars"
           :key="pillar.id"
-          class="flex-1 flex flex-col justify-center px-10 py-16 relative"
-          :class="i < 2 ? 'border-r border-white/[0.04]' : ''"
+          class="flex flex-col justify-center px-8 py-10 relative border-white/[0.04]"
+          :class="{
+            'border-r': i % 3 < 2,
+            'border-b': i < 3,
+          }"
         >
           <!-- Pillar number -->
           <div
-            class="font-display font-bold leading-none mb-1 pillar-num"
-            style="font-size: clamp(4rem, 6vw, 6rem); letter-spacing: -0.05em;"
+            class="font-display font-bold leading-none mb-1"
+            style="font-size: clamp(2.6rem, 4vw, 4rem); letter-spacing: -0.05em;"
             :style="{ color: pillar.color }"
           >
             {{ pillar.count }}
           </div>
 
           <!-- Label -->
-          <div class="font-display font-bold text-white mb-3" style="font-size:1.4rem; letter-spacing:-0.02em">
+          <div class="font-display font-bold text-white mb-2" style="font-size:1.05rem; letter-spacing:-0.02em">
             {{ pillar.label }}
           </div>
 
           <!-- Desc -->
-          <p class="font-body text-white/30 text-sm leading-relaxed mb-8" style="max-width: 22ch">
+          <p class="font-body text-white/28 text-[11px] leading-relaxed mb-4" style="max-width: 22ch">
             {{ pillar.desc }}
           </p>
 
           <!-- Check list -->
-          <ul class="space-y-3">
+          <ul class="space-y-2">
             <li
               v-for="check in pillar.checks"
               :key="check"
-              class="flex items-center gap-3"
+              class="flex items-center gap-2.5"
             >
               <div class="w-1 h-1 rounded-full shrink-0" :style="{ background: pillar.color }" />
-              <span class="text-[12px] font-body text-white/45">{{ check }}</span>
+              <span class="text-[11px] font-body text-white/40">{{ check }}</span>
             </li>
           </ul>
-
-          <!-- Bottom accent line -->
-          <div
-            class="absolute bottom-0 left-0 right-0 h-[2px]"
-            :style="{ background: pillar.color, opacity: 0.25 }"
-          />
         </div>
       </div>
     </section>

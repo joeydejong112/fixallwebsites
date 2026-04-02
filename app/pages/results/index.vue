@@ -36,14 +36,7 @@ function printPDF() {
   window.print()
 }
 
-const FIX_SNIPPETS: Record<string, { label: string, code: string }> = {
-  'HTTPS enforced': { label: 'Nginx', code: 'server {\n  listen 80;\n  return 301 https://$host$request_uri;\n}' },
-  'Strict-Transport-Security header present': { label: 'Apache .htaccess', code: 'Header always set Strict-Transport-Security "max-age=31536000"' },
-  'Content-Security-Policy header present': { label: 'Next.js', code: 'async headers() {\n  return [{ key: "Content-Security-Policy", value: "default-src \'self\'" }]\n}' },
-  'Compression enabled (gzip or Brotli)': { label: 'Express', code: 'const compression = require("compression");\napp.use(compression());' },
-  'Images have width/height attributes': { label: 'HTML', code: '<img src="/img.jpg" width="800" height="600" />' },
-  '<meta name="description"> present': { label: 'HTML', code: '<meta name="description" content="Your search snippet" />' }
-}
+import { FIX_SNIPPETS } from '~/utils/fixSnippets'
 
 onMounted(async () => {
   const url    = route.query.url    as string
@@ -101,12 +94,29 @@ function barColor(score?: number) {
 }
 
 const pillars = computed(() => [
-  { key: 'security',    label: 'Security',    color: '#00d4aa', score: scan.value?.securityScore },
-  { key: 'performance', label: 'Performance', color: '#ffaa00', score: scan.value?.performanceScore },
-  { key: 'seo',         label: 'SEO',         color: '#6c5ce7', score: scan.value?.seoScore },
+  { key: 'security',      label: 'Security',      color: '#00d4aa', score: scan.value?.securityScore },
+  { key: 'performance',   label: 'Performance',   color: '#ffaa00', score: scan.value?.performanceScore },
+  { key: 'seo',           label: 'SEO',            color: '#6c5ce7', score: scan.value?.seoScore },
+  { key: 'accessibility', label: 'Accessibility', color: '#a29bfe', score: scan.value?.accessibilityScore },
 ])
 
-const activeTab    = ref<'all' | 'security' | 'performance' | 'seo'>('all')
+const bonusCards = computed(() => [
+  { key: 'dns',   label: 'DNS & Email', color: '#74b9ff', score: scan.value?.dnsScore },
+  { key: 'trust', label: 'Trust',       color: '#fd79a8', score: scan.value?.trustScore },
+])
+
+function daysUntil(dateStr?: string | null): number | null {
+  if (!dateStr) return null
+  return Math.ceil((new Date(dateStr).getTime() - Date.now()) / 86_400_000)
+}
+
+const certDays   = computed(() => daysUntil(scan.value?.certExpiry))
+const domainDays = computed(() => daysUntil(scan.value?.domainExpiry))
+
+type TabKey = 'all' | 'security' | 'performance' | 'seo' | 'accessibility' | 'dns' | 'trust'
+const activeTab = ref<TabKey>('all')
+const issueTabs: TabKey[] = ['all', 'security', 'performance', 'seo', 'accessibility', 'dns', 'trust']
+
 const displayIssues = computed(() => {
   if (!scan.value?.issues) return []
   if (activeTab.value === 'all') return scan.value.issues
@@ -160,7 +170,7 @@ function arcPath(score: number, r = 42) {
         {{ scan?.status === 'running' ? 'Scanning…' : 'Initialising…' }}
       </p>
       <p class="text-white/30 font-body text-sm mb-1">{{ scan?.url }}</p>
-      <p class="text-white/18 font-body text-xs">Running 15+ checks across security, performance & SEO</p>
+      <p class="text-white/18 font-body text-xs">Running 84 checks across security, performance, SEO, accessibility, DNS & trust</p>
 
       <!-- Animated progress dots -->
       <div class="flex gap-1.5 mt-8">
@@ -219,7 +229,7 @@ function arcPath(score: number, r = 42) {
             class="font-display font-bold text-white leading-tight tracking-[-0.03em] mb-3 break-all"
             style="font-size: clamp(1.1rem, 2vw, 1.5rem); max-width: 50ch"
           >{{ scan.url }}</h1>
-          <p class="text-white/25 text-xs font-body">Scanned just now · 15 checks</p>
+          <p class="text-white/25 text-xs font-body">Scanned just now · 84 checks</p>
         </div>
 
         <!-- Big score -->
@@ -259,8 +269,8 @@ function arcPath(score: number, r = 42) {
         </div>
       </div>
 
-      <!-- ── Pillar score bars ── -->
-      <div class="grid grid-cols-3 gap-3 mb-12">
+      <!-- ── Pillar score bars (4 pillars in overall score) ── -->
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
         <div
           v-for="p in pillars"
           :key="p.key"
@@ -286,18 +296,83 @@ function arcPath(score: number, r = 42) {
         </div>
       </div>
 
+      <!-- ── Bonus cards (DNS & Trust — not in overall score) ── -->
+      <div class="flex gap-3 mb-6">
+        <div
+          v-for="b in bonusCards"
+          :key="b.key"
+          class="pillar-card flex-1"
+          style="padding: 14px 18px"
+        >
+          <div class="absolute top-0 left-0 right-0 h-px" :style="{ background: `linear-gradient(90deg, transparent, ${b.color}40, transparent)` }" />
+          <div class="relative z-10 flex items-center justify-between">
+            <div>
+              <span class="text-[9px] font-display font-bold tracking-[0.16em] uppercase block mb-0.5" :style="{ color: b.color }">{{ b.label }}</span>
+              <span class="text-[9px] font-body text-white/20">Bonus · not in overall</span>
+            </div>
+            <span
+              class="font-display font-bold leading-none"
+              :class="scoreColor(b.score)"
+              style="font-size: 1.7rem; letter-spacing: -0.04em"
+            >{{ b.score ?? '—' }}</span>
+          </div>
+        </div>
+
+        <!-- Cert + Domain expiry strip -->
+        <div v-if="certDays !== null || domainDays !== null" class="pillar-card flex-1" style="padding: 14px 18px">
+          <div class="relative z-10 flex flex-col gap-2">
+            <div v-if="certDays !== null" class="flex items-center justify-between">
+              <span class="text-[9px] font-display tracking-[0.14em] uppercase text-white/30">SSL cert</span>
+              <span
+                class="text-[11px] font-display font-bold"
+                :class="certDays < 7 ? 'text-danger' : certDays < 30 ? 'text-warning' : 'text-success'"
+              >{{ certDays }}d</span>
+            </div>
+            <div v-if="domainDays !== null" class="flex items-center justify-between">
+              <span class="text-[9px] font-display tracking-[0.14em] uppercase text-white/30">Domain</span>
+              <span
+                class="text-[11px] font-display font-bold"
+                :class="domainDays < 7 ? 'text-danger' : domainDays < 30 ? 'text-warning' : 'text-success'"
+              >{{ domainDays }}d</span>
+            </div>
+            <div v-if="scan.carbonGrams != null" class="flex items-center justify-between">
+              <span class="text-[9px] font-display tracking-[0.14em] uppercase text-white/30">CO₂/view</span>
+              <span class="text-[11px] font-display font-bold" :class="scan.carbonGrams > 0.5 ? 'text-warning' : 'text-success'">
+                {{ scan.carbonGrams }}g
+              </span>
+            </div>
+            <div v-if="scan.greenHosting != null" class="flex items-center gap-1.5 mt-0.5">
+              <div class="w-1.5 h-1.5 rounded-full" :class="scan.greenHosting ? 'bg-success' : 'bg-white/20'" />
+              <span class="text-[9px] font-body" :class="scan.greenHosting ? 'text-success' : 'text-white/25'">
+                {{ scan.greenHosting ? 'Green hosting' : 'Not green hosted' }}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Tech stack badges ── -->
+      <div v-if="scan.detectedTech?.length" class="flex flex-wrap gap-2 mb-8">
+        <span class="text-[9px] font-display font-semibold tracking-[0.14em] uppercase text-white/20 self-center mr-1">Stack</span>
+        <span
+          v-for="tech in scan.detectedTech"
+          :key="tech"
+          class="text-[10px] font-body text-white/50 bg-white/[0.04] border border-white/[0.06] rounded-full px-2.5 py-0.5"
+        >{{ tech }}</span>
+      </div>
+
       <!-- ── Issues ── -->
       <div>
         <!-- Tab bar -->
-        <div class="flex items-end gap-1 border-b border-white/[0.05] mb-6">
+        <div class="flex items-end gap-0.5 border-b border-white/[0.05] mb-6 overflow-x-auto">
           <button
-            v-for="tab in ['all', 'security', 'performance', 'seo']"
+            v-for="tab in issueTabs"
             :key="tab"
             class="results-tab"
             :class="activeTab === tab ? 'results-tab--active' : ''"
-            @click="activeTab = tab as any"
+            @click="activeTab = tab"
           >
-            <span class="capitalize">{{ tab }}</span>
+            <span class="capitalize">{{ tab === 'dns' ? 'DNS' : tab === 'seo' ? 'SEO' : tab }}</span>
             <span class="results-tab__count">{{ issueCount(tab) }}</span>
           </button>
         </div>
@@ -342,10 +417,10 @@ function arcPath(score: number, r = 42) {
               <div v-if="issue.severity !== 'pass' && FIX_SNIPPETS[issue.title]" class="mt-3 pt-3 border-t border-white/[0.04] max-w-2xl">
                 <div class="flex items-center gap-2 mb-2">
                   <svg class="w-3.5 h-3.5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
-                  <span class="text-[10px] font-display font-semibold uppercase tracking-wider text-white/40">How to fix ({{ FIX_SNIPPETS[issue.title]?.label }})</span>
+                  <span class="text-[10px] font-display font-semibold uppercase tracking-wider text-white/40">How to fix</span>
                 </div>
                 <div class="bg-[#07070a] border border-white/[0.05] rounded-lg p-3 overflow-x-auto">
-                  <pre class="text-[11px] font-mono text-white/70 whitespace-pre-wrap"><code v-html="FIX_SNIPPETS[issue.title]?.code"></code></pre>
+                  <pre class="text-[11px] font-mono text-white/70 whitespace-pre-wrap">{{ FIX_SNIPPETS[issue.title]?.generic }}</pre>
                 </div>
               </div>
             </div>
