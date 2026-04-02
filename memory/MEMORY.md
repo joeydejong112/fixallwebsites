@@ -297,20 +297,14 @@ Scores: `(passing / total) × 100`. Overall = average of three pillars.
 
 ## Last Session
 
-**Date**: 2026-04-01
+**Date**: 2026-04-02
 **What was done**:
-- Completed Phase 2 Dashboard features:
-  - Switched user scan history from static fetch to real-time sync (`ConvexClient.onUpdate`)
-  - Implemented `deleteScan` internal mutation and connected to UI
-  - Added Re-scan capability
-  - Added frontend grouping/filtering by passing/warning/critical states
-- Completed Phase 2 Results features:
-  - Added PDF Native Print Export (using `@media print`)
-  - Created a public shareable unauthenticated route (`/share/[id]`) and added a copy-to-clipboard Share button.
-  - Linked previous scan comparison (added frontend query for `getPreviousScan`).
-  - Implemented a code snippet guide for common failing checks mapped statically in `FIX_SNIPPETS`.
-- Deployed schema and function updates to Convex
+- Completed Phase 2.5 Task 7 — DNS & Email checks module
+  - Created `convex/checks/dns.ts` with `runDnsChecks(dnsData, domainExpiry): PillarResult`
+  - 8 checks: SPF, DMARC, DKIM, MX, domain expiry, DNSSEC, IPv6, DNS response time
+  - Deployed to Convex successfully
+  - Updated docs/PLAN.md (Task 7 marked complete)
 
-**Where we left off**: Finished the Phase 2 Results features. Ready to tackle Monitoring or Billing, or move to Phase 2.5 Best-in-Class Scan Engine.
+**Where we left off**: Task 7 done. Next up: Task 8 (Trust & Compliance), Task 9 (Tech Stack Detection), Task 10 (Orchestrator Refactor).
 
 **Branch**: `main` (all work committed directly, no open branches)

@@ -339,18 +339,18 @@ Scores are `(passing checks / total checks) × 100`. Overall = average of three 
 
 ---
 
-### Task 7 — DNS & Email checks module (8 checks)
+### Task 7 — DNS & Email checks module (8 checks) ✅ Complete
 > Spec ref: [DNS & Email](superpowers/specs/2026-04-01-phase-2.5-scan-engine-design.md#dns--email-8-checks)
 
-- [ ] Create `convex/checks/dns.ts` exporting `runDnsChecks(dnsData, domainExpiry): PillarResult`
-- [ ] Check 1: SPF record — `dns.resolveTxt(domain)`, find `v=spf1`, flag `+all`
-- [ ] Check 2: DMARC — `dns.resolveTxt('_dmarc.' + domain)`, check `p=quarantine|reject`
-- [ ] Check 3: DKIM — probe 8 selectors: google, default, selector1, selector2, k1, ses, mandrill, dkim
-- [ ] Check 4: MX records — `dns.resolveMx(domain)`, critical if none
-- [ ] Check 5: Domain expiry — RDAP API `https://rdap.org/domain/${domain}`, warn <30d, critical <7d
-- [ ] Check 6: DNSSEC — DoH `https://dns.google/resolve?name=${domain}&type=A&do=1`, check `AD` flag
-- [ ] Check 7: IPv6 support — `dns.resolve(domain, 'AAAA')` exists
-- [ ] Check 8: DNS response time — time the A record resolve, warn >300ms, critical >600ms
+- [x] Create `convex/checks/dns.ts` exporting `runDnsChecks(dnsData, domainExpiry): PillarResult`
+- [x] Check 1: SPF record — `dns.resolveTxt(domain)`, find `v=spf1`, flag `+all`
+- [x] Check 2: DMARC — `dns.resolveTxt('_dmarc.' + domain)`, check `p=quarantine|reject`
+- [x] Check 3: DKIM — probe 8 selectors: google, default, selector1, selector2, k1, ses, mandrill, dkim
+- [x] Check 4: MX records — `dns.resolveMx(domain)`, critical if none
+- [x] Check 5: Domain expiry — RDAP API `https://rdap.org/domain/${domain}`, warn <30d, critical <7d
+- [x] Check 6: DNSSEC — DoH `https://dns.google/resolve?name=${domain}&type=A&do=1`, check `AD` flag
+- [x] Check 7: IPv6 support — `dns.resolve(domain, 'AAAA')` exists
+- [x] Check 8: DNS response time — time the A record resolve, warn >300ms, critical >600ms
 
 ---
 
@@ -447,4 +447,4 @@ NUXT_PUBLIC_CONVEX_URL=https://your-deployment.convex.cloud
 
 ---
 
-_Last updated: 2026-04-01 — Phase 2.5 expanded to 12 granular tasks with spec links_
+_Last updated: 2026-04-02 — Task 7 (DNS & Email checks module) complete_
