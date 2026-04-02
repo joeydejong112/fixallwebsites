@@ -233,16 +233,16 @@ Scores are `(passing checks / total checks) × 100`. Overall = average of three 
 ### Task 2 — Schema migration
 > Spec ref: [Schema Changes](superpowers/specs/2026-04-01-phase-2.5-scan-engine-design.md#schema-changes)
 
-- [ ] Add `accessibilityScore: v.optional(v.number())` to `scans` table in `convex/schema.ts`
-- [ ] Add `dnsScore: v.optional(v.number())` to `scans` table
-- [ ] Add `trustScore: v.optional(v.number())` to `scans` table
-- [ ] Add `detectedTech: v.optional(v.array(v.string()))` to `scans` table
-- [ ] Add `carbonGrams: v.optional(v.number())` to `scans` table
-- [ ] Add `greenHosting: v.optional(v.boolean())` to `scans` table
-- [ ] Add `domainExpiry: v.optional(v.string())` to `scans` table
-- [ ] Add `certExpiry: v.optional(v.string())` to `scans` table
-- [ ] Update `updateScan` in `convex/scans.ts` to accept all new optional fields
-- [ ] Run `npx convex deploy --yes`
+- [x] Add `accessibilityScore: v.optional(v.number())` to `scans` table in `convex/schema.ts`
+- [x] Add `dnsScore: v.optional(v.number())` to `scans` table
+- [x] Add `trustScore: v.optional(v.number())` to `scans` table
+- [x] Add `detectedTech: v.optional(v.array(v.string()))` to `scans` table
+- [x] Add `carbonGrams: v.optional(v.number())` to `scans` table
+- [x] Add `greenHosting: v.optional(v.boolean())` to `scans` table
+- [x] Add `domainExpiry: v.optional(v.string())` to `scans` table
+- [x] Add `certExpiry: v.optional(v.string())` to `scans` table
+- [x] Update `updateScan` in `convex/scans.ts` to accept all new optional fields
+- [x] Run `npx convex deploy --yes`
 
 ---
 
