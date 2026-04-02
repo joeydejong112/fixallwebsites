@@ -299,12 +299,15 @@ Scores: `(passing / total) × 100`. Overall = average of three pillars.
 
 **Date**: 2026-04-02
 **What was done**:
-- Completed Phase 2.5 Task 7 — DNS & Email checks module
-  - Created `convex/checks/dns.ts` with `runDnsChecks(dnsData, domainExpiry): PillarResult`
-  - 8 checks: SPF, DMARC, DKIM, MX, domain expiry, DNSSEC, IPv6, DNS response time
-  - Deployed to Convex successfully
-  - Updated docs/PLAN.md (Task 7 marked complete)
+- Marked `GOOGLE_PSI_API_KEY` env var task as complete in PLAN.md (was already done)
+- Completed Phase 2.5 Task 11 — FIX_SNIPPETS expansion
+  - Created `app/utils/fixSnippets.ts` (new file, `app/utils/` directory created)
+  - `FIX_SNIPPETS` record keyed by issue title, `{ generic, platforms? }` structure
+  - Covers all 84 checks: 21 security, 18 performance, 19 SEO, 12 accessibility, 8 DNS, 6 trust
+  - Security + performance + SEO checks include platform-specific snippets (nextjs, nuxt, nginx, apache, cloudflare)
+  - Updated docs/PLAN.md (Task 11 marked complete)
 
-**Where we left off**: Task 7 done. Next up: Task 8 (Trust & Compliance), Task 9 (Tech Stack Detection), Task 10 (Orchestrator Refactor).
+**Where we left off**: Task 11 done. Next up: Task 12 (UI updates for new pillars and scores).
 
 **Branch**: `main` (all work committed directly, no open branches)
+

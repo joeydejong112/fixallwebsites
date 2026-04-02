@@ -391,20 +391,20 @@ Scores are `(passing checks / total checks) × 100`. Overall = average of three 
 - [x] Compute per-pillar scores: `(passing / total) * 100`
 - [x] Compute overall score: `avg(security, performance, seo, accessibility)` — DNS and Trust excluded
 - [x] Save all new fields via `updateScan`
-- [ ] Add `GOOGLE_PSI_API_KEY` env var to Convex dashboard docs
+- [x] Add `GOOGLE_PSI_API_KEY` env var to Convex dashboard docs
 
 ---
 
-### Task 11 — Expand FIX_SNIPPETS to cover all 84 checks
+### Task 11 — Expand FIX_SNIPPETS to cover all 84 checks ✅ Complete
 > Spec ref: [Fix Snippets Expansion](superpowers/specs/2026-04-01-phase-2.5-scan-engine-design.md#fix-snippets-expansion)
 
-- [ ] Update `app/utils/fixSnippets.ts` structure to `{ generic, platforms? }` per check
-- [ ] Add generic + platform-specific snippets for all 21 security checks (Next.js, Nginx, Cloudflare, Apache, .htaccess)
-- [ ] Add generic + platform-specific snippets for all 18 performance checks
-- [ ] Add generic + platform-specific snippets for all 19 SEO checks
-- [ ] Add generic snippets for all 12 accessibility checks
-- [ ] Add generic snippets for all 8 DNS & Email checks
-- [ ] Add generic snippets for all 6 Trust checks
+- [x] Update `app/utils/fixSnippets.ts` structure to `{ generic, platforms? }` per check
+- [x] Add generic + platform-specific snippets for all 21 security checks (Next.js, Nginx, Cloudflare, Apache, .htaccess)
+- [x] Add generic + platform-specific snippets for all 18 performance checks
+- [x] Add generic + platform-specific snippets for all 19 SEO checks
+- [x] Add generic snippets for all 12 accessibility checks
+- [x] Add generic snippets for all 8 DNS & Email checks
+- [x] Add generic snippets for all 6 Trust checks
 
 ---
 
@@ -447,4 +447,4 @@ NUXT_PUBLIC_CONVEX_URL=https://your-deployment.convex.cloud
 
 ---
 
-_Last updated: 2026-04-02 — Task 10 (Orchestrator refactor) complete_
+_Last updated: 2026-04-02 — Task 11 (FIX_SNIPPETS expansion) complete_
