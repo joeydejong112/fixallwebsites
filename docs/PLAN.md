@@ -218,108 +218,204 @@ Scores are `(passing checks / total checks) × 100`. Overall = average of three 
 
 ## Phase 2.5 — Best-in-Class Scan Engine
 
-> **Goal**: Make ScanPulse the most comprehensive free website scanner on the market.
-> Competitors (GTmetrix, SecurityHeaders.com, PageSpeed Insights, Ahrefs) each own one pillar.
-> We own all of them — plus Accessibility, which nobody else offers for free.
+> **Goal**: 84 checks across 6 categories — the most comprehensive free website scanner on the market.
+> Full design spec: [`docs/superpowers/specs/2026-04-01-phase-2.5-scan-engine-design.md`](superpowers/specs/2026-04-01-phase-2.5-scan-engine-design.md)
 
-### 🔒 Security — Expand to 15+ checks
-Currently 5 checks. Target: most thorough free security header scanner available.
+---
 
-**TLS / Certificate**
-- [ ] SSL certificate expiry — show days remaining, warn at <30 days
-- [ ] TLS version detection — flag TLS 1.0/1.1 as critical, reward TLS 1.3
-- [ ] Cipher suite strength — warn on weak/export ciphers
+### Task 1 — Shared types and interfaces
+> Spec ref: [Shared Interface](superpowers/specs/2026-04-01-phase-2.5-scan-engine-design.md#shared-interface)
 
-**Headers (expand current set)**
-- [ ] `Referrer-Policy` header present and strict
-- [ ] `Permissions-Policy` header present
-- [ ] Cross-Origin headers: `COEP`, `COOP`, `CORP`
-- [ ] Server info leakage — `Server:` and `X-Powered-By` should be absent or obscured
+- [x] Create `convex/checks/types.ts` with `ScanIssue`, `PillarResult`, `TlsInfo`, `CwvData`, `DnsData` interfaces
 
-**Content & Cookies**
-- [ ] Mixed content detection — HTTPS page loading HTTP sub-resources
-- [ ] Cookie flags audit — check Secure, HttpOnly, SameSite on all Set-Cookie headers
-- [ ] Subresource Integrity (SRI) on external `<script>` and `<link>` tags
+---
 
-**Exposure**
-- [ ] Sensitive file exposure probe — `/.env`, `/.git/HEAD`, `/phpinfo.php`, `/wp-login.php`
-- [ ] CORS misconfiguration — `Access-Control-Allow-Origin: *` on credentialed requests
-- [ ] Redirect chain audit — http→https, www→non-www, count hops, flag long chains
+### Task 2 — Schema migration
+> Spec ref: [Schema Changes](superpowers/specs/2026-04-01-phase-2.5-scan-engine-design.md#schema-changes)
 
-### ⚡ Performance — Real data, not estimates
-Currently 3 checks. Target: replace Lighthouse for most users.
+- [ ] Add `accessibilityScore: v.optional(v.number())` to `scans` table in `convex/schema.ts`
+- [ ] Add `dnsScore: v.optional(v.number())` to `scans` table
+- [ ] Add `trustScore: v.optional(v.number())` to `scans` table
+- [ ] Add `detectedTech: v.optional(v.array(v.string()))` to `scans` table
+- [ ] Add `carbonGrams: v.optional(v.number())` to `scans` table
+- [ ] Add `greenHosting: v.optional(v.boolean())` to `scans` table
+- [ ] Add `domainExpiry: v.optional(v.string())` to `scans` table
+- [ ] Add `certExpiry: v.optional(v.string())` to `scans` table
+- [ ] Update `updateScan` in `convex/scans.ts` to accept all new optional fields
+- [ ] Run `npx convex deploy --yes`
 
-**Core Web Vitals (real field data)**
-- [ ] PageSpeed Insights API integration — LCP, INP, CLS (real user data, not synthetic)
-- [ ] CrUX data where available, fallback to lab data
+---
 
-**Resource audit**
-- [ ] Total page weight — HTML + CSS + JS + images breakdown
-- [ ] Render-blocking resources count and size
-- [ ] JavaScript bundle size — flag if >500kb uncompressed
-- [ ] Image format audit — detect unoptimised PNG/JPEG that should be WebP/AVIF
-- [ ] Image lazy loading coverage — % of below-fold images with `loading="lazy"`
-- [ ] Third-party script count and domains
+### Task 3 — Security checks module (21 checks)
+> Spec ref: [Security](superpowers/specs/2026-04-01-phase-2.5-scan-engine-design.md#security-21-checks)
 
-**Infrastructure**
-- [ ] HTTP/2 or HTTP/3 support
-- [ ] CDN detection — Cloudflare, Fastly, AWS CloudFront, Vercel, etc.
-- [ ] Cache-Control audit — are static assets cached with long max-age?
-- [ ] Font loading strategy — `font-display` swap, preload hints
-- [ ] Compression ratio — report actual bytes saved by gzip/Brotli
+- [ ] Create `convex/checks/security.ts` exporting `runSecurityChecks(headers, html, url, tlsInfo, exposureResults): PillarResult`
+- [ ] Checks 1–5: keep existing HTTPS, HSTS, CSP, X-Frame-Options, X-Content-Type-Options
+- [ ] Check 3b: HSTS quality (max-age ≥ 15768000, includeSubDomains)
+- [ ] Check 5b: CSP quality (no `unsafe-inline`/`unsafe-eval`, no wildcard sources)
+- [ ] Check 6: `Referrer-Policy` present and strict
+- [ ] Check 7: `Permissions-Policy` present
+- [ ] Check 8: `COEP` header present
+- [ ] Check 9: `COOP` header present
+- [ ] Check 10: `Reporting-Endpoints` configured when CSP exists
+- [ ] Check 11: `Trusted Types` in CSP (`require-trusted-types-for`)
+- [ ] Check 12: `Server` header not leaking version info
+- [ ] Check 13: `X-Powered-By` absent
+- [ ] Check 14: Cookie flags audit — Secure, HttpOnly, SameSite on all `Set-Cookie` headers
+- [ ] Check 15: Mixed content — HTTP resources on HTTPS page
+- [ ] Check 16: SRI on external `<script>` and `<link rel="stylesheet">` tags
+- [ ] Check 17: `Access-Control-Allow-Origin: *` CORS misconfiguration
+- [ ] Check 18: Sensitive file exposure — HEAD `/.env`, `/.git/HEAD`, `/phpinfo.php` (200 = critical)
+- [ ] Check 19: Redirect chain — count hops via manual `redirect: 'manual'` fetches, flag >2
+- [ ] Check 20 (TLS): SSL cert expiry — `tls.connect` → `valid_to`, warn <30d, critical <7d
+- [ ] Check 21 (TLS): TLS version — flag 1.0/1.1 as critical, reward 1.3
 
-### 🔍 SEO — Full technical SEO audit
-Currently 4 checks. Target: replace free Screaming Frog / Ahrefs site audit for single pages.
+---
 
-**Social & Structured Data**
-- [ ] Open Graph tags — og:title, og:description, og:image, og:url
-- [ ] Twitter Card tags — twitter:card, twitter:title, twitter:image
-- [ ] JSON-LD / Schema.org structured data detection and type identification
-- [ ] Social preview simulation — show how the page looks when shared on X/LinkedIn
+### Task 4 — Performance checks module (18 checks)
+> Spec ref: [Performance](superpowers/specs/2026-04-01-phase-2.5-scan-engine-design.md#performance-18-checks)
 
-**Crawlability**
-- [ ] robots.txt — reachable, valid, not blocking key pages
-- [ ] sitemap.xml — reachable, linked from robots.txt
-- [ ] `noindex` detection — is this page actually indexable?
-- [ ] Canonical URL — self-referencing, no conflicts
+- [ ] Create `convex/checks/performance.ts` exporting `runPerformanceChecks(headers, html, url, cwvData, greenHosting): PillarResult`
+- [ ] Check 1: TTFB ≤ 400ms (>800ms critical) — keep existing
+- [ ] Check 2: Compression enabled (gzip/Brotli) — keep existing
+- [ ] Check 3: Images have `width`/`height` attributes — keep existing
+- [ ] Check 4: HTTP/2+ support — `alt-svc` header or response protocol
+- [ ] Check 5: LCP from `cwvData` — ≤2.5s pass, >4s critical (skip if `cwvData.available = false`)
+- [ ] Check 6: INP from `cwvData` — ≤200ms pass, >500ms critical
+- [ ] Check 7: CLS from `cwvData` — ≤0.1 pass, >0.25 critical
+- [ ] Check 8: Total HTML size — warn if >100KB
+- [ ] Check 9: Render-blocking scripts in `<head>` without async/defer
+- [ ] Check 10: Image format audit — flag PNG/JPEG/BMP in `<img src>` URLs
+- [ ] Check 11: Third-party script count — count `<script src>` with different origin, warn >10
+- [ ] Check 12: Image lazy loading — count `<img>` without `loading="lazy"`, warn if majority missing
+- [ ] Check 13: Cache-Control header — warn if absent or no `max-age`
+- [ ] Check 14: CDN detection — `cf-ray`, `x-vercel-id`, `x-amz-cf-id`, `x-fastly-request-id` (info)
+- [ ] Check 15: `fetchpriority="high"` usage — warn if absent on any resource
+- [ ] Check 16: Resource hints — `<link rel="preconnect|preload">` for third-party origins
+- [ ] Check 17: Carbon footprint — calculate grams CO2/pageview from transfer size, warn >0.5g
+- [ ] Check 18: Green hosting — from `greenHosting` boolean passed in (info)
 
-**On-page**
-- [ ] Mobile viewport meta tag present
-- [ ] Image alt text coverage — % of images with alt attribute
-- [ ] Internal link count
-- [ ] Hreflang tags for multilingual sites
-- [ ] URL structure — no query string junk, readable slugs
-- [ ] Page word count — thin content detection (<300 words)
+---
 
-### ♿ Accessibility — 4th Pillar (unique differentiator)
-No major free scanner includes accessibility. This is our moat.
+### Task 5 — SEO checks module (19 checks)
+> Spec ref: [SEO](superpowers/specs/2026-04-01-phase-2.5-scan-engine-design.md#seo-19-checks)
 
-- [ ] Color contrast ratio — WCAG AA (4.5:1) and AAA (7:1) for body text
-- [ ] Images without alt text — count and list offenders
-- [ ] Form inputs without associated `<label>`
-- [ ] Buttons with no accessible name (no text, no aria-label)
-- [ ] `lang` attribute present on `<html>` element
-- [ ] Focus visible — interactive elements have visible focus ring
-- [ ] Heading hierarchy — h1→h2→h3 in logical order, no skipped levels
-- [ ] ARIA landmark regions present (main, nav, footer)
-- [ ] Links with non-descriptive text ("click here", "read more")
-- [ ] Auto-playing media (video/audio) — WCAG failure
+- [ ] Create `convex/checks/seo.ts` exporting `runSeoChecks(headers, html, url, robotsTxt, sitemap, wwwCheck): PillarResult`
+- [ ] Checks 1–4: keep existing title, meta description, H1 count, canonical
+- [ ] Check 5: Viewport meta tag present
+- [ ] Check 6: Open Graph tags — `og:title`, `og:description`, `og:image`
+- [ ] Check 7: Twitter Card tags — `twitter:card`, `twitter:title`
+- [ ] Check 8: JSON-LD structured data — detect and identify type
+- [ ] Check 9: Favicon present — `<link rel="icon">` or HEAD `/favicon.ico`
+- [ ] Check 10: `robots.txt` reachable — 200 status from parallel HEAD request
+- [ ] Check 11: `sitemap.xml` reachable — 200 status from parallel HEAD request
+- [ ] Check 12: `noindex` detection — `<meta name="robots" content="noindex">` or `X-Robots-Tag` header
+- [ ] Check 13: WWW vs non-WWW — one should 301 to the other
+- [ ] Check 14: Image alt text coverage — >80% of `<img>` tags have `alt`
+- [ ] Check 15: Page word count — strip tags, count words, warn <300
+- [ ] Check 16: Charset declaration — `<meta charset>` or `Content-Type` header
+- [ ] Check 17: HTTP status is 200 — flag 3xx/4xx/5xx
+- [ ] Check 18: Author attribution — `meta author`, `Person` schema, or byline patterns
+- [ ] Check 19: Publication dates — `datePublished`/`dateModified` in JSON-LD
 
-### 🤖 AI-Powered Recommendations
-The feature that turns a score into action — and justifies Pro pricing.
+---
 
-- [ ] Technology stack detection — WordPress, Shopify, Next.js, Nuxt, Nginx, Apache, etc.
-- [ ] Platform-aware fix recommendations — show the right config for their stack
-  - e.g. "Add to your `next.config.js` headers" vs "Add to `.htaccess`" vs "Cloudflare Page Rule"
-- [ ] Priority ranking — sort issues by `impact × ease of fix`, not just severity
-- [ ] Code snippet per issue — copy-pasteable fix for every failing check
-- [ ] Plain-English summary — "Your site is secure but slow. The biggest win is enabling compression — it'll cut load time by ~40%."
+### Task 6 — Accessibility checks module (12 checks)
+> Spec ref: [Accessibility](superpowers/specs/2026-04-01-phase-2.5-scan-engine-design.md#accessibility-12-checks)
 
-### 📊 Score Intelligence
-- [ ] Score history stored per URL — trend chart over time (sparkline on dashboard)
-- [ ] Regression detection — flag if any pillar drops >10 points since last scan
-- [ ] Competitor scan — scan two URLs side by side, see scores compared
-- [ ] Industry benchmarking — "Your performance score is better than 73% of e-commerce sites"
+- [ ] Create `convex/checks/accessibility.ts` exporting `runAccessibilityChecks(html): PillarResult`
+- [ ] Check 1: `lang` attribute on `<html>`
+- [ ] Check 2: Images without `alt` — count offenders, critical if any
+- [ ] Check 3: Form `<input>` without associated `<label>` (via `for`/`id` or nesting)
+- [ ] Check 4: `<button>` with no text content and no `aria-label`
+- [ ] Check 5: Heading hierarchy — parse h1–h6, flag skipped levels
+- [ ] Check 6: ARIA landmarks — `<main>`, `<nav>`, `<footer>` or `role=` equivalents
+- [ ] Check 7: Non-descriptive link text — "click here", "read more", "here"
+- [ ] Check 8: Auto-playing media — `<video autoplay>`, `<audio autoplay>`
+- [ ] Check 9: Skip-navigation link — first `<a>` targeting `#main` or similar
+- [ ] Check 10: Tabindex abuse — any `tabindex` value > 0
+- [ ] Check 11: Duplicate IDs — collect all `id=` values, flag duplicates
+- [ ] Check 12: Focus killer — `outline: none` on `:focus` in inline `<style>` without `:focus-visible`
+
+---
+
+### Task 7 — DNS & Email checks module (8 checks)
+> Spec ref: [DNS & Email](superpowers/specs/2026-04-01-phase-2.5-scan-engine-design.md#dns--email-8-checks)
+
+- [ ] Create `convex/checks/dns.ts` exporting `runDnsChecks(dnsData, domainExpiry): PillarResult`
+- [ ] Check 1: SPF record — `dns.resolveTxt(domain)`, find `v=spf1`, flag `+all`
+- [ ] Check 2: DMARC — `dns.resolveTxt('_dmarc.' + domain)`, check `p=quarantine|reject`
+- [ ] Check 3: DKIM — probe 8 selectors: google, default, selector1, selector2, k1, ses, mandrill, dkim
+- [ ] Check 4: MX records — `dns.resolveMx(domain)`, critical if none
+- [ ] Check 5: Domain expiry — RDAP API `https://rdap.org/domain/${domain}`, warn <30d, critical <7d
+- [ ] Check 6: DNSSEC — DoH `https://dns.google/resolve?name=${domain}&type=A&do=1`, check `AD` flag
+- [ ] Check 7: IPv6 support — `dns.resolve(domain, 'AAAA')` exists
+- [ ] Check 8: DNS response time — time the A record resolve, warn >300ms, critical >600ms
+
+---
+
+### Task 8 — Trust & Compliance checks module (6 checks)
+> Spec ref: [Trust & Compliance](superpowers/specs/2026-04-01-phase-2.5-scan-engine-design.md#trust--compliance-6-checks)
+
+- [ ] Create `convex/checks/trust.ts` exporting `runTrustChecks(html, headers, gpcResult, custom404Result): PillarResult`
+- [ ] Check 1: Privacy policy link — regex links with "privacy" in href/text
+- [ ] Check 2: Terms of service link — regex links with "terms"
+- [ ] Check 3: Cookie consent — search for OneTrust, Cookiebot, CookieYes, Osano, Civic signatures
+- [ ] Check 4: Contact information — `tel:`, `mailto:`, or `/contact` links
+- [ ] Check 5: GPC support — HEAD `/.well-known/gpc.json`, 200 = pass (info)
+- [ ] Check 6: Custom 404 page — fetch nonexistent path, check for branded content vs bare server error
+
+---
+
+### Task 9 — Tech stack detection
+> Spec ref: [Tech Stack Detection](superpowers/specs/2026-04-01-phase-2.5-scan-engine-design.md#tech-stack-detection)
+
+- [ ] Create `convex/checks/techDetect.ts` exporting `detectTechStack(headers, html): string[]`
+- [ ] Detect CMS: WordPress, Shopify, Wix, Squarespace, Drupal, Ghost, Webflow
+- [ ] Detect frameworks: Next.js, Nuxt, Gatsby, SvelteKit, Angular, React, Vue
+- [ ] Detect servers from `Server` header: Nginx, Apache, Caddy, IIS, LiteSpeed
+- [ ] Detect CDN/hosting: Cloudflare, Vercel, Netlify, AWS CloudFront, Fastly, Render
+- [ ] Detect analytics: GA4, GTM, Plausible, Fathom, Hotjar
+
+---
+
+### Task 10 — Orchestrator refactor
+> Spec ref: [Orchestrator Flow](superpowers/specs/2026-04-01-phase-2.5-scan-engine-design.md#orchestrator-flow)
+
+- [ ] Refactor `convex/scanAction.ts` to thin orchestrator (~100 lines)
+- [ ] Initial fetch with 15s timeout and `ScanPulse/1.0` User-Agent
+- [ ] `Promise.allSettled` parallel calls: PageSpeed API, `tls.connect`, DNS, RDAP, Green Web Foundation API
+- [ ] Parallel HEAD requests: `/.env`, `/.git/HEAD`, `/phpinfo.php`, `/robots.txt`, `/sitemap.xml`, `/.well-known/gpc.json`
+- [ ] Parallel GET: nonexistent path (custom 404 check), www vs non-www variant
+- [ ] Fan out to all 6 pillar modules with correct arguments
+- [ ] Compute per-pillar scores: `(passing / total) * 100`
+- [ ] Compute overall score: `avg(security, performance, seo, accessibility)` — DNS and Trust excluded
+- [ ] Save all new fields via `updateScan`
+- [ ] Add `GOOGLE_PSI_API_KEY` env var to Convex dashboard docs
+
+---
+
+### Task 11 — Expand FIX_SNIPPETS to cover all 84 checks
+> Spec ref: [Fix Snippets Expansion](superpowers/specs/2026-04-01-phase-2.5-scan-engine-design.md#fix-snippets-expansion)
+
+- [ ] Update `app/utils/fixSnippets.ts` structure to `{ generic, platforms? }` per check
+- [ ] Add generic + platform-specific snippets for all 21 security checks (Next.js, Nginx, Cloudflare, Apache, .htaccess)
+- [ ] Add generic + platform-specific snippets for all 18 performance checks
+- [ ] Add generic + platform-specific snippets for all 19 SEO checks
+- [ ] Add generic snippets for all 12 accessibility checks
+- [ ] Add generic snippets for all 8 DNS & Email checks
+- [ ] Add generic snippets for all 6 Trust checks
+
+---
+
+### Task 12 — UI updates for new pillars and scores
+- [ ] Add Accessibility pillar card (color: pick from design system — e.g. `#a29bfe`) to results page
+- [ ] Add DNS & Email and Trust scores as "bonus" category cards (not in overall ring)
+- [ ] Display `detectedTech` stack badges on results page
+- [ ] Display `certExpiry` and `domainExpiry` prominently on results (days remaining)
+- [ ] Display `carbonGrams` and `greenHosting` badge on results
+- [ ] Update overall score ring calculation to average 4 pillars when `accessibilityScore` is present
+- [ ] Update landing page pillar strip to show 6 categories and 84 check count
 
 ---
 
@@ -351,4 +447,4 @@ NUXT_PUBLIC_CONVEX_URL=https://your-deployment.convex.cloud
 
 ---
 
-_Last updated: 2026-03-26 — Phase 2.5 added_
+_Last updated: 2026-04-01 — Phase 2.5 expanded to 12 granular tasks with spec links_
