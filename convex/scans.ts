@@ -10,8 +10,8 @@ export const createScan = mutation({
       .withIndex('by_clerk', q => q.eq('clerkId', userId))
       .unique()
 
-    if (user && user.plan === 'free' && user.scanCount >= 10) {
-      throw new Error('Free plan limit reached. Upgrade to Pro for unlimited scans.')
+    if (user && user.plan === 'free' && user.scanCount >= 1) {
+      throw new Error('Free trial scan used. Upgrade to Pro for unlimited scans.')
     }
 
     const scanId = await ctx.db.insert('scans', {

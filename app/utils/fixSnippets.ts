@@ -624,9 +624,7 @@ server {
 RewriteEngine On
 RewriteCond %{HTTP_HOST} ^www\\.(.+)$ [NC]
 RewriteRule ^ https://%1%{REQUEST_URI} [R=301,L]`,
-      cloudflare: `# Cloudflare → Rules → Redirect Rules
-# Match: hostname eq "www.yourdomain.com"
-# Action: Redirect to https://yourdomain.com${REQUEST_URI} (301)`,
+      cloudflare: '# Cloudflare → Rules → Redirect Rules\n# Match: hostname eq "www.yourdomain.com"\n# Action: Redirect to https://yourdomain.com${REQUEST_URI} (301)',
     },
   },
 

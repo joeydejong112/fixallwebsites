@@ -19,14 +19,14 @@ const clerkAppearance = useClerkAppearance()
       <!-- Animated scan line on bottom edge -->
       <div class="scan-sweep" />
 
-      <div class="w-full px-16 xl:px-24 h-[52px] flex items-center justify-between gap-8">
+      <div class="w-full px-16 xl:px-24 h-[60px] flex items-center justify-between gap-8">
 
         <!-- ── Logo ── -->
         <NuxtLink to="/" class="flex items-center gap-2.5 shrink-0 group">
           <Logo class="w-[30px] h-[30px]" :animate="false" />
           <span
             class="font-display font-bold text-white tracking-[-0.025em]"
-            style="font-size:15px"
+            style="font-size:17px"
           >ScanPulse</span>
         </NuxtLink>
 
@@ -37,7 +37,7 @@ const clerkAppearance = useClerkAppearance()
           </div>
           <span
             class="font-display text-white/30 tracking-[0.1em] uppercase"
-            style="font-size:10px"
+            style="font-size:11px"
           >3,847 scans today</span>
         </div>
 
@@ -128,7 +128,7 @@ const clerkAppearance = useClerkAppearance()
 /* ── Nav link ─────────────────────────────────────────── */
 .nav-link {
   font-family: 'DM Sans', sans-serif;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 400;
   color: rgba(255, 255, 255, 0.42);
   letter-spacing: 0.01em;
@@ -147,12 +147,12 @@ const clerkAppearance = useClerkAppearance()
   background: #ec3586;
   color: white;
   font-family: 'Space Grotesk', sans-serif;
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 600;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   text-decoration: none;
-  padding: 8px 16px;
+  padding: 9px 18px;
   border-radius: 3px;
   transition: background 0.15s ease, transform 0.15s ease;
 }

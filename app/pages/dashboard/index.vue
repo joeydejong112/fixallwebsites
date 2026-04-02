@@ -193,7 +193,7 @@ function relativeTime(ts: number) {
               :class="convexUser.plan === 'pro' ? 'plan-badge--pro' : 'plan-badge--free'"
             >
               <span v-if="convexUser.plan === 'pro'">Pro</span>
-              <span v-else>{{ convexUser.scanCount }} / 10 free</span>
+              <span v-else>{{ convexUser.scanCount }} / 1 free</span>
             </div>
           </div>
 

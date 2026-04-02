@@ -419,6 +419,138 @@ Scores are `(passing checks / total checks) × 100`. Overall = average of three 
 
 ---
 
+## Phase 3 — Account & Settings
+
+> **Goal**: A dedicated `/settings` page giving users control over their profile, billing, notifications, API access, and account deletion — all in our dark-theme design language.
+
+---
+
+### Task 1 — Settings layout & sidebar navigation
+- [ ] Create `app/pages/settings/index.vue` as the settings shell page
+- [ ] Build a vertical sidebar nav with icons for each tab: Profile, Billing, Notifications, Developer, Danger Zone
+- [ ] Use `activeTab` ref to switch between tab content panels (no sub-routes needed)
+- [ ] Apply auth middleware — redirect unauthenticated users to `/sign-in`
+- [ ] Add "Settings" link to NavBar (gear icon) when user is signed in
+- [ ] Style sidebar with dark theme: `bg-dark-surface`, `border-white/[0.06]`, active tab accent `#ec3586`
+- [ ] Make layout responsive — sidebar collapses to horizontal tabs on mobile
+
+---
+
+### Task 2 — Profile tab (Clerk integration)
+- [ ] Embed `<UserProfile />` from `@clerk/nuxt` inside the Profile tab panel
+- [ ] Apply `useClerkAppearance()` dark-theme overrides so Clerk UI matches our design
+- [ ] Override Clerk card backgrounds to `#0f0f14`, text to `white/70`, borders to `white/[0.06]`
+- [ ] Test MFA setup, email change, and profile picture upload through the embedded component
+- [ ] Add a custom header above Clerk component: user's name, email, and plan badge (`Free` / `Pro`)
+
+---
+
+### Task 3 — Billing & Usage tab
+- [ ] Display current plan prominently: `Free` or `Pro` with accent color badge
+- [ ] Show usage stats from Convex `users` table:
+  - Lifetime scan count (`scanCount`)
+  - Remaining scans (for free tier: `1 - scanCount`, for Pro: "Unlimited")
+  - Number of monitored sites (count from `monitors` table)
+- [ ] For **Free users**: Show upgrade CTA button → triggers `api.stripe.pay` action (existing logic)
+- [ ] For **Pro users**: Show "Manage Subscription" button → triggers `api.stripe.portal` (existing logic)
+- [ ] Display when the Pro subscription renews (if available from Stripe metadata)
+- [ ] Show invoice history link (points to Stripe customer portal)
+- [ ] Style usage bars: horizontal progress bars with pillar accent colors
+
+---
+
+### Task 4 — Notifications tab (schema + UI)
+- [ ] Add `alertPreferences` field to `users` table in `convex/schema.ts`:
+  - `enabled: v.boolean()`
+  - `threshold: v.number()` (0–100, alert if score drops below)
+  - `email: v.optional(v.string())` (override email for alerts)
+- [ ] Create `convex/users.ts` mutation: `updateAlertPreferences` — validates threshold 0–100, patches user
+- [ ] Build Notifications tab UI:
+  - Toggle switch: "Enable email alerts" (on/off)
+  - Threshold slider: 0–100 with label "Alert me when overall score drops below **{value}**"
+  - Optional email override input (defaults to Clerk email)
+  - Save button with success toast
+- [ ] Style slider with `#ec3586` accent track + dark handle
+- [ ] Wire up save button to call `updateAlertPreferences` mutation
+- [ ] Show "Pro only" lock overlay if user is on free plan (notifications require Pro)
+
+---
+
+### Task 5 — Email sending for alerts (Resend + Convex cron)
+- [ ] Sign up for Resend and add `RESEND_API_KEY` to Convex env vars
+- [ ] Create `convex/emails.ts` action: `sendAlertEmail({ to, subject, html })` using Resend API
+- [ ] Design email template HTML: ScanPulse branding, score drop summary, link to results page
+- [ ] Create `convex/crons.ts` scheduled job (or extend existing monitoring cron):
+  - Query all users with `alertPreferences.enabled === true`
+  - For each monitored site, compare latest scan score to `alertPreferences.threshold`
+  - If score < threshold and no alert sent in last 24h, fire `sendAlertEmail`
+- [ ] Add `lastAlertSentAt` field to `monitors` table to prevent spam
+- [ ] Test: manually lower a score below threshold, verify email arrives
+- [ ] Mark Phase 2 "Email alerts when score drops below threshold" as ✅
+
+---
+
+### Task 6 — Developer tab (API keys)
+- [ ] Create `apiKeys` table in `convex/schema.ts`:
+  - `userId: v.string()`
+  - `key: v.string()` (hashed)
+  - `prefix: v.string()` (`sp_live_` + first 8 chars, for display)
+  - `createdAt: v.number()`
+  - `lastUsedAt: v.optional(v.number())`
+  - Indexes: `by_user`, `by_key`
+- [ ] Create `convex/apiKeys.ts` with mutations/queries:
+  - `generateApiKey({ userId })` → generate `sp_live_` + 32-char random hex, hash, store, return raw key once
+  - `listApiKeys({ userId })` → return prefix + createdAt + lastUsedAt (never full key)
+  - `revokeApiKey({ userId, keyId })` → delete the key document
+- [ ] Build Developer tab UI:
+  - "Generate API Key" button (disabled if free plan)
+  - After generation: show full key once in a copy-to-clipboard box with warning
+  - Table listing existing keys: prefix, created date, last used, revoke button
+  - Code example showing how to call the API with `curl`
+- [ ] Create Convex HTTP endpoint `POST /api/scan` in `convex/http.ts`:
+  - Validate `Authorization: Bearer` header against `apiKeys` table
+  - Call `createScan` + `runScan` action
+  - Return JSON `{ scanId, status }`
+  - Update `lastUsedAt` on the API key
+- [ ] Create Convex HTTP endpoint `GET /api/scan/:id` in `convex/http.ts`:
+  - Return scan results as JSON
+- [ ] Gate behind Pro/Agency plan — free users see "Upgrade to Pro" overlay
+
+---
+
+### Task 7 — Danger Zone (Account deletion)
+- [ ] Build Danger Zone tab UI:
+  - Red-bordered card with warning text
+  - "Delete my account and all data" button (red, destructive)
+  - Confirmation modal: type account email to confirm
+- [ ] Create `convex/users.ts` mutation: `deleteUserData({ clerkId })`:
+  - Delete all scans belonging to this user
+  - Delete all monitors belonging to this user
+  - Delete all API keys belonging to this user
+  - Delete the user document itself
+- [ ] After Convex cleanup, call Clerk's `deleteUser` API or redirect to Clerk's account deletion flow
+- [ ] Handle `user.deleted` Clerk webhook in `convex/http.ts`:
+  - If user deleted from Clerk dashboard, also clean up Convex data
+  - Prevents orphaned data
+- [ ] Add toast confirmation: "Your account has been deleted" → redirect to `/`
+
+---
+
+### Task 8 — Dashboard widget for monitored sites (Phase 2 completion)
+- [ ] Add a "Monitored Sites" section to `/dashboard` above the scan history
+- [ ] Query `monitors` table for user's active monitors
+- [ ] Display each monitor as a card:
+  - URL + favicon
+  - Latest overall score (color-coded)
+  - Score trend arrow (↑ / ↓ / →) comparing last 2 scans
+  - Monitoring frequency badge (Hourly / Daily / Weekly)
+  - "Last checked: 2h ago" timestamp
+- [ ] Add "View History" button → navigates to results page with `?url=` filter
+- [ ] Empty state: "No sites monitored yet. Scan a site and toggle Watch."
+- [ ] Mark Phase 2 "Dashboard widget for monitored sites" as ✅
+
+---
+
 ## Environment Variables
 
 ```env
@@ -447,4 +579,263 @@ NUXT_PUBLIC_CONVEX_URL=https://your-deployment.convex.cloud
 
 ---
 
-_Last updated: 2026-04-02 — Task 12 (UI updates for new pillars) complete_
+## Phase 4 — Fix-It Tools
+
+> **Goal**: A `/tools` hub with free, standalone utilities that help users **fix** the exact issues the scanner flags. Each tool maps directly to one or more scan checks — turning "here's what's broken" into "here, fix it now." Tools also serve as SEO landing pages to drive organic traffic.
+>
+> **Gating strategy**: Every tool is usable for free (drives SEO traffic + trust). Advanced power features are locked behind Pro with an upgrade prompt overlay.
+
+---
+
+### Task 1 — Tools Hub page & ProGate component (foundation)
+- [ ] Build reusable `<ProGate>` component: blurred overlay with "Upgrade to Pro to unlock" CTA — used by all tools
+- [ ] Create `app/pages/tools/index.vue` as the tools landing/directory page
+- [ ] Grid of tool cards with icon, title, one-line description, and pillar badge (Security/Performance/SEO/etc.)
+- [ ] Group tools by pillar category
+- [ ] Each card links to the individual tool page
+- [ ] Show "Free" and "Pro" badges on each card to indicate gating level
+- [ ] SEO: unique title/description per tool page for organic traffic
+- [ ] Add "Tools" link to NavBar between "Pricing" and "Dashboard"
+- [ ] Cross-link from scan results: when an issue is flagged, show a "Fix with our tool →" link to the relevant tool
+- [ ] All tools accessible without login — Pro features prompt sign-in → upgrade
+
+---
+
+### Task 2 — Meta Tag Generator
+> Fixes: SEO Checks 1–7 (title, description, OG, Twitter Card, viewport)
+
+- [ ] Create `app/pages/tools/meta-generator.vue`
+- [ ] 🟢 FREE: Form fields:
+  - Page title (with character counter, 30–60 target)
+  - Meta description (with character counter, 70–160 target)
+  - Canonical URL
+  - Viewport (pre-filled with best practice default)
+  - Charset (pre-filled UTF-8)
+  - Robots (index/noindex toggle)
+- [ ] 🟢 FREE: "Copy to clipboard" button for the generated `<head>` HTML block
+- [ ] 🟢 FREE: Live preview: Google search result snippet (title + description + URL)
+- [ ] 🔒 PRO: OG image URL field (with preview thumbnail)
+- [ ] 🔒 PRO: Twitter card type dropdown (summary / summary_large_image)
+- [ ] 🔒 PRO: Live preview: social share card (Facebook and Twitter/X)
+- [ ] 🔒 PRO: **Platform-specific output tabs**: Next.js `metadata`, Nuxt `useSeoMeta`, WordPress Yoast
+
+---
+
+### Task 3 — Image Optimizer & Converter
+> Fixes: Performance Check 10 (image format audit), Check 12 (lazy loading awareness)
+
+- [ ] Create `app/pages/tools/image-optimizer.vue`
+- [ ] 🟢 FREE: Drag-and-drop upload zone — accept PNG, JPEG, BMP, GIF, TIFF
+- [ ] 🟢 FREE: Client-side conversion to **WebP** using `HTMLCanvasElement.toBlob()`
+- [ ] 🟢 FREE: Quality slider: 1–100 with live preview (before/after side-by-side)
+- [ ] 🟢 FREE: Show file size savings: "Original: 1.2MB → WebP: 180KB (85% smaller)"
+- [ ] 🟢 FREE: Single image download
+- [ ] 🔒 PRO: **AVIF** output format (WASM library, e.g. `squoosh-wasm`)
+- [ ] 🔒 PRO: **Batch upload** — convert multiple images at once with download-all ZIP (via `JSZip`)
+- [ ] 🔒 PRO: **Resize** option — set max width/height while maintaining aspect ratio
+- [ ] 🟢 FREE: Output `width` and `height` attributes in a copyable `<img>` tag snippet with `loading="lazy"`
+- [ ] All processing happens client-side — no server upload needed (privacy-friendly)
+
+---
+
+### Task 4 — Security Headers Checker & Generator
+> Fixes: Security Checks 2–13 (all header checks)
+
+- [ ] Create `app/pages/tools/security-headers.vue`
+- [ ] 🟢 FREE: Generate recommended headers with one click:
+  - `Strict-Transport-Security` (with recommended max-age)
+  - `X-Content-Type-Options: nosniff`
+  - `X-Frame-Options: DENY`
+  - `Referrer-Policy: strict-origin-when-cross-origin`
+  - `Permissions-Policy` (with sensible defaults)
+  - `Cross-Origin-Embedder-Policy`
+  - `Cross-Origin-Opener-Policy`
+- [ ] 🟢 FREE: Copy individual or all headers to clipboard
+- [ ] 🔒 PRO: **"Check my site"** input: enter URL → fetch headers → score them (A+ to F)
+- [ ] 🔒 PRO: **Platform-specific install tabs**: Nginx, Apache, Cloudflare, Vercel, Netlify, Next.js
+- [ ] 🔒 PRO: **Before/after comparison**: current headers vs recommended
+
+---
+
+### Task 5 — CSP Header Builder
+> Fixes: Security Checks 3, 5b (CSP present, CSP quality)
+
+- [ ] Create `app/pages/tools/csp-builder.vue`
+- [ ] 🟢 FREE: Visual directive editor — add/remove sources for each CSP directive:
+  - `default-src`, `script-src`, `style-src`, `img-src`, `font-src`, `connect-src`, `frame-src`, `media-src`, `object-src`, `base-uri`, `form-action`, `frame-ancestors`
+- [ ] 🟢 FREE: Warn visually when `unsafe-inline`, `unsafe-eval`, or `*` wildcards are used
+- [ ] 🟢 FREE: Live output: full `Content-Security-Policy` header value + copy-to-clipboard
+- [ ] 🔒 PRO: **Common presets**: "Strict", "Google Analytics compatible", "Cloudflare compatible"
+- [ ] 🔒 PRO: **Platform-specific install tabs**: Nginx, Apache, Cloudflare Workers, Next.js, Vercel, `<meta>` fallback
+- [ ] 🔒 PRO: **"Test against my site"** button: paste a URL → fetch headers → show what would change
+
+---
+
+### Task 6 — Robots.txt Generator & Validator
+> Fixes: SEO Check 10 (robots.txt reachable)
+
+- [ ] Create `app/pages/tools/robots-txt.vue`
+- [ ] 🟢 FREE: Visual editor:
+  - Add user-agent rules (Googlebot, Bingbot, *, etc.)
+  - Allow/Disallow path rules per agent
+  - Sitemap URL input
+  - Crawl-delay setting
+- [ ] 🟢 FREE: Common presets: "Allow all", "Block all", "Block specific folders", "WordPress default"
+- [ ] 🟢 FREE: Download as `robots.txt` file + copy-to-clipboard
+- [ ] 🔒 PRO: **"Test a URL"** input: check if a given path would be crawled or blocked
+- [ ] 🔒 PRO: **"Fetch my current robots.txt"** button: paste domain → show current file + analysis
+
+---
+
+### Task 7 — Favicon Generator
+> Fixes: SEO Check 9 (favicon present)
+
+- [ ] Create `app/pages/tools/favicon-generator.vue`
+- [ ] 🟢 FREE: Upload a source image (SVG, PNG, JPEG) or pick from emoji/icon grid
+- [ ] 🟢 FREE: Generate basic sizes client-side:
+  - `favicon.ico` (16×16, 32×32 multi-size)
+  - `apple-touch-icon.png` (180×180)
+- [ ] 🟢 FREE: Preview on a mock browser tab
+- [ ] 🟢 FREE: Download favicon.ico + apple-touch-icon individually
+- [ ] 🔒 PRO: **Full PWA set**: `icon-192.png`, `icon-512.png`
+- [ ] 🔒 PRO: **OG image** (1200×630) with customizable background color
+- [ ] 🔒 PRO: Preview on phone home screen and bookmarks bar
+- [ ] 🔒 PRO: **Download all as ZIP** with ready-to-paste `<head>` snippet + `site.webmanifest`
+
+---
+
+### Task 8 — Schema Markup Generator (JSON-LD)
+> Fixes: SEO Checks 8, 18, 19 (structured data, author, dates)
+
+- [ ] Create `app/pages/tools/schema-generator.vue`
+- [ ] 🟢 FREE: Template selector for basic types:
+  - `Article` / `BlogPosting` (with author, datePublished, dateModified)
+  - `Organization` (with logo, social profiles)
+- [ ] 🟢 FREE: Guided form: fill in fields, auto-generates valid JSON-LD
+- [ ] 🟢 FREE: Live preview: rendered JSON-LD `<script>` block
+- [ ] 🟢 FREE: "Copy to clipboard" and "Download .json" buttons
+- [ ] 🔒 PRO: **Additional schema types**: `LocalBusiness`, `Product`, `BreadcrumbList`, `FAQPage`, `WebSite` (sitelinks searchbox)
+- [ ] 🔒 PRO: **Validation**: run against Schema.org rules, flag missing required fields
+- [ ] 🔒 PRO: **Google Rich Results preview** mock (how it would look in search)
+
+---
+
+### Task 9 — Color Contrast Checker
+> Fixes: Accessibility — WCAG contrast requirements
+
+- [ ] Create `app/pages/tools/contrast-checker.vue`
+- [ ] 🟢 FREE: Two color pickers: foreground (text) and background
+- [ ] 🟢 FREE: Live preview: sample text rendered with chosen colors at different sizes
+- [ ] 🟢 FREE: Calculate contrast ratio using WCAG 2.1 formula
+- [ ] 🟢 FREE: Show pass/fail badges for AA Normal, AA Large, AAA Normal, AAA Large
+- [ ] 🟢 FREE: Hex, RGB, and HSL input support
+- [ ] 🔒 PRO: **"Suggest closest passing color"** — auto-adjust hue/lightness to meet AA
+- [ ] 🔒 PRO: **Color blindness simulation**: protanopia, deuteranopia, tritanopia preview
+
+---
+
+### Task 10 — SPF / DKIM / DMARC Record Generator
+> Fixes: DNS Checks 1–3 (SPF, DMARC, DKIM)
+
+- [ ] Create `app/pages/tools/email-auth.vue`
+- [ ] 🟢 FREE: **SPF Builder**:
+  - Dropdown to add common senders: Google Workspace, Microsoft 365, Mailchimp, SendGrid, Resend, Amazon SES, Zoho
+  - Add custom IP ranges
+  - Choose policy: `~all` (softfail) or `-all` (hardfail)
+  - Output: full SPF TXT record value
+- [ ] 🟢 FREE: **DMARC Builder**:
+  - Policy selector: `none`, `quarantine`, `reject`
+  - Reporting email input (`rua=`)
+  - Subdomain policy option
+  - Output: full DMARC TXT record value for `_dmarc.yourdomain.com`
+- [ ] 🟢 FREE: **DKIM guidance**: step-by-step instructions per provider (Google, Microsoft, etc.)
+- [ ] 🟢 FREE: Copy-to-clipboard for each record
+- [ ] 🔒 PRO: **"Check my domain"** button: enter domain → query DNS → show current SPF/DMARC records + analysis
+- [ ] 🔒 PRO: DNS provider-specific instructions (Cloudflare, Namecheap, GoDaddy)
+
+---
+
+_Last updated: 2026-04-02 — Phase 4 (Fix-It Tools) planned with Free/Pro gating, tasks reordered_
+
+---
+
+## Phase 5 — AI Searchability (AEO)
+
+> **Goal**: 94 checks across 7 categories + a dedicated fix-it tool — the first website scanner with native Answer Engine Optimization. Evaluates how well AI systems (ChatGPT, Perplexity, Google AI Overviews, Claude) can discover, parse, and cite the website.
+
+---
+
+### Task 1 — Schema migration
+
+- [ ] Add `aiScore: v.optional(v.number())` to `scans` table in `convex/schema.ts`
+- [ ] Update `updateScan` in `convex/scans.ts` to accept new `aiScore` field
+- [ ] Run `npx convex deploy --yes`
+
+---
+
+### Task 2 — AI Readiness checks module (10 checks)
+
+- [ ] Create `convex/checks/ai.ts` exporting `runAiChecks(html, headers, robotsTxt, jsonLd, llmsTxtResult, llmsFullTxtResult): PillarResult`
+- [ ] Check 1: `llms.txt` present — 200 status from parallel HEAD to `/llms.txt` or `/.well-known/llms.txt`
+- [ ] Check 2: `llms-full.txt` present — 200 status from parallel HEAD for extended AI ingestion content
+- [ ] Check 3: AI crawler allow-list — parse `robotsTxt` for `GPTBot`, `ChatGPT-User`, `Google-Extended`, `ClaudeBot`, `PerplexityBot`, `anthropic-ai`; flag if any are `Disallow: /`
+- [ ] Check 4: Answer-Engine Schema — parse `jsonLd` for `FAQPage`, `HowTo`, `QAPage`, or `Article` types (AIs extract structured answers from these)
+- [ ] Check 5: Author Authority (E-E-A-T) — detect `Person` or `Organization` in `jsonLd`, or `rel="author"` / `<meta name="author">` in HTML
+- [ ] Check 6: Semantic Content Isolation — check `html` for `<main>`, `<article>`, or `<section>` usage to help LLM parsers separate content from boilerplate
+- [ ] Check 7: Content Freshness — detect `dateModified` in `jsonLd` or `<meta property="article:modified_time">` (RAG pipelines prefer recent data)
+- [ ] Check 8: Heading Continuity — ensure `H1` → `H2` → `H3` flows without skipped levels, providing clean outlines for AI parsers
+- [ ] Check 9: Citation-Friendly Formatting — detect `<ol>`, `<ul>`, `<dl>`, or `<table>` tags; LLMs prefer structured lists/tables for factual extraction
+- [ ] Check 10: Open Graph Article Data — check for `article:published_time`, `article:author`, `article:section` providing metadata context for browsing agents
+
+---
+
+### Task 3 — Orchestrator update
+
+- [ ] Add parallel HEAD requests in `convex/scanAction.ts` for `/llms.txt`, `/.well-known/llms.txt`, `/llms-full.txt`
+- [ ] Pass results to `runAiChecks()` alongside existing `html`, `headers`, `robotsTxt`, `jsonLd`
+- [ ] Compute `aiScore: (passing / total) * 100`
+- [ ] Update overall score calculation: `avg(security, performance, seo, accessibility, ai)` — 5 pillars; DNS and Trust remain bonus
+- [ ] Save `aiScore` via `updateScan`
+
+---
+
+### Task 4 — Expand FIX_SNIPPETS for AI checks
+
+- [ ] Update `app/utils/fixSnippets.ts` with generic fix instructions for all 10 AI Readiness checks
+- [ ] Add platform-specific snippets where applicable:
+  - `llms.txt` creation guide (generic markdown file)
+  - `robots.txt` AI bot rules (Nginx, Vercel, Cloudflare)
+  - JSON-LD `FAQPage` / `HowTo` templates (Next.js, Nuxt, WordPress)
+
+---
+
+### Task 5 — UI updates for AI Readiness pillar
+
+- [ ] Add AI Readiness pillar card (color: `#ff7675`) to results page — update grid to 5-col for main pillars
+- [ ] Add `AI` tab to the tabbed issue list in `/results`
+- [ ] Update overall score ring to reflect 5-pillar average
+- [ ] Update landing page pillar strip to show 7 categories and 94 check count
+- [ ] Update landing page stats ticker: `94+ checks · 7 pillars`
+
+---
+
+### Task 6 — AI Optimizer & `llms.txt` Generator tool
+> Fixes: AI Readiness Checks 1, 2, 3
+
+- [ ] Create `app/pages/tools/ai-optimizer.vue`
+- [ ] 🟢 FREE: **`llms.txt` Generator**:
+  - Form fields: Site Name, Short Description, Target Audience, Key URLs (Docs, Pricing, API, Blog)
+  - Live output: valid markdown formatted for LLM ingestion
+  - Download as `llms.txt` file + copy-to-clipboard
+- [ ] 🟢 FREE: **AI Crawler robots.txt Builder**:
+  - Dropdown per agent: `GPTBot`, `ChatGPT-User`, `Google-Extended`, `ClaudeBot`, `PerplexityBot`, `anthropic-ai`
+  - Toggle each: Allow / Block
+  - Output: pasteable `robots.txt` snippet
+  - Copy-to-clipboard
+- [ ] 🔒 PRO: **"Live AI Parse Test"**: enter URL → backend strips nav/footer/scripts → returns exact markdown an LLM would "see" (helps debug Semantic Isolation, Check 6)
+- [ ] Add to `/tools` hub with pillar badge "AI Readiness"
+- [ ] Cross-link from scan results when AI checks fail: "Fix with our tool →"
+
+---
+
+_Last updated: 2026-04-02 — Phase 5 (AI Searchability / AEO) planned_

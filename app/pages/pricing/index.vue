@@ -79,7 +79,7 @@ async function handleUpgrade() {
           <ul class="space-y-4 mb-10 flex-1">
             <li class="flex items-start gap-3">
               <svg class="w-5 h-5 text-white/30 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
-              <span class="text-white/70 font-body text-sm">Up to 10 manual scans total</span>
+              <span class="text-white/70 font-body text-sm">1 full scan to try it out</span>
             </li>
             <li class="flex items-start gap-3">
               <svg class="w-5 h-5 text-white/30 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
