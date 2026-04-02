@@ -249,26 +249,26 @@ Scores are `(passing checks / total checks) × 100`. Overall = average of three 
 ### Task 3 — Security checks module (21 checks)
 > Spec ref: [Security](superpowers/specs/2026-04-01-phase-2.5-scan-engine-design.md#security-21-checks)
 
-- [ ] Create `convex/checks/security.ts` exporting `runSecurityChecks(headers, html, url, tlsInfo, exposureResults): PillarResult`
-- [ ] Checks 1–5: keep existing HTTPS, HSTS, CSP, X-Frame-Options, X-Content-Type-Options
-- [ ] Check 3b: HSTS quality (max-age ≥ 15768000, includeSubDomains)
-- [ ] Check 5b: CSP quality (no `unsafe-inline`/`unsafe-eval`, no wildcard sources)
-- [ ] Check 6: `Referrer-Policy` present and strict
-- [ ] Check 7: `Permissions-Policy` present
-- [ ] Check 8: `COEP` header present
-- [ ] Check 9: `COOP` header present
-- [ ] Check 10: `Reporting-Endpoints` configured when CSP exists
-- [ ] Check 11: `Trusted Types` in CSP (`require-trusted-types-for`)
-- [ ] Check 12: `Server` header not leaking version info
-- [ ] Check 13: `X-Powered-By` absent
-- [ ] Check 14: Cookie flags audit — Secure, HttpOnly, SameSite on all `Set-Cookie` headers
-- [ ] Check 15: Mixed content — HTTP resources on HTTPS page
-- [ ] Check 16: SRI on external `<script>` and `<link rel="stylesheet">` tags
-- [ ] Check 17: `Access-Control-Allow-Origin: *` CORS misconfiguration
-- [ ] Check 18: Sensitive file exposure — HEAD `/.env`, `/.git/HEAD`, `/phpinfo.php` (200 = critical)
-- [ ] Check 19: Redirect chain — count hops via manual `redirect: 'manual'` fetches, flag >2
-- [ ] Check 20 (TLS): SSL cert expiry — `tls.connect` → `valid_to`, warn <30d, critical <7d
-- [ ] Check 21 (TLS): TLS version — flag 1.0/1.1 as critical, reward 1.3
+- [x] Create `convex/checks/security.ts` exporting `runSecurityChecks(headers, html, url, tlsInfo, exposureResults): PillarResult`
+- [x] Checks 1–5: keep existing HTTPS, HSTS, CSP, X-Frame-Options, X-Content-Type-Options
+- [x] Check 3b: HSTS quality (max-age ≥ 15768000, includeSubDomains)
+- [x] Check 5b: CSP quality (no `unsafe-inline`/`unsafe-eval`, no wildcard sources)
+- [x] Check 6: `Referrer-Policy` present and strict
+- [x] Check 7: `Permissions-Policy` present
+- [x] Check 8: `COEP` header present
+- [x] Check 9: `COOP` header present
+- [x] Check 10: `Reporting-Endpoints` configured when CSP exists
+- [x] Check 11: `Trusted Types` in CSP (`require-trusted-types-for`)
+- [x] Check 12: `Server` header not leaking version info
+- [x] Check 13: `X-Powered-By` absent
+- [x] Check 14: Cookie flags audit — Secure, HttpOnly, SameSite on all `Set-Cookie` headers
+- [x] Check 15: Mixed content — HTTP resources on HTTPS page
+- [x] Check 16: SRI on external `<script>` and `<link rel="stylesheet">` tags
+- [x] Check 17: `Access-Control-Allow-Origin: *` CORS misconfiguration
+- [x] Check 18: Sensitive file exposure — HEAD `/.env`, `/.git/HEAD`, `/phpinfo.php` (200 = critical)
+- [x] Check 19: Redirect chain — count hops via manual `redirect: 'manual'` fetches, flag >2
+- [x] Check 20 (TLS): SSL cert expiry — `tls.connect` → `valid_to`, warn <30d, critical <7d
+- [x] Check 21 (TLS): TLS version — flag 1.0/1.1 as critical, reward 1.3
 
 ---
 
