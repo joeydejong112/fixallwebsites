@@ -14,6 +14,7 @@ import type * as checks_dns from "../checks/dns.js";
 import type * as checks_performance from "../checks/performance.js";
 import type * as checks_security from "../checks/security.js";
 import type * as checks_seo from "../checks/seo.js";
+import type * as checks_techDetect from "../checks/techDetect.js";
 import type * as checks_trust from "../checks/trust.js";
 import type * as checks_types from "../checks/types.js";
 import type * as crons from "../crons.js";
@@ -37,6 +38,7 @@ declare const fullApi: ApiFromModules<{
   "checks/performance": typeof checks_performance;
   "checks/security": typeof checks_security;
   "checks/seo": typeof checks_seo;
+  "checks/techDetect": typeof checks_techDetect;
   "checks/trust": typeof checks_trust;
   "checks/types": typeof checks_types;
   crons: typeof crons;

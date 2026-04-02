@@ -367,15 +367,15 @@ Scores are `(passing checks / total checks) × 100`. Overall = average of three 
 
 ---
 
-### Task 9 — Tech stack detection
+### Task 9 — Tech stack detection ✅ Complete
 > Spec ref: [Tech Stack Detection](superpowers/specs/2026-04-01-phase-2.5-scan-engine-design.md#tech-stack-detection)
 
-- [ ] Create `convex/checks/techDetect.ts` exporting `detectTechStack(headers, html): string[]`
-- [ ] Detect CMS: WordPress, Shopify, Wix, Squarespace, Drupal, Ghost, Webflow
-- [ ] Detect frameworks: Next.js, Nuxt, Gatsby, SvelteKit, Angular, React, Vue
-- [ ] Detect servers from `Server` header: Nginx, Apache, Caddy, IIS, LiteSpeed
-- [ ] Detect CDN/hosting: Cloudflare, Vercel, Netlify, AWS CloudFront, Fastly, Render
-- [ ] Detect analytics: GA4, GTM, Plausible, Fathom, Hotjar
+- [x] Create `convex/checks/techDetect.ts` exporting `detectTechStack(headers, html): string[]`
+- [x] Detect CMS: WordPress, Shopify, Wix, Squarespace, Drupal, Ghost, Webflow
+- [x] Detect frameworks: Next.js, Nuxt, Gatsby, SvelteKit, Angular, React, Vue
+- [x] Detect servers from `Server` header: Nginx, Apache, Caddy, IIS, LiteSpeed
+- [x] Detect CDN/hosting: Cloudflare, Vercel, Netlify, AWS CloudFront, Fastly, Render
+- [x] Detect analytics: GA4, GTM, Plausible, Fathom, Hotjar
 
 ---
 
@@ -447,4 +447,4 @@ NUXT_PUBLIC_CONVEX_URL=https://your-deployment.convex.cloud
 
 ---
 
-_Last updated: 2026-04-02 — Task 8 (Trust & Compliance checks module) complete_
+_Last updated: 2026-04-02 — Task 9 (Tech stack detection) complete_
