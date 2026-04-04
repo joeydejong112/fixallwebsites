@@ -70,11 +70,18 @@ export const getMonitorByUrl = internalQuery({
 export const updateMonitorState = internalMutation({
   args: { monitorId: v.id('monitoredSites'), score: v.number() },
   handler: async (ctx, { monitorId, score }) => {
-    await ctx.db.patch(monitorId, { 
+    await ctx.db.patch(monitorId, {
       lastRunTime: Date.now(),
       lastScore: score
     })
   }
+})
+
+export const updateLastAlertSent = internalMutation({
+  args: { monitorId: v.id('monitoredSites') },
+  handler: async (ctx, { monitorId }) => {
+    await ctx.db.patch(monitorId, { lastAlertSentAt: Date.now() })
+  },
 })
 
 export const getDueMonitors = internalQuery({
@@ -116,8 +123,10 @@ export const processDueMonitors = internalAction({
             await ctx.runAction(internal.alerts.checkAndSendAlert, {
               userId: monitor.userId,
               url: monitor.url,
+              monitorId: monitor._id,
               newScore: finishedScan.overallScore,
-              previousScore: monitor.lastScore
+              previousScore: monitor.lastScore,
+              lastAlertSentAt: monitor.lastAlertSentAt,
             })
           }
           

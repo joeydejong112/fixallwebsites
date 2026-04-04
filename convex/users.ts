@@ -59,6 +59,15 @@ export const updateAlertPreferences = mutation({
   },
 })
 
+export const getUserForAlert = internalQuery({
+  args: { clerkId: v.string() },
+  handler: async (ctx, { clerkId }) => {
+    const user = await ctx.db.query('users').withIndex('by_clerk', q => q.eq('clerkId', clerkId)).unique()
+    if (!user) return null
+    return { email: user.email, plan: user.plan, alertPreferences: user.alertPreferences ?? null }
+  },
+})
+
 export const getStripeCustomerId = internalQuery({
   args: { clerkId: v.string() },
   handler: async (ctx, { clerkId }) => {

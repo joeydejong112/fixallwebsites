@@ -18,6 +18,7 @@ import type * as checks_techDetect from "../checks/techDetect.js";
 import type * as checks_trust from "../checks/trust.js";
 import type * as checks_types from "../checks/types.js";
 import type * as crons from "../crons.js";
+import type * as emails from "../emails.js";
 import type * as http from "../http.js";
 import type * as monitors from "../monitors.js";
 import type * as scanAction from "../scanAction.js";
@@ -42,6 +43,7 @@ declare const fullApi: ApiFromModules<{
   "checks/trust": typeof checks_trust;
   "checks/types": typeof checks_types;
   crons: typeof crons;
+  emails: typeof emails;
   http: typeof http;
   monitors: typeof monitors;
   scanAction: typeof scanAction;

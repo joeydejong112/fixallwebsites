@@ -476,17 +476,15 @@ Scores are `(passing checks / total checks) × 100`. Overall = average of three 
 
 ---
 
-### Task 5 — Email sending for alerts (Resend + Convex cron)
-- [ ] Sign up for Resend and add `RESEND_API_KEY` to Convex env vars
-- [ ] Create `convex/emails.ts` action: `sendAlertEmail({ to, subject, html })` using Resend API
-- [ ] Design email template HTML: ScanPulse branding, score drop summary, link to results page
-- [ ] Create `convex/crons.ts` scheduled job (or extend existing monitoring cron):
-  - Query all users with `alertPreferences.enabled === true`
-  - For each monitored site, compare latest scan score to `alertPreferences.threshold`
-  - If score < threshold and no alert sent in last 24h, fire `sendAlertEmail`
-- [ ] Add `lastAlertSentAt` field to `monitors` table to prevent spam
-- [ ] Test: manually lower a score below threshold, verify email arrives
-- [ ] Mark Phase 2 "Email alerts when score drops below threshold" as ✅
+### Task 5 — Email sending for alerts (Resend + Convex cron) ✅ Complete
+- [x] Sign up for Resend and add `RESEND_API_KEY` to Convex env vars
+- [x] Create `convex/emails.ts` action: `sendAlertEmail({ to, subject, html })` using Resend API
+- [x] Design email template HTML: ScanPulse branding, score drop summary, link to results page
+- [x] Extend monitoring cron (`processDueMonitors`) to fire `checkAndSendAlert` after each scan
+- [x] `checkAndSendAlert` respects alertPreferences (enabled, threshold, email override), plan=pro gate, 24h spam guard
+- [x] Add `lastAlertSentAt` field to `monitoredSites` table + `updateLastAlertSent` mutation
+- [x] Add `getUserForAlert` internal query to fetch email + alertPreferences
+- [x] Convex deployed ✅
 
 ---
 

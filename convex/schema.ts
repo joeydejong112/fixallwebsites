@@ -59,5 +59,6 @@ export default defineSchema({
     frequency: v.union(v.literal('daily'), v.literal('weekly')),
     lastRunTime: v.optional(v.number()),
     lastScore: v.optional(v.number()),
+    lastAlertSentAt: v.optional(v.number()),
   }).index('by_user', ['userId']).index('by_active', ['isActive']),
 })
