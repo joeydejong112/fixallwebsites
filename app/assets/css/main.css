@@ -5,7 +5,7 @@
 @tailwind utilities;
 
 @layer base {
-  html { @apply scroll-smooth; }
+  html { @apply scroll-smooth; scrollbar-gutter: stable; }
   body { @apply bg-dark text-white font-body antialiased overflow-x-hidden; }
   h1, h2, h3, h4 { @apply font-display; }
 }

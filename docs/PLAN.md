@@ -436,12 +436,12 @@ Scores are `(passing checks / total checks) × 100`. Overall = average of three 
 
 ---
 
-### Task 2 — Profile tab (Clerk integration)
-- [ ] Embed `<UserProfile />` from `@clerk/nuxt` inside the Profile tab panel
-- [ ] Apply `useClerkAppearance()` dark-theme overrides so Clerk UI matches our design
-- [ ] Override Clerk card backgrounds to `#0f0f14`, text to `white/70`, borders to `white/[0.06]`
-- [ ] Test MFA setup, email change, and profile picture upload through the embedded component
-- [ ] Add a custom header above Clerk component: user's name, email, and plan badge (`Free` / `Pro`)
+### Task 2 — Profile tab (Clerk integration) ✅ Complete
+- [x] Embed `<UserProfile />` from `@clerk/nuxt` inside the Profile tab panel
+- [x] Apply `useClerkAppearance()` dark-theme overrides so Clerk UI matches our design
+- [x] Override Clerk card backgrounds to `#0f0f14`, text to `white/70`, borders to `white/[0.06]`
+- [x] Test MFA setup, email change, and profile picture upload through the embedded component
+- [x] Add a custom header above Clerk component: user's name, email, and plan badge (`Free` / `Pro`)
 
 ---
 
