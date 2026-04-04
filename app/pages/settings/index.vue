@@ -22,7 +22,7 @@ const { client, api } = useConvex()
 const clerkAppearance = useClerkAppearance()
 const { toast } = useAppToast()
 
-const convexUser = ref<{ plan: 'free' | 'pro'; scanCount: number } | null>(null)
+const convexUser = ref<{ plan: 'free' | 'pro'; scanCount: number; alertPreferences: { enabled: boolean; threshold: number; email?: string } | null } | null>(null)
 const monitors   = ref<any[]>([])
 
 watchEffect(async () => {
@@ -33,6 +33,14 @@ watchEffect(async () => {
   ])
   if (userResult.status === 'fulfilled')     convexUser.value = userResult.value
   if (monitorsResult.status === 'fulfilled') monitors.value   = monitorsResult.value
+
+  // Seed notification form from saved prefs
+  const prefs = convexUser.value?.alertPreferences
+  if (prefs) {
+    alertEnabled.value   = prefs.enabled
+    alertThreshold.value = prefs.threshold
+    alertEmail.value     = prefs.email ?? ''
+  }
 })
 
 const displayName  = computed(() => user.value?.fullName || user.value?.firstName || 'User')
@@ -47,6 +55,30 @@ const scanCount       = computed(() => convexUser.value?.scanCount ?? 0)
 const scansRemaining  = computed(() => plan.value === 'pro' ? Infinity : Math.max(0, FREE_SCAN_LIMIT - scanCount.value))
 const scanPct         = computed(() => plan.value === 'pro' ? 100 : Math.min(100, (scanCount.value / FREE_SCAN_LIMIT) * 100))
 const monitorCount    = computed(() => monitors.value.length)
+
+// ── Notifications tab ─────────────────────────────────────
+const alertEnabled   = ref(false)
+const alertThreshold = ref(70)
+const alertEmail     = ref('')
+const notifSaving    = ref(false)
+
+async function saveAlertPreferences() {
+  if (!userId.value) return
+  notifSaving.value = true
+  try {
+    await client.mutation(api.users.updateAlertPreferences, {
+      clerkId:   userId.value,
+      enabled:   alertEnabled.value,
+      threshold: alertThreshold.value,
+      ...(alertEmail.value.trim() ? { email: alertEmail.value.trim() } : {}),
+    })
+    toast.success('Notification preferences saved.')
+  } catch {
+    toast.error('Failed to save preferences. Please try again.')
+  } finally {
+    notifSaving.value = false
+  }
+}
 
 async function handleBillingAction() {
   if (!userId.value) return
@@ -322,8 +354,101 @@ async function handleBillingAction() {
             </div>
             <h2 class="settings-heading">Email alerts</h2>
             <p class="settings-subtext">Get notified when your site's score drops below a threshold.</p>
-            <div class="mt-8 p-6 rounded-xl border border-white/[0.06] bg-dark-elevated text-white/40 font-body text-sm text-center">
-              Notifications component coming in Task 4
+
+            <!-- Pro lock overlay -->
+            <div v-if="plan !== 'pro'" class="mt-8 relative">
+              <div class="pointer-events-none opacity-30 select-none" aria-hidden="true">
+                <div class="notif-card">
+                  <div class="flex items-center justify-between">
+                    <div>
+                      <div class="font-display font-semibold text-white text-[15px]">Enable email alerts</div>
+                      <div class="font-body text-white/40 text-[13px] mt-0.5">Send an email when overall score drops below your threshold</div>
+                    </div>
+                    <div class="toggle toggle--off" />
+                  </div>
+                </div>
+              </div>
+              <div class="absolute inset-0 flex flex-col items-center justify-center gap-4 rounded-2xl bg-dark/60 backdrop-blur-sm border border-white/[0.06]">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.3)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/>
+                </svg>
+                <div class="text-center">
+                  <div class="font-display font-semibold text-white/70 text-[15px]">Pro only</div>
+                  <div class="font-body text-white/35 text-[13px] mt-1">Upgrade to Pro to enable email alerts</div>
+                </div>
+                <button class="billing-btn billing-btn--primary" @click="activeTab = 'billing'">Upgrade to Pro →</button>
+              </div>
+            </div>
+
+            <!-- Notifications form (Pro) -->
+            <div v-else class="mt-8 space-y-5">
+
+              <!-- Enable toggle -->
+              <div class="notif-card">
+                <div class="flex items-center justify-between gap-6">
+                  <div>
+                    <div class="font-display font-semibold text-white text-[15px]">Enable email alerts</div>
+                    <div class="font-body text-white/40 text-[13px] mt-0.5">Send an email when your site's overall score drops below the threshold</div>
+                  </div>
+                  <button
+                    class="toggle shrink-0"
+                    :class="alertEnabled ? 'toggle--on' : 'toggle--off'"
+                    role="switch"
+                    :aria-checked="alertEnabled"
+                    @click="alertEnabled = !alertEnabled"
+                  />
+                </div>
+              </div>
+
+              <!-- Threshold slider -->
+              <div class="notif-card" :class="{ 'opacity-40 pointer-events-none': !alertEnabled }">
+                <div class="flex items-center justify-between mb-4">
+                  <div class="font-display font-semibold text-white text-[15px]">Score threshold</div>
+                  <div class="font-display font-bold text-primary text-xl">{{ alertThreshold }}</div>
+                </div>
+                <p class="font-body text-white/40 text-[13px] mb-5">
+                  Alert me when overall score drops below <strong class="text-white/70">{{ alertThreshold }}</strong>
+                </p>
+                <div class="relative">
+                  <input
+                    v-model.number="alertThreshold"
+                    type="range"
+                    min="0"
+                    max="100"
+                    step="5"
+                    class="alert-slider"
+                  />
+                  <div class="flex justify-between mt-2">
+                    <span class="font-body text-white/20 text-[11px]">0</span>
+                    <span class="font-body text-white/20 text-[11px]">50</span>
+                    <span class="font-body text-white/20 text-[11px]">100</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Email override -->
+              <div class="notif-card" :class="{ 'opacity-40 pointer-events-none': !alertEnabled }">
+                <label class="block font-display font-semibold text-white text-[15px] mb-1">Alert email</label>
+                <p class="font-body text-white/40 text-[13px] mb-4">Leave blank to use your Clerk account email ({{ displayEmail }})</p>
+                <input
+                  v-model="alertEmail"
+                  type="email"
+                  placeholder="override@example.com"
+                  class="w-full bg-dark border border-white/[0.08] text-white placeholder-white/20 rounded-xl px-4 py-3 font-body text-sm focus:outline-none focus:border-primary/50 transition-colors"
+                />
+              </div>
+
+              <!-- Save button -->
+              <div class="flex justify-end">
+                <button
+                  class="billing-btn billing-btn--primary"
+                  :disabled="notifSaving"
+                  @click="saveAlertPreferences"
+                >
+                  {{ notifSaving ? 'Saving…' : 'Save preferences' }}
+                </button>
+              </div>
+
             </div>
           </div>
         </section>
@@ -520,6 +645,78 @@ async function handleBillingAction() {
   font-family: 'DM Sans', sans-serif;
   font-size: 12px;
   color: rgba(255,255,255,0.3);
+}
+
+/* ── Notification cards ───────────────────────────────── */
+.notif-card {
+  padding: 20px 24px;
+  border-radius: 16px;
+  border: 1px solid rgba(255,255,255,0.06);
+  background: #0f0f14;
+}
+
+/* ── Toggle switch ────────────────────────────────────── */
+.toggle {
+  position: relative;
+  width: 44px;
+  height: 24px;
+  border-radius: 999px;
+  border: none;
+  cursor: pointer;
+  transition: background 0.2s ease;
+  flex-shrink: 0;
+}
+.toggle::after {
+  content: '';
+  position: absolute;
+  top: 3px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: white;
+  transition: left 0.2s ease;
+}
+.toggle--off {
+  background: rgba(255,255,255,0.12);
+}
+.toggle--off::after { left: 3px; }
+.toggle--on {
+  background: #ec3586;
+}
+.toggle--on::after { left: 23px; }
+
+/* ── Alert threshold slider ───────────────────────────── */
+.alert-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 4px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.08);
+  outline: none;
+  cursor: pointer;
+}
+.alert-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #ec3586;
+  cursor: pointer;
+  border: 3px solid #0f0f14;
+  box-shadow: 0 0 0 1px rgba(236,53,134,0.4);
+  transition: box-shadow 0.15s ease;
+}
+.alert-slider::-webkit-slider-thumb:hover {
+  box-shadow: 0 0 0 4px rgba(236,53,134,0.2);
+}
+.alert-slider::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #ec3586;
+  cursor: pointer;
+  border: 3px solid #0f0f14;
 }
 
 /* ── Panel typography ─────────────────────────────────── */

@@ -459,20 +459,20 @@ Scores are `(passing checks / total checks) × 100`. Overall = average of three 
 
 ---
 
-### Task 4 — Notifications tab (schema + UI)
-- [ ] Add `alertPreferences` field to `users` table in `convex/schema.ts`:
+### Task 4 — Notifications tab (schema + UI) ✅ Complete
+- [x] Add `alertPreferences` field to `users` table in `convex/schema.ts`:
   - `enabled: v.boolean()`
   - `threshold: v.number()` (0–100, alert if score drops below)
   - `email: v.optional(v.string())` (override email for alerts)
-- [ ] Create `convex/users.ts` mutation: `updateAlertPreferences` — validates threshold 0–100, patches user
-- [ ] Build Notifications tab UI:
+- [x] Create `convex/users.ts` mutation: `updateAlertPreferences` — validates threshold 0–100, patches user
+- [x] Build Notifications tab UI:
   - Toggle switch: "Enable email alerts" (on/off)
   - Threshold slider: 0–100 with label "Alert me when overall score drops below **{value}**"
   - Optional email override input (defaults to Clerk email)
   - Save button with success toast
-- [ ] Style slider with `#ec3586` accent track + dark handle
-- [ ] Wire up save button to call `updateAlertPreferences` mutation
-- [ ] Show "Pro only" lock overlay if user is on free plan (notifications require Pro)
+- [x] Style slider with `#ec3586` accent track + dark handle
+- [x] Wire up save button to call `updateAlertPreferences` mutation
+- [x] Show "Pro only" lock overlay if user is on free plan (notifications require Pro)
 
 ---
 

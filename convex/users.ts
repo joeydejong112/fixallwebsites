@@ -1,4 +1,4 @@
-import { internalMutation, internalQuery, query } from './_generated/server'
+import { internalMutation, internalQuery, mutation, query } from './_generated/server'
 import { v } from 'convex/values'
 
 export const upsertUser = internalMutation({
@@ -38,7 +38,24 @@ export const getUserByClerkId = query({
       .withIndex('by_clerk', q => q.eq('clerkId', clerkId))
       .unique()
     if (!user) return null
-    return { plan: user.plan, scanCount: user.scanCount }
+    return { plan: user.plan, scanCount: user.scanCount, alertPreferences: user.alertPreferences ?? null }
+  },
+})
+
+export const updateAlertPreferences = mutation({
+  args: {
+    clerkId:   v.string(),
+    enabled:   v.boolean(),
+    threshold: v.number(),
+    email:     v.optional(v.string()),
+  },
+  handler: async (ctx, { clerkId, enabled, threshold, email }) => {
+    if (threshold < 0 || threshold > 100) throw new Error('Threshold must be 0–100')
+    const user = await ctx.db.query('users').withIndex('by_clerk', q => q.eq('clerkId', clerkId)).unique()
+    if (!user) throw new Error('User not found')
+    await ctx.db.patch(user._id, {
+      alertPreferences: { enabled, threshold, ...(email ? { email } : {}) },
+    })
   },
 })
 

@@ -11,6 +11,11 @@ export default defineSchema({
     stripeCustomerId: v.optional(v.string()),
     stripeSubscriptionId: v.optional(v.string()),
     stripePriceId: v.optional(v.string()),
+    alertPreferences: v.optional(v.object({
+      enabled: v.boolean(),
+      threshold: v.number(),
+      email: v.optional(v.string()),
+    })),
   })
     .index('by_clerk', ['clerkId'])
     .index('by_stripe_customer', ['stripeCustomerId']),
