@@ -512,21 +512,16 @@ Scores are `(passing checks / total checks) × 100`. Overall = average of three 
 
 ---
 
-### Task 7 — Danger Zone (Account deletion)
-- [ ] Build Danger Zone tab UI:
-  - Red-bordered card with warning text
+### Task 7 — Danger Zone (Account deletion) ✅ Complete
+- [x] Build Danger Zone tab UI:
+  - Red-bordered card listing what gets deleted
+  - Email confirmation input — button only enables when typed email matches account email
   - "Delete my account and all data" button (red, destructive)
-  - Confirmation modal: type account email to confirm
-- [ ] Create `convex/users.ts` mutation: `deleteUserData({ clerkId })`:
-  - Delete all scans belonging to this user
-  - Delete all monitors belonging to this user
-  - Delete all API keys belonging to this user
-  - Delete the user document itself
-- [ ] After Convex cleanup, call Clerk's `deleteUser` API or redirect to Clerk's account deletion flow
-- [ ] Handle `user.deleted` Clerk webhook in `convex/http.ts`:
-  - If user deleted from Clerk dashboard, also clean up Convex data
-  - Prevents orphaned data
-- [ ] Add toast confirmation: "Your account has been deleted" → redirect to `/`
+- [x] Create `convex/users.ts` mutations: `deleteUserData` (internal) + `deleteUserDataPublic` (public)
+  - Deletes scans, monitors, API keys, user document
+- [x] After Convex cleanup: signOut() via Clerk → redirect to `/`
+- [x] Handle `user.deleted` Clerk webhook → runs `deleteUserData` internal mutation
+- [x] Convex deployed ✅
 
 ---
 

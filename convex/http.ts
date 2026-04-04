@@ -70,6 +70,12 @@ http.route({
       return new Response('Invalid JSON payload', { status: 400 })
     }
 
+    if (data.type === 'user.deleted') {
+      const clerkId = data.data.id as string
+      await ctx.runMutation(internal.users.deleteUserData, { clerkId })
+      return new Response(null, { status: 200 })
+    }
+
     if (data.type === 'user.created' || data.type === 'user.updated') {
       const clerkId = data.data.id as string
       const email   = data.data.email_addresses?.[0]?.email_address ?? ''

@@ -66,7 +66,7 @@ export const revokeApiKey = mutation({
   },
 })
 
-// ── Internal: validate key for HTTP endpoints ──────────────────────────────
+// ── Validate key (public — safe because caller must know raw key) ──────────
 
 export const validateApiKey = internalQuery({
   args: { raw: v.string() },
@@ -79,7 +79,17 @@ export const validateApiKey = internalQuery({
   },
 })
 
-export const touchLastUsed = internalMutation({
+export const validateApiKeyPublic = query({
+  args: { raw: v.string() },
+  handler: async (ctx, { raw }) => {
+    const hashed = await sha256Hex(raw)
+    const key = await ctx.db.query('apiKeys').withIndex('by_key', q => q.eq('key', hashed)).unique()
+    if (!key) return null
+    return { _id: key._id, userId: key.userId }
+  },
+})
+
+export const touchLastUsed = mutation({
   args: { keyId: v.id('apiKeys') },
   handler: async (ctx, { keyId }) => {
     await ctx.db.patch(keyId, { lastUsedAt: Date.now() })

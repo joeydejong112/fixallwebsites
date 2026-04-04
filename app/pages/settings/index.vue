@@ -129,6 +129,25 @@ function formatDate(ts: number) {
   return new Date(ts).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
 }
 
+// ── Danger Zone ───────────────────────────────────────────
+const deleteConfirmEmail = ref('')
+const deleteLoading      = ref(false)
+const deleteEmailMatch   = computed(() => deleteConfirmEmail.value.trim() === displayEmail.value)
+const { signOut }        = useClerk()
+
+async function deleteAccount() {
+  if (!userId.value || !deleteEmailMatch.value) return
+  deleteLoading.value = true
+  try {
+    await client.mutation(api.users.deleteUserDataPublic, { clerkId: userId.value })
+    await signOut()
+    await navigateTo('/')
+  } catch {
+    toast.error('Failed to delete account. Please try again or contact support.')
+    deleteLoading.value = false
+  }
+}
+
 async function handleBillingAction() {
   if (!userId.value) return
   billingLoading.value = true
@@ -581,13 +600,13 @@ async function handleBillingAction() {
               <div class="notif-card">
                 <div class="font-display font-semibold text-white text-[15px] mb-4">Usage example</div>
                 <pre class="bg-dark rounded-xl p-4 text-[12px] font-mono text-white/60 overflow-x-auto leading-relaxed"><code><span class="text-white/30"># Run a scan</span>
-curl -X POST https://hip-bass-536.eu-west-1.convex.site/api/scan \
+curl -X POST https://yourdomain.com/api/scan \
   -H "Authorization: Bearer sp_live_YOUR_KEY" \
   -H "Content-Type: application/json" \
   -d '{"url":"https://example.com"}'
 
 <span class="text-white/30"># Fetch results</span>
-curl "https://hip-bass-536.eu-west-1.convex.site/api/scan?id=SCAN_ID" \
+curl "https://yourdomain.com/api/scan?id=SCAN_ID" \
   -H "Authorization: Bearer sp_live_YOUR_KEY"</code></pre>
               </div>
 
@@ -602,10 +621,55 @@ curl "https://hip-bass-536.eu-west-1.convex.site/api/scan?id=SCAN_ID" \
               <div class="w-5 h-px" style="background:#ff4757" />
               <span style="color:#ff4757">DANGER ZONE</span>
             </div>
-            <h2 class="settings-heading">Account deletion</h2>
-            <p class="settings-subtext">Permanently delete your account and all associated data.</p>
-            <div class="mt-8 p-6 rounded-xl border border-danger/20 bg-dark-elevated text-white/40 font-body text-sm text-center">
-              Danger zone component coming in Task 7
+            <h2 class="settings-heading">Delete account</h2>
+            <p class="settings-subtext">Permanently delete your account and all associated data. This cannot be undone.</p>
+
+            <!-- Warning card -->
+            <div class="mt-8 p-6 rounded-2xl border border-danger/20 bg-danger/[0.03] space-y-4">
+
+              <!-- What gets deleted -->
+              <div class="flex items-start gap-3">
+                <svg class="shrink-0 mt-0.5" width="16" height="16" viewBox="0 0 24 24" fill="#ff4757">
+                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+                </svg>
+                <div>
+                  <div class="font-display font-semibold text-white/80 text-[14px] mb-2">The following will be permanently deleted:</div>
+                  <ul class="space-y-1.5 font-body text-white/45 text-[13px]">
+                    <li class="flex items-center gap-2"><span class="w-1 h-1 rounded-full bg-danger/50 shrink-0" />All scan history and results</li>
+                    <li class="flex items-center gap-2"><span class="w-1 h-1 rounded-full bg-danger/50 shrink-0" />All monitored sites</li>
+                    <li class="flex items-center gap-2"><span class="w-1 h-1 rounded-full bg-danger/50 shrink-0" />All API keys</li>
+                    <li class="flex items-center gap-2"><span class="w-1 h-1 rounded-full bg-danger/50 shrink-0" />Your account and profile</li>
+                  </ul>
+                </div>
+              </div>
+
+              <div class="h-px bg-danger/10" />
+
+              <!-- Email confirmation -->
+              <div>
+                <label class="block font-display font-semibold text-white/60 text-[13px] mb-2">
+                  Type your email <span class="text-white/40 font-normal font-body">({{ displayEmail }})</span> to confirm
+                </label>
+                <input
+                  v-model="deleteConfirmEmail"
+                  type="email"
+                  :placeholder="displayEmail"
+                  class="w-full bg-dark border border-danger/20 text-white placeholder-white/15 rounded-xl px-4 py-3 font-body text-sm focus:outline-none focus:border-danger/50 transition-colors"
+                />
+              </div>
+
+              <!-- Delete button -->
+              <button
+                class="w-full py-3 px-6 rounded-xl font-display font-semibold text-[14px] transition-all duration-200 border"
+                :class="deleteEmailMatch
+                  ? 'bg-danger text-white border-danger hover:-translate-y-px cursor-pointer'
+                  : 'bg-transparent text-danger/30 border-danger/15 cursor-not-allowed'"
+                :disabled="!deleteEmailMatch || deleteLoading"
+                @click="deleteAccount"
+              >
+                {{ deleteLoading ? 'Deleting account…' : 'Delete my account and all data' }}
+              </button>
+
             </div>
           </div>
         </section>

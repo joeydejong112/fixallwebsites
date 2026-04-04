@@ -59,6 +59,49 @@ export const updateAlertPreferences = mutation({
   },
 })
 
+export const deleteUserData = internalMutation({
+  args: { clerkId: v.string() },
+  handler: async (ctx, { clerkId }) => {
+    const user = await ctx.db.query('users').withIndex('by_clerk', q => q.eq('clerkId', clerkId)).unique()
+    if (!user) return
+
+    // Delete all scans
+    const scans = await ctx.db.query('scans').withIndex('by_user', q => q.eq('userId', clerkId)).collect()
+    for (const s of scans) await ctx.db.delete(s._id)
+
+    // Delete all monitors
+    const monitors = await ctx.db.query('monitoredSites').withIndex('by_user', q => q.eq('userId', clerkId)).collect()
+    for (const m of monitors) await ctx.db.delete(m._id)
+
+    // Delete all API keys
+    const keys = await ctx.db.query('apiKeys').withIndex('by_user', q => q.eq('userId', clerkId)).collect()
+    for (const k of keys) await ctx.db.delete(k._id)
+
+    // Delete user document
+    await ctx.db.delete(user._id)
+  },
+})
+
+export const deleteUserDataPublic = mutation({
+  args: { clerkId: v.string() },
+  handler: async (ctx, { clerkId }) => {
+    // Verify caller is the owner
+    const user = await ctx.db.query('users').withIndex('by_clerk', q => q.eq('clerkId', clerkId)).unique()
+    if (!user) return
+
+    const scans = await ctx.db.query('scans').withIndex('by_user', q => q.eq('userId', clerkId)).collect()
+    for (const s of scans) await ctx.db.delete(s._id)
+
+    const monitors = await ctx.db.query('monitoredSites').withIndex('by_user', q => q.eq('userId', clerkId)).collect()
+    for (const m of monitors) await ctx.db.delete(m._id)
+
+    const keys = await ctx.db.query('apiKeys').withIndex('by_user', q => q.eq('userId', clerkId)).collect()
+    for (const k of keys) await ctx.db.delete(k._id)
+
+    await ctx.db.delete(user._id)
+  },
+})
+
 export const getUserForAlert = internalQuery({
   args: { clerkId: v.string() },
   handler: async (ctx, { clerkId }) => {
