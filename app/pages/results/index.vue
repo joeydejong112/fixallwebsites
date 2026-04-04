@@ -39,6 +39,49 @@ function printPDF() {
 
 import { FIX_SNIPPETS } from '~/utils/fixSnippets'
 
+const TOOL_LINKS: Record<string, string> = {
+  // Security headers
+  'Missing HSTS header':              '/tools/security-headers',
+  'Weak HSTS configuration':          '/tools/security-headers',
+  'Missing clickjacking protection':  '/tools/security-headers',
+  'Missing X-Content-Type-Options':   '/tools/security-headers',
+  'Missing Referrer-Policy':          '/tools/security-headers',
+  'Weak Referrer-Policy':             '/tools/security-headers',
+  'Missing Permissions-Policy':       '/tools/security-headers',
+  'No COEP header':                   '/tools/security-headers',
+  'No COOP header':                   '/tools/security-headers',
+  // CSP
+  'Missing Content-Security-Policy':  '/tools/csp-builder',
+  'Weak CSP configuration':           '/tools/csp-builder',
+  // Images
+  'Unoptimized image formats':        '/tools/image-optimizer',
+  'Images missing lazy loading':      '/tools/image-optimizer',
+  'Images without dimensions':        '/tools/image-optimizer',
+  // SEO / meta
+  'Missing <title> tag':              '/tools/meta-generator',
+  'Title length suboptimal':          '/tools/meta-generator',
+  'Missing meta description':         '/tools/meta-generator',
+  'Meta description length suboptimal': '/tools/meta-generator',
+  'Missing canonical URL':            '/tools/meta-generator',
+  'Missing viewport meta tag':        '/tools/meta-generator',
+  'Incomplete Open Graph tags':       '/tools/meta-generator',
+  'Incomplete Twitter Card tags':     '/tools/meta-generator',
+  // Robots
+  'robots.txt not reachable':         '/tools/robots-txt',
+  // Favicon
+  'No favicon detected':              '/tools/favicon-generator',
+  // Schema
+  'No structured data':               '/tools/schema-generator',
+  'No author attribution':            '/tools/schema-generator',
+  'No publication dates':             '/tools/schema-generator',
+  // DNS / email
+  'No SPF record found':              '/tools/email-auth',
+  'SPF record too permissive':        '/tools/email-auth',
+  'No DMARC record found':            '/tools/email-auth',
+  'DMARC policy not enforcing':       '/tools/email-auth',
+  'No DKIM record detected':          '/tools/email-auth',
+}
+
 onMounted(async () => {
   const url    = route.query.url    as string
   const scanId = route.query.scanId as string
@@ -417,14 +460,25 @@ function arcPath(score: number, r = 42) {
               <p class="text-white/35 text-xs font-body leading-relaxed max-w-2xl">{{ issue.description }}</p>
               
               <!-- Fix recommendation -->
-              <div v-if="issue.severity !== 'pass' && FIX_SNIPPETS[issue.title]" class="mt-3 pt-3 border-t border-white/[0.04] max-w-2xl">
-                <div class="flex items-center gap-2 mb-2">
-                  <svg class="w-3.5 h-3.5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
-                  <span class="text-[10px] font-display font-semibold uppercase tracking-wider text-white/40">How to fix</span>
+              <div v-if="issue.severity !== 'pass' && (FIX_SNIPPETS[issue.title] || TOOL_LINKS[issue.title])" class="mt-3 pt-3 border-t border-white/[0.04] max-w-2xl">
+                <div v-if="FIX_SNIPPETS[issue.title]">
+                  <div class="flex items-center gap-2 mb-2">
+                    <svg class="w-3.5 h-3.5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+                    <span class="text-[10px] font-display font-semibold uppercase tracking-wider text-white/40">How to fix</span>
+                  </div>
+                  <div class="bg-[#07070a] border border-white/[0.05] rounded-lg p-3 overflow-x-auto">
+                    <pre class="text-[11px] font-mono text-white/70 whitespace-pre-wrap">{{ FIX_SNIPPETS[issue.title]?.generic }}</pre>
+                  </div>
                 </div>
-                <div class="bg-[#07070a] border border-white/[0.05] rounded-lg p-3 overflow-x-auto">
-                  <pre class="text-[11px] font-mono text-white/70 whitespace-pre-wrap">{{ FIX_SNIPPETS[issue.title]?.generic }}</pre>
-                </div>
+                <NuxtLink
+                  v-if="TOOL_LINKS[issue.title]"
+                  :to="TOOL_LINKS[issue.title]"
+                  class="tool-fix-link"
+                >
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M22 9V7h-2V5c0-1.1-.9-2-2-2H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2v-2h2v-2h-2v-2h2v-2h-2V9h2zm-4 10H4V5h14v14z"/><path d="M6 13h5v4H6zm6-6h4v3h-4zm0 4h4v6h-4zM6 7h5v5H6z"/></svg>
+                  Fix with our tool
+                  <svg width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M2.5 6h7M6.5 3l3 3-3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </NuxtLink>
               </div>
             </div>
 
@@ -516,6 +570,22 @@ function arcPath(score: number, r = 42) {
 .issue-row--critical { border-left-color: #ff4757; }
 .issue-row--warning  { border-left-color: #ffaa00; }
 .issue-row--pass     { border-left-color: #00d4aa; }
+
+/* ── Tool fix link ───────────────────────────────────── */
+.tool-fix-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 10px;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: #ec3586;
+  text-decoration: none;
+  transition: opacity 0.15s ease;
+}
+.tool-fix-link:hover { opacity: 0.75; }
 
 /* ── Print Styles ────────────────────────────────────── */
 @media print {

@@ -576,62 +576,62 @@ NUXT_PUBLIC_CONVEX_URL=https://your-deployment.convex.cloud
 
 ---
 
-### Task 1 — Tools Hub page & ProGate component (foundation)
-- [ ] Build reusable `<ProGate>` component: blurred overlay with "Upgrade to Pro to unlock" CTA — used by all tools
-- [ ] Create `app/pages/tools/index.vue` as the tools landing/directory page
-- [ ] Grid of tool cards with icon, title, one-line description, and pillar badge (Security/Performance/SEO/etc.)
-- [ ] Group tools by pillar category
-- [ ] Each card links to the individual tool page
-- [ ] Show "Free" and "Pro" badges on each card to indicate gating level
-- [ ] SEO: unique title/description per tool page for organic traffic
-- [ ] Add "Tools" link to NavBar between "Pricing" and "Dashboard"
-- [ ] Cross-link from scan results: when an issue is flagged, show a "Fix with our tool →" link to the relevant tool
-- [ ] All tools accessible without login — Pro features prompt sign-in → upgrade
+### Task 1 — Tools Hub page & ProGate component (foundation) ✅ Complete
+- [x] Build reusable `<ProGate>` component: blurred overlay with "Upgrade to Pro to unlock" CTA — used by all tools
+- [x] Create `app/pages/tools/index.vue` as the tools landing/directory page
+- [x] Grid of tool cards with icon, title, one-line description, and pillar badge (Security/Performance/SEO/etc.)
+- [x] Group tools by pillar category
+- [x] Each card links to the individual tool page
+- [x] Show "Free" and "Pro" badges on each card to indicate gating level
+- [x] SEO: unique title/description per tool page for organic traffic
+- [x] Add "Tools" link to NavBar between "Pricing" and "Dashboard"
+- [x] Cross-link from scan results: when an issue is flagged, show a "Fix with our tool →" link to the relevant tool
+- [x] All tools accessible without login — Pro features prompt sign-in → upgrade
 
 ---
 
-### Task 2 — Meta Tag Generator
+### Task 2 — Meta Tag Generator ✅ Complete
 > Fixes: SEO Checks 1–7 (title, description, OG, Twitter Card, viewport)
 
-- [ ] Create `app/pages/tools/meta-generator.vue`
-- [ ] 🟢 FREE: Form fields:
+- [x] Create `app/pages/tools/meta-generator.vue`
+- [x] 🟢 FREE: Form fields:
   - Page title (with character counter, 30–60 target)
   - Meta description (with character counter, 70–160 target)
   - Canonical URL
   - Viewport (pre-filled with best practice default)
   - Charset (pre-filled UTF-8)
   - Robots (index/noindex toggle)
-- [ ] 🟢 FREE: "Copy to clipboard" button for the generated `<head>` HTML block
-- [ ] 🟢 FREE: Live preview: Google search result snippet (title + description + URL)
-- [ ] 🔒 PRO: OG image URL field (with preview thumbnail)
-- [ ] 🔒 PRO: Twitter card type dropdown (summary / summary_large_image)
-- [ ] 🔒 PRO: Live preview: social share card (Facebook and Twitter/X)
-- [ ] 🔒 PRO: **Platform-specific output tabs**: Next.js `metadata`, Nuxt `useSeoMeta`, WordPress Yoast
+- [x] 🟢 FREE: "Copy to clipboard" button for the generated `<head>` HTML block
+- [x] 🟢 FREE: Live preview: Google search result snippet (title + description + URL)
+- [x] 🔒 PRO: OG image URL field (with preview thumbnail)
+- [x] 🔒 PRO: Twitter card type dropdown (summary / summary_large_image)
+- [x] 🔒 PRO: Live preview: social share card (Facebook and Twitter/X)
+- [x] 🔒 PRO: **Platform-specific output tabs**: Next.js `metadata`, Nuxt `useSeoMeta`, WordPress Yoast
 
 ---
 
-### Task 3 — Image Optimizer & Converter
+### Task 3 — Image Optimizer & Converter ✅ Complete
 > Fixes: Performance Check 10 (image format audit), Check 12 (lazy loading awareness)
 
-- [ ] Create `app/pages/tools/image-optimizer.vue`
-- [ ] 🟢 FREE: Drag-and-drop upload zone — accept PNG, JPEG, BMP, GIF, TIFF
-- [ ] 🟢 FREE: Client-side conversion to **WebP** using `HTMLCanvasElement.toBlob()`
-- [ ] 🟢 FREE: Quality slider: 1–100 with live preview (before/after side-by-side)
-- [ ] 🟢 FREE: Show file size savings: "Original: 1.2MB → WebP: 180KB (85% smaller)"
-- [ ] 🟢 FREE: Single image download
-- [ ] 🔒 PRO: **AVIF** output format (WASM library, e.g. `squoosh-wasm`)
-- [ ] 🔒 PRO: **Batch upload** — convert multiple images at once with download-all ZIP (via `JSZip`)
-- [ ] 🔒 PRO: **Resize** option — set max width/height while maintaining aspect ratio
-- [ ] 🟢 FREE: Output `width` and `height` attributes in a copyable `<img>` tag snippet with `loading="lazy"`
-- [ ] All processing happens client-side — no server upload needed (privacy-friendly)
+- [x] Create `app/pages/tools/image-optimizer.vue`
+- [x] 🟢 FREE: Drag-and-drop upload zone — accept PNG, JPEG, BMP, GIF, TIFF
+- [x] 🟢 FREE: Client-side conversion to **WebP** using `HTMLCanvasElement.toBlob()`
+- [x] 🟢 FREE: Quality slider: 1–100 with live preview (before/after side-by-side)
+- [x] 🟢 FREE: Show file size savings: "Original: 1.2MB → WebP: 180KB (85% smaller)"
+- [x] 🟢 FREE: Single image download
+- [x] 🔒 PRO: **AVIF** output format (WASM library, e.g. `squoosh-wasm`)
+- [x] 🔒 PRO: **Batch upload** — convert multiple images at once with download-all ZIP (via `JSZip`)
+- [x] 🔒 PRO: **Resize** option — set max width/height while maintaining aspect ratio
+- [x] 🟢 FREE: Output `width` and `height` attributes in a copyable `<img>` tag snippet with `loading="lazy"`
+- [x] All processing happens client-side — no server upload needed (privacy-friendly)
 
 ---
 
-### Task 4 — Security Headers Checker & Generator
+### Task 4 — Security Headers Checker & Generator ✅ Complete
 > Fixes: Security Checks 2–13 (all header checks)
 
-- [ ] Create `app/pages/tools/security-headers.vue`
-- [ ] 🟢 FREE: Generate recommended headers with one click:
+- [x] Create `app/pages/tools/security-headers.vue`
+- [x] 🟢 FREE: Generate recommended headers with one click:
   - `Strict-Transport-Security` (with recommended max-age)
   - `X-Content-Type-Options: nosniff`
   - `X-Frame-Options: DENY`
@@ -639,108 +639,77 @@ NUXT_PUBLIC_CONVEX_URL=https://your-deployment.convex.cloud
   - `Permissions-Policy` (with sensible defaults)
   - `Cross-Origin-Embedder-Policy`
   - `Cross-Origin-Opener-Policy`
-- [ ] 🟢 FREE: Copy individual or all headers to clipboard
-- [ ] 🔒 PRO: **"Check my site"** input: enter URL → fetch headers → score them (A+ to F)
-- [ ] 🔒 PRO: **Platform-specific install tabs**: Nginx, Apache, Cloudflare, Vercel, Netlify, Next.js
-- [ ] 🔒 PRO: **Before/after comparison**: current headers vs recommended
+- [x] 🟢 FREE: Copy individual or all headers to clipboard
+- [x] 🔒 PRO: **"Check my site"** input: enter URL → fetch headers → score them (A+ to F)
+- [x] 🔒 PRO: **Platform-specific install tabs**: Nginx, Apache, Cloudflare, Vercel, Netlify, Next.js
+- [x] 🔒 PRO: **Before/after comparison**: current headers vs recommended
 
 ---
 
-### Task 5 — CSP Header Builder
+### Task 5 — CSP Header Builder ✅ Complete
 > Fixes: Security Checks 3, 5b (CSP present, CSP quality)
 
-- [ ] Create `app/pages/tools/csp-builder.vue`
-- [ ] 🟢 FREE: Visual directive editor — add/remove sources for each CSP directive:
-  - `default-src`, `script-src`, `style-src`, `img-src`, `font-src`, `connect-src`, `frame-src`, `media-src`, `object-src`, `base-uri`, `form-action`, `frame-ancestors`
-- [ ] 🟢 FREE: Warn visually when `unsafe-inline`, `unsafe-eval`, or `*` wildcards are used
-- [ ] 🟢 FREE: Live output: full `Content-Security-Policy` header value + copy-to-clipboard
-- [ ] 🔒 PRO: **Common presets**: "Strict", "Google Analytics compatible", "Cloudflare compatible"
-- [ ] 🔒 PRO: **Platform-specific install tabs**: Nginx, Apache, Cloudflare Workers, Next.js, Vercel, `<meta>` fallback
-- [ ] 🔒 PRO: **"Test against my site"** button: paste a URL → fetch headers → show what would change
+- [x] Create `app/pages/tools/csp-builder.vue`
+- [x] 🟢 FREE: Visual directive editor — add/remove sources for each CSP directive
+- [x] 🟢 FREE: Warn visually when `unsafe-inline`, `unsafe-eval`, or `*` wildcards are used
+- [x] 🟢 FREE: Live output: full `Content-Security-Policy` header value + copy-to-clipboard
+- [x] 🔒 PRO: Common presets, platform install tabs, site tester
 
 ---
 
-### Task 6 — Robots.txt Generator & Validator
+### Task 6 — Robots.txt Generator & Validator ✅ Complete
 > Fixes: SEO Check 10 (robots.txt reachable)
 
-- [ ] Create `app/pages/tools/robots-txt.vue`
-- [ ] 🟢 FREE: Visual editor:
-  - Add user-agent rules (Googlebot, Bingbot, *, etc.)
-  - Allow/Disallow path rules per agent
-  - Sitemap URL input
-  - Crawl-delay setting
-- [ ] 🟢 FREE: Common presets: "Allow all", "Block all", "Block specific folders", "WordPress default"
-- [ ] 🟢 FREE: Download as `robots.txt` file + copy-to-clipboard
-- [ ] 🔒 PRO: **"Test a URL"** input: check if a given path would be crawled or blocked
-- [ ] 🔒 PRO: **"Fetch my current robots.txt"** button: paste domain → show current file + analysis
+- [x] Create `app/pages/tools/robots-txt.vue`
+- [x] 🟢 FREE: Visual editor with user-agent rules, allow/disallow paths, sitemap, crawl-delay
+- [x] 🟢 FREE: Common presets: "Allow all", "Block all", "Block folders", "WordPress"
+- [x] 🟢 FREE: Download as `robots.txt` + copy-to-clipboard
+- [x] 🔒 PRO: URL tester & live fetch
 
 ---
 
-### Task 7 — Favicon Generator
+### Task 7 — Favicon Generator ✅ Complete
 > Fixes: SEO Check 9 (favicon present)
 
-- [ ] Create `app/pages/tools/favicon-generator.vue`
-- [ ] 🟢 FREE: Upload a source image (SVG, PNG, JPEG) or pick from emoji/icon grid
-- [ ] 🟢 FREE: Generate basic sizes client-side:
-  - `favicon.ico` (16×16, 32×32 multi-size)
-  - `apple-touch-icon.png` (180×180)
-- [ ] 🟢 FREE: Preview on a mock browser tab
-- [ ] 🟢 FREE: Download favicon.ico + apple-touch-icon individually
-- [ ] 🔒 PRO: **Full PWA set**: `icon-192.png`, `icon-512.png`
-- [ ] 🔒 PRO: **OG image** (1200×630) with customizable background color
-- [ ] 🔒 PRO: Preview on phone home screen and bookmarks bar
-- [ ] 🔒 PRO: **Download all as ZIP** with ready-to-paste `<head>` snippet + `site.webmanifest`
+- [x] Create `app/pages/tools/favicon-generator.vue`
+- [x] 🟢 FREE: Upload source image, generate favicon.ico (32×32) + apple-touch-icon (180×180)
+- [x] 🟢 FREE: Mock browser tab preview with editable tab title
+- [x] 🟢 FREE: Download favicon.ico + apple-touch-icon individually + head snippet
+- [x] 🔒 PRO: PWA set, OG image, ZIP download
 
 ---
 
-### Task 8 — Schema Markup Generator (JSON-LD)
+### Task 8 — Schema Markup Generator (JSON-LD) ✅ Complete
 > Fixes: SEO Checks 8, 18, 19 (structured data, author, dates)
 
-- [ ] Create `app/pages/tools/schema-generator.vue`
-- [ ] 🟢 FREE: Template selector for basic types:
-  - `Article` / `BlogPosting` (with author, datePublished, dateModified)
-  - `Organization` (with logo, social profiles)
-- [ ] 🟢 FREE: Guided form: fill in fields, auto-generates valid JSON-LD
-- [ ] 🟢 FREE: Live preview: rendered JSON-LD `<script>` block
-- [ ] 🟢 FREE: "Copy to clipboard" and "Download .json" buttons
-- [ ] 🔒 PRO: **Additional schema types**: `LocalBusiness`, `Product`, `BreadcrumbList`, `FAQPage`, `WebSite` (sitelinks searchbox)
-- [ ] 🔒 PRO: **Validation**: run against Schema.org rules, flag missing required fields
-- [ ] 🔒 PRO: **Google Rich Results preview** mock (how it would look in search)
+- [x] Create `app/pages/tools/schema-generator.vue`
+- [x] 🟢 FREE: Article, BlogPosting, Organization type selector
+- [x] 🟢 FREE: Guided form → auto-generates valid JSON-LD
+- [x] 🟢 FREE: Copy `<script>` block + Download .json
+- [x] 🔒 PRO: Additional types, validation, rich results preview
 
 ---
 
-### Task 9 — Color Contrast Checker
+### Task 9 — Color Contrast Checker ✅ Complete
 > Fixes: Accessibility — WCAG contrast requirements
 
-- [ ] Create `app/pages/tools/contrast-checker.vue`
-- [ ] 🟢 FREE: Two color pickers: foreground (text) and background
-- [ ] 🟢 FREE: Live preview: sample text rendered with chosen colors at different sizes
-- [ ] 🟢 FREE: Calculate contrast ratio using WCAG 2.1 formula
-- [ ] 🟢 FREE: Show pass/fail badges for AA Normal, AA Large, AAA Normal, AAA Large
-- [ ] 🟢 FREE: Hex, RGB, and HSL input support
-- [ ] 🔒 PRO: **"Suggest closest passing color"** — auto-adjust hue/lightness to meet AA
-- [ ] 🔒 PRO: **Color blindness simulation**: protanopia, deuteranopia, tritanopia preview
+- [x] Create `app/pages/tools/contrast-checker.vue`
+- [x] 🟢 FREE: Color pickers for foreground + background with swap button
+- [x] 🟢 FREE: Live preview at normal and large text sizes
+- [x] 🟢 FREE: WCAG 2.1 contrast ratio (AA Normal, AA Large, AAA Normal, AAA Large)
+- [x] 🔒 PRO: Color suggestions & colorblind simulation
 
 ---
 
-### Task 10 — SPF / DKIM / DMARC Record Generator
+### Task 10 — SPF / DKIM / DMARC Record Generator ✅ Complete
 > Fixes: DNS Checks 1–3 (SPF, DMARC, DKIM)
 
-- [ ] Create `app/pages/tools/email-auth.vue`
-- [ ] 🟢 FREE: **SPF Builder**:
-  - Dropdown to add common senders: Google Workspace, Microsoft 365, Mailchimp, SendGrid, Resend, Amazon SES, Zoho
-  - Add custom IP ranges
-  - Choose policy: `~all` (softfail) or `-all` (hardfail)
-  - Output: full SPF TXT record value
-- [ ] 🟢 FREE: **DMARC Builder**:
-  - Policy selector: `none`, `quarantine`, `reject`
-  - Reporting email input (`rua=`)
-  - Subdomain policy option
-  - Output: full DMARC TXT record value for `_dmarc.yourdomain.com`
-- [ ] 🟢 FREE: **DKIM guidance**: step-by-step instructions per provider (Google, Microsoft, etc.)
-- [ ] 🟢 FREE: Copy-to-clipboard for each record
-- [ ] 🔒 PRO: **"Check my domain"** button: enter domain → query DNS → show current SPF/DMARC records + analysis
-- [ ] 🔒 PRO: DNS provider-specific instructions (Cloudflare, Namecheap, GoDaddy)
+- [x] Create `app/pages/tools/email-auth.vue`
+- [x] 🟢 FREE: SPF Builder with provider dropdown + custom IPs + softfail/hardfail policy
+- [x] 🟢 FREE: DMARC Builder with policy selector, rua email, subdomain policy, pct slider
+- [x] 🟢 FREE: DKIM guidance with per-provider setup instructions
+- [x] 🟢 FREE: Copy-to-clipboard for each record
+- [x] 🔒 PRO: Live DNS checker
 
 ---
 

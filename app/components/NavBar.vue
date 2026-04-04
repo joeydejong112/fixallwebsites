@@ -45,6 +45,7 @@ const clerkAppearance = useClerkAppearance()
         <div class="flex items-center gap-5 shrink-0">
           <template v-if="isSignedIn">
             <NuxtLink to="/pricing" class="nav-link">Pricing</NuxtLink>
+            <NuxtLink to="/tools" class="nav-link">Tools</NuxtLink>
             <NuxtLink to="/dashboard" class="nav-link">Dashboard</NuxtLink>
             <NuxtLink to="/settings" class="nav-icon" aria-label="Settings">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
@@ -55,6 +56,7 @@ const clerkAppearance = useClerkAppearance()
           </template>
           <template v-else>
             <NuxtLink to="/pricing" class="nav-link">Pricing</NuxtLink>
+            <NuxtLink to="/tools" class="nav-link">Tools</NuxtLink>
             <NuxtLink to="/sign-in" class="nav-link">Sign in</NuxtLink>
             <NuxtLink
               to="/sign-up"
