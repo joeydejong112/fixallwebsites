@@ -525,18 +525,18 @@ Scores are `(passing checks / total checks) × 100`. Overall = average of three 
 
 ---
 
-### Task 8 — Dashboard widget for monitored sites (Phase 2 completion)
-- [ ] Add a "Monitored Sites" section to `/dashboard` above the scan history
-- [ ] Query `monitors` table for user's active monitors
-- [ ] Display each monitor as a card:
-  - URL + favicon
-  - Latest overall score (color-coded)
-  - Score trend arrow (↑ / ↓ / →) comparing last 2 scans
-  - Monitoring frequency badge (Hourly / Daily / Weekly)
-  - "Last checked: 2h ago" timestamp
-- [ ] Add "View History" button → navigates to results page with `?url=` filter
-- [ ] Empty state: "No sites monitored yet. Scan a site and toggle Watch."
-- [ ] Mark Phase 2 "Dashboard widget for monitored sites" as ✅
+### Task 8 — Dashboard widget for monitored sites (Phase 2 completion) ✅ Complete
+- [x] Add a "Monitored Sites" section to `/dashboard` above the scan history
+- [x] Query `monitors` table for user's active monitors
+- [x] Display each monitor as a card:
+  - URL + Google favicon
+  - Latest overall score (color-coded with score color)
+  - Score trend arrow (↑ / ↓ / →) computed from last 2 scans in history
+  - Monitoring frequency badge (Daily / Weekly)
+  - "Last checked: Xh ago" timestamp
+- [x] Add "View →" link → results page with `?url=` filter
+- [x] Empty state with icon and "Scan a site and toggle Watch" message
+- [x] Mark Phase 2 "Dashboard widget for monitored sites" as ✅
 
 ---
 

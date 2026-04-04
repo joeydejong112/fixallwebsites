@@ -104,6 +104,31 @@ function isMonitored(url: string) {
   return monitors.value.some(m => m.url === url && m.isActive)
 }
 
+// ── Monitored sites helpers ────────────────────────────
+function scoreTrend(url: string): '↑' | '↓' | '→' | null {
+  const urlScans = scans.value
+    .filter(s => s.url === url && s.status === 'done' && s.overallScore != null)
+    .sort((a, b) => b._creationTime - a._creationTime)
+  if (urlScans.length < 2) return null
+  const diff = urlScans[0].overallScore - urlScans[1].overallScore
+  if (diff > 2) return '↑'
+  if (diff < -2) return '↓'
+  return '→'
+}
+
+function trendColor(trend: string | null) {
+  if (trend === '↑') return '#00d4aa'
+  if (trend === '↓') return '#ff4757'
+  return 'rgba(255,255,255,0.3)'
+}
+
+function faviconUrl(url: string) {
+  try {
+    const domain = new URL(url).hostname
+    return `https://www.google.com/s2/favicons?domain=${domain}&sz=32`
+  } catch { return null }
+}
+
 // ── Derived stats ──────────────────────────────────────
 const doneScans    = computed(() => scans.value.filter(s => s.status === 'done'))
 const avgScore     = computed(() => {
@@ -238,22 +263,90 @@ function relativeTime(ts: number) {
       </div>
 
       <!-- ── Monitored Sites Widget ───────────────────────────── -->
-      <div v-if="monitors.length > 0" class="mb-12">
-        <div class="flex items-center gap-3 mb-5">
-          <svg class="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
-          <span class="text-[11px] font-display font-semibold tracking-[0.18em] uppercase text-white/30 hidden sm:inline-block">Monitored Sites</span>
+      <div class="mb-12">
+        <div class="flex items-center justify-between mb-5">
+          <div class="flex items-center gap-3">
+            <div class="w-7 h-px bg-primary" />
+            <span class="text-[11px] font-display font-semibold tracking-[0.2em] uppercase text-primary">Monitored Sites</span>
+          </div>
+          <span class="font-body text-white/20 text-[12px]">{{ monitors.length }} active</span>
         </div>
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          <div v-for="m in monitors" :key="m._id" class="p-5 rounded-xl bg-white/[0.02] border border-white/[0.05] hover:border-white/[0.1] transition-colors flex flex-col relative overflow-hidden group">
-            <div class="absolute top-0 right-0 p-3 opacity-0 group-hover:opacity-100 transition-opacity">
-              <button @click.prevent="(e) => toggleMonitor(m.url, e)" class="text-white/30 hover:text-danger text-xs font-display flex items-center gap-1">
-                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg> Stop
-              </button>
+
+        <!-- Empty state -->
+        <div
+          v-if="!monitors.length"
+          class="flex flex-col items-center justify-center py-12 border border-dashed border-white/[0.06] rounded-2xl"
+          style="background:rgba(255,255,255,0.01)"
+        >
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="mb-4">
+            <path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+          </svg>
+          <p class="font-display font-semibold text-white/25 text-[14px] mb-1">No sites monitored yet</p>
+          <p class="font-body text-white/15 text-[13px]">Scan a site and toggle the Watch button to start monitoring.</p>
+        </div>
+
+        <!-- Monitor cards -->
+        <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div
+            v-for="m in monitors"
+            :key="m._id"
+            class="monitor-card group"
+          >
+            <!-- Top accent line in score color -->
+            <div class="h-[2px] rounded-t-xl mb-4 -mx-5 -mt-5 px-5 pt-5"
+              :style="{ background: scoreBg(m.lastScore) }" />
+
+            <!-- URL row -->
+            <div class="flex items-center gap-3 mb-4">
+              <img
+                v-if="faviconUrl(m.url)"
+                :src="faviconUrl(m.url)!"
+                class="w-5 h-5 rounded shrink-0 opacity-80"
+                :alt="m.url"
+                @error="($event.target as HTMLImageElement).style.display='none'"
+              />
+              <span class="font-display font-semibold text-white/85 text-[13px] truncate flex-1">{{ m.url }}</span>
             </div>
-            <p class="font-display font-bold text-white/90 text-sm mb-1 truncate pr-8">{{ m.url }}</p>
-            <div class="flex items-center gap-2 mt-auto pt-4">
-              <span class="text-[9px] font-display font-bold tracking-[0.14em] uppercase text-white/30 bg-white/[0.05] px-2 py-0.5 rounded">{{ m.frequency }}</span>
-              <span class="text-xs font-body text-white/40">Last target score: <strong :class="scoreColor(m.lastScore)">{{ m.lastScore ?? 'none' }}</strong></span>
+
+            <!-- Score + trend -->
+            <div class="flex items-end justify-between mb-4">
+              <div>
+                <div class="font-body text-white/25 text-[10px] uppercase tracking-[0.14em] mb-1">Overall score</div>
+                <div class="flex items-baseline gap-2">
+                  <span
+                    class="font-display font-bold leading-none"
+                    style="font-size:2rem;letter-spacing:-0.04em"
+                    :class="scoreColor(m.lastScore)"
+                  >{{ m.lastScore ?? '—' }}</span>
+                  <span
+                    v-if="scoreTrend(m.url)"
+                    class="font-display font-bold text-lg"
+                    :style="{ color: trendColor(scoreTrend(m.url)) }"
+                  >{{ scoreTrend(m.url) }}</span>
+                </div>
+              </div>
+
+              <!-- Frequency badge -->
+              <span class="px-2.5 py-1 rounded-full font-display font-semibold text-[10px] tracking-[0.1em] uppercase bg-white/[0.05] text-white/35 border border-white/[0.07]">
+                {{ m.frequency }}
+              </span>
+            </div>
+
+            <!-- Last checked + actions -->
+            <div class="flex items-center justify-between pt-3 border-t border-white/[0.05]">
+              <span class="font-body text-white/25 text-[12px]">
+                {{ m.lastRunTime ? 'Checked ' + relativeTime(m.lastRunTime) : 'Not yet checked' }}
+              </span>
+              <div class="flex items-center gap-2">
+                <NuxtLink
+                  :to="`/results?url=${encodeURIComponent(m.url)}`"
+                  class="font-body text-white/35 hover:text-white/70 text-[12px] transition-colors"
+                >View →</NuxtLink>
+                <button
+                  class="font-body text-white/20 hover:text-danger text-[12px] transition-colors opacity-0 group-hover:opacity-100"
+                  @click.prevent="(e) => toggleMonitor(m.url, e)"
+                >Stop</button>
+              </div>
             </div>
           </div>
         </div>
@@ -480,6 +573,20 @@ function relativeTime(ts: number) {
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: rgba(255,255,255,0.25);
+}
+
+/* ── Monitor card ────────────────────────────────────── */
+.monitor-card {
+  padding: 20px;
+  border-radius: 14px;
+  background: rgba(255,255,255,0.02);
+  border: 1px solid rgba(255,255,255,0.05);
+  transition: border-color 0.15s ease, background 0.15s ease;
+  overflow: hidden;
+}
+.monitor-card:hover {
+  background: rgba(255,255,255,0.035);
+  border-color: rgba(255,255,255,0.09);
 }
 
 /* ── Scan input wrapper ───────────────────────────────── */
