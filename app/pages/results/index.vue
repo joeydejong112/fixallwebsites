@@ -215,8 +215,8 @@ function arcPath(score: number, r = 42) {
       <p class="font-display font-bold text-white mb-2" style="font-size: 1.5rem; letter-spacing: -0.03em">
         {{ scan?.status === 'running' ? 'Scanning…' : 'Initialising…' }}
       </p>
-      <p class="text-white/30 font-body text-sm mb-1">{{ scan?.url }}</p>
-      <p class="text-white/18 font-body text-xs">Running 84 checks across security, performance, SEO, accessibility, DNS & trust</p>
+      <p class="text-white/50 font-body text-sm mb-1">{{ scan?.url }}</p>
+      <p class="text-white/40 font-body text-xs">Running 84 checks across security, performance, SEO, accessibility, DNS & trust</p>
 
       <!-- Animated progress dots -->
       <div class="flex gap-1.5 mt-8">
@@ -232,7 +232,7 @@ function arcPath(score: number, r = 42) {
         </svg>
       </div>
       <p class="font-display font-bold text-white text-xl mb-2 tracking-tight">Scan failed</p>
-      <p class="text-white/35 text-sm font-body mb-8 max-w-xs text-center">{{ error || scan?.errorMessage }}</p>
+      <p class="text-white/55 text-sm font-body mb-8 max-w-xs text-center">{{ error || scan?.errorMessage }}</p>
       <NuxtLink to="/dashboard" class="btn-secondary text-sm">← Back to dashboard</NuxtLink>
     </div>
 
@@ -275,7 +275,7 @@ function arcPath(score: number, r = 42) {
             class="font-display font-bold text-white leading-tight tracking-[-0.03em] mb-3 break-all"
             style="font-size: clamp(1.4rem, 2.5vw, 1.8rem); max-width: 50ch"
           >{{ scan.url }}</h1>
-          <p class="text-white/25 text-sm font-body">Scanned just now · 84 checks</p>
+          <p class="text-white/45 text-sm font-body">Scanned just now · 84 checks</p>
         </div>
 
         <!-- Big score -->
@@ -303,7 +303,7 @@ function arcPath(score: number, r = 42) {
               >{{ scan.overallScore ?? '—' }}</span>
 
               <div class="flex items-center gap-2 mt-1">
-                <span class="text-[11px] font-display font-semibold tracking-[0.14em] uppercase text-white/25">Overall</span>
+                <span class="text-[11px] font-display font-semibold tracking-[0.14em] uppercase text-white/45">Overall</span>
                 <span v-if="previousScan && previousScan.overallScore != null && scan.overallScore != null" 
                       class="text-[10px] font-display font-semibold leading-none rounded-sm px-1"
                       :class="scan.overallScore > previousScan.overallScore ? 'text-success bg-success/10' : (scan.overallScore < previousScan.overallScore ? 'text-danger bg-danger/10' : 'text-white/40 bg-white/5')">
@@ -354,7 +354,7 @@ function arcPath(score: number, r = 42) {
           <div class="relative z-10 flex items-center justify-between">
             <div>
               <span class="text-[11px] font-display font-bold tracking-[0.16em] uppercase block mb-0.5" :style="{ color: b.color }">{{ b.label }}</span>
-              <span class="text-[11px] font-body text-white/25">Bonus · not in overall</span>
+              <span class="text-[11px] font-body text-white/45">Bonus · not in overall</span>
             </div>
             <span
               class="font-display font-bold leading-none"
@@ -368,21 +368,21 @@ function arcPath(score: number, r = 42) {
         <div v-if="certDays !== null || domainDays !== null" class="pillar-card flex-1" style="padding: 14px 18px">
           <div class="relative z-10 flex flex-col gap-2">
             <div v-if="certDays !== null" class="flex items-center justify-between">
-              <span class="text-[11px] font-display tracking-[0.14em] uppercase text-white/30">SSL cert</span>
+              <span class="text-[11px] font-display tracking-[0.14em] uppercase text-white/50">SSL cert</span>
               <span
                 class="text-[12px] font-display font-bold"
                 :class="certDays < 7 ? 'text-danger' : certDays < 30 ? 'text-warning' : 'text-success'"
               >{{ certDays }}d</span>
             </div>
             <div v-if="domainDays !== null" class="flex items-center justify-between">
-              <span class="text-[11px] font-display tracking-[0.14em] uppercase text-white/30">Domain</span>
+              <span class="text-[11px] font-display tracking-[0.14em] uppercase text-white/50">Domain</span>
               <span
                 class="text-[12px] font-display font-bold"
                 :class="domainDays < 7 ? 'text-danger' : domainDays < 30 ? 'text-warning' : 'text-success'"
               >{{ domainDays }}d</span>
             </div>
             <div v-if="scan.carbonGrams != null" class="flex items-center justify-between">
-              <span class="text-[11px] font-display tracking-[0.14em] uppercase text-white/30">CO₂/view</span>
+              <span class="text-[11px] font-display tracking-[0.14em] uppercase text-white/50">CO₂/view</span>
               <span class="text-[12px] font-display font-bold" :class="scan.carbonGrams > 0.5 ? 'text-warning' : 'text-success'">
                 {{ scan.carbonGrams }}g
               </span>
@@ -399,7 +399,7 @@ function arcPath(score: number, r = 42) {
 
       <!-- ── Tech stack badges ── -->
       <div v-if="scan.detectedTech?.length" class="flex flex-wrap gap-2.5 mb-8">
-        <span class="text-[11px] font-display font-semibold tracking-[0.14em] uppercase text-white/25 self-center mr-1">Stack</span>
+        <span class="text-[11px] font-display font-semibold tracking-[0.14em] uppercase text-white/45 self-center mr-1">Stack</span>
         <span
           v-for="tech in scan.detectedTech"
           :key="tech"
@@ -457,7 +457,7 @@ function arcPath(score: number, r = 42) {
                   }"
                 >{{ issue.severity }}</span>
               </div>
-              <p class="text-white/35 text-xs font-body leading-relaxed max-w-2xl">{{ issue.description }}</p>
+              <p class="text-white/55 text-xs font-body leading-relaxed max-w-2xl">{{ issue.description }}</p>
               
               <!-- Fix recommendation -->
               <div v-if="issue.severity !== 'pass' && (FIX_SNIPPETS[issue.title] || TOOL_LINKS[issue.title])" class="mt-3 pt-3 border-t border-white/[0.04] max-w-2xl">
@@ -482,12 +482,12 @@ function arcPath(score: number, r = 42) {
               </div>
             </div>
 
-            <span class="flex-shrink-0 text-[11px] font-display font-bold uppercase tracking-[0.14em] text-white/15">
+            <span class="flex-shrink-0 text-[11px] font-display font-bold uppercase tracking-[0.14em] text-white/35">
               {{ issue.pillar }}
             </span>
           </div>
 
-          <div v-if="!displayIssues.length" class="text-center py-12 text-white/20 text-sm font-body">
+          <div v-if="!displayIssues.length" class="text-center py-12 text-white/40 text-sm font-body">
             No {{ activeTab === 'all' ? '' : activeTab }} issues found.
           </div>
         </div>
@@ -532,7 +532,7 @@ function arcPath(score: number, r = 42) {
   font-size: 12px;
   font-weight: 600;
   letter-spacing: 0.01em;
-  color: rgba(255,255,255,0.3);
+  color: rgba(255,255,255,0.50);
   border-bottom: 2px solid transparent;
   margin-bottom: -1px;
   background: none;
@@ -542,12 +542,12 @@ function arcPath(score: number, r = 42) {
   cursor: pointer;
   transition: color 0.15s ease;
 }
-.results-tab:hover { color: rgba(255,255,255,0.6); }
+.results-tab:hover { color: rgba(255,255,255,0.75); }
 .results-tab--active { color: white; border-bottom-color: #ec3586; }
 .results-tab__count {
   font-size: 10px;
   font-weight: 700;
-  color: rgba(255,255,255,0.2);
+  color: rgba(255,255,255,0.40);
   background: rgba(255,255,255,0.05);
   padding: 1px 6px;
   border-radius: 20px;

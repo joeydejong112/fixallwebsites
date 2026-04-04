@@ -79,6 +79,7 @@ export const updateScan = internalMutation({
     accessibilityScore: v.optional(v.number()),
     dnsScore: v.optional(v.number()),
     trustScore: v.optional(v.number()),
+    aiScore: v.optional(v.number()),
     detectedTech: v.optional(v.array(v.string())),
     carbonGrams: v.optional(v.number()),
     greenHosting: v.optional(v.boolean()),

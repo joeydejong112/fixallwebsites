@@ -1,8 +1,8 @@
 <script setup lang="ts">
+definePageMeta({ layout: 'tool' })
 useHead({ title: 'CSP Header Builder — ScanPulse Tools' })
 useSeoMeta({ description: 'Build a Content-Security-Policy header visually. Add sources per directive, get unsafe-inline warnings, and copy the full CSP value — free.' })
 
-// ── Directive definitions ─────────────────────────────────────────────────
 interface Directive {
   name: string
   description: string
@@ -36,7 +36,6 @@ function removeSource(dir: Directive, src: string) {
   dir.sources = dir.sources.filter(s => s !== src)
 }
 
-// ── Warnings ──────────────────────────────────────────────────────────────
 const UNSAFE = ["'unsafe-inline'", "'unsafe-eval'", '*']
 
 function warnings(dir: Directive): string[] {
@@ -47,7 +46,6 @@ function warnings(dir: Directive): string[] {
 
 const allWarnings = computed(() => directives.flatMap(warnings))
 
-// ── CSP output ────────────────────────────────────────────────────────────
 const cspValue = computed(() =>
   directives
     .filter(d => d.sources.length > 0)
@@ -69,13 +67,10 @@ function isBad(src: string) { return UNSAFE.includes(src) }
 
 <template>
   <div class="page-bg">
-    <NavBar />
     <div class="tool-shell">
 
-      <NuxtLink to="/tools" class="back-link">← All Tools</NuxtLink>
-
       <div class="tool-header">
-        <div class="tool-badge" style="color:#00d4aa;background:rgba(0,212,170,0.1)">
+        <div class="tool-badge">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z"/></svg>
           Security
         </div>
@@ -85,7 +80,7 @@ function isBad(src: string) { return UNSAFE.includes(src) }
 
       <!-- Warnings -->
       <div v-if="allWarnings.length" class="warn-banner">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style="color:#ff4757;flex-shrink:0"><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/></svg>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" class="warn-icon"><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/></svg>
         <div>
           <p v-for="w in allWarnings" :key="w" class="warn-line">{{ w }}</p>
         </div>
@@ -93,7 +88,7 @@ function isBad(src: string) { return UNSAFE.includes(src) }
 
       <div class="tool-columns">
 
-        <!-- ── Directive editor ──────────────────────────────────── -->
+        <!-- Directive editor -->
         <div class="directives-col">
           <div v-for="dir in directives" :key="dir.name" class="dir-card">
             <div class="dir-header">
@@ -128,12 +123,15 @@ function isBad(src: string) { return UNSAFE.includes(src) }
           </div>
         </div>
 
-        <!-- ── Output ────────────────────────────────────────────── -->
+        <!-- Output -->
         <div class="output-col">
 
           <div class="output-card">
             <div class="output-header">
-              <p class="output-label">Content-Security-Policy header</p>
+              <div class="output-title-row">
+                <span class="output-dot"></span>
+                <p class="output-label">Content-Security-Policy header</p>
+              </div>
               <button class="copy-btn" @click="copy">
                 <svg v-if="!copied" width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
                 <svg v-else width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
@@ -143,17 +141,23 @@ function isBad(src: string) { return UNSAFE.includes(src) }
             <pre class="output-code">{{ headerLine }}</pre>
           </div>
 
-          <div class="output-card" style="margin-top:16px">
+          <div class="output-card">
             <div class="output-header">
-              <p class="output-label">Value only</p>
+              <div class="output-title-row">
+                <span class="output-dot output-dot--dim"></span>
+                <p class="output-label">Value only</p>
+              </div>
             </div>
             <pre class="output-code output-code--dim">{{ cspValue }}</pre>
           </div>
 
           <!-- Pro -->
-          <div class="output-card pro-card" style="margin-top:16px">
+          <div class="output-card pro-card">
             <div class="output-header">
-              <p class="output-label">Presets & platform install</p>
+              <div class="output-title-row">
+                <span class="output-dot output-dot--pro"></span>
+                <p class="output-label">Presets &amp; platform install</p>
+              </div>
               <span class="pro-badge">Pro</span>
             </div>
             <ProGate feature="Unlock presets & platform guides">
@@ -180,22 +184,18 @@ function isBad(src: string) { return UNSAFE.includes(src) }
 
 <style scoped>
 .page-bg { min-height: 100vh; background: #07070a; }
-.tool-shell { max-width: 1080px; margin: 0 auto; padding: 100px 24px 80px; }
+.tool-shell { max-width: 1080px; margin: 0 auto; padding: 48px 28px 80px; }
 
-.back-link {
-  display: inline-flex; align-items: center; gap: 6px;
-  font-family: 'DM Sans', sans-serif; font-size: 13px;
-  color: rgba(255,255,255,0.3); text-decoration: none;
-  margin-bottom: 32px; transition: color 0.15s;
-}
-.back-link:hover { color: rgba(255,255,255,0.7); }
-
+/* ── Header ──────────────────────────────────────────────── */
 .tool-header { margin-bottom: 24px; }
 .tool-badge {
   display: inline-flex; align-items: center; gap: 5px;
   font-family: 'Space Grotesk', sans-serif; font-size: 9px; font-weight: 700;
   letter-spacing: 0.16em; text-transform: uppercase;
   padding: 4px 10px; border-radius: 3px; margin-bottom: 12px;
+  color: #00d4aa;
+  background: rgba(0,212,170,0.1);
+  border: 1px solid rgba(0,212,170,0.2);
 }
 .tool-title {
   font-family: 'Space Grotesk', sans-serif;
@@ -204,7 +204,7 @@ function isBad(src: string) { return UNSAFE.includes(src) }
 }
 .tool-subtitle {
   font-family: 'DM Sans', sans-serif; font-size: 15px;
-  color: rgba(255,255,255,0.38); line-height: 1.6; max-width: 580px;
+  color: rgba(255,255,255,0.60); line-height: 1.6; max-width: 580px;
 }
 .tool-subtitle code {
   font-family: monospace; font-size: 13px;
@@ -215,14 +215,16 @@ function isBad(src: string) { return UNSAFE.includes(src) }
 /* ── Warning banner ──────────────────────────────────────── */
 .warn-banner {
   display: flex; align-items: flex-start; gap: 10px;
-  padding: 12px 16px; margin-bottom: 20px;
+  padding: 14px 18px; margin-bottom: 20px;
   background: rgba(255,71,87,0.06);
-  border: 1px solid rgba(255,71,87,0.2);
+  border: 1px solid rgba(255,71,87,0.18);
+  border-left: 3px solid #ff4757;
   border-radius: 8px;
 }
+.warn-icon { color: #ff4757; flex-shrink: 0; margin-top: 1px; }
 .warn-line {
   font-family: 'DM Sans', sans-serif; font-size: 12px;
-  color: rgba(255,71,87,0.8); margin: 0; line-height: 1.6;
+  color: rgba(255,100,110,0.9); margin: 0; line-height: 1.6;
 }
 
 /* ── Columns ─────────────────────────────────────────────── */
@@ -236,20 +238,24 @@ function isBad(src: string) { return UNSAFE.includes(src) }
 .directives-col { display: flex; flex-direction: column; gap: 8px; }
 
 .dir-card {
-  background: #0f0f14; border: 1px solid rgba(255,255,255,0.06);
+  background: #0c0c12; border: 1px solid rgba(255,255,255,0.06);
+  border-left: 3px solid rgba(0,212,170,0.3);
   border-radius: 10px; padding: 14px 16px;
   display: flex; flex-direction: column; gap: 10px;
+  transition: border-left-color 0.2s;
 }
+.dir-card:hover { border-left-color: #00d4aa; }
 
-.dir-header { display: flex; flex-direction: column; gap: 3px; }
+.dir-header { display: flex; flex-direction: column; gap: 4px; }
 .dir-name {
-  font-family: 'Fira Mono', monospace; font-size: 12px;
-  color: #00d4aa; background: rgba(0,212,170,0.08);
-  padding: 2px 7px; border-radius: 4px; align-self: flex-start;
+  font-family: 'Fira Mono', monospace; font-size: 11px; font-weight: 600;
+  color: #00d4aa; background: rgba(0,212,170,0.1);
+  border: 1px solid rgba(0,212,170,0.18);
+  padding: 3px 8px; border-radius: 4px; align-self: flex-start;
 }
 .dir-desc {
-  font-family: 'DM Sans', sans-serif; font-size: 11px;
-  color: rgba(255,255,255,0.22); margin: 0;
+  font-family: 'DM Sans', sans-serif; font-size: 12px;
+  color: rgba(255,255,255,0.50); margin: 0;
 }
 
 /* ── Chips ───────────────────────────────────────────────── */
@@ -257,15 +263,15 @@ function isBad(src: string) { return UNSAFE.includes(src) }
 .chip {
   display: inline-flex; align-items: center; gap: 4px;
   font-family: 'Fira Mono', monospace; font-size: 11px;
-  color: rgba(255,255,255,0.6);
+  color: rgba(255,255,255,0.7);
   background: rgba(255,255,255,0.05);
   border: 1px solid rgba(255,255,255,0.08);
   padding: 3px 8px; border-radius: 4px;
 }
-.chip--bad { color: #ff4757; background: rgba(255,71,87,0.08); border-color: rgba(255,71,87,0.2); }
+.chip--bad { color: #ff6b78; background: rgba(255,71,87,0.08); border-color: rgba(255,71,87,0.2); }
 .chip-remove {
   background: none; border: none; cursor: pointer;
-  color: inherit; opacity: 0.5; padding: 0; font-size: 13px; line-height: 1;
+  color: inherit; opacity: 0.45; padding: 0; font-size: 13px; line-height: 1;
   transition: opacity 0.15s;
 }
 .chip-remove:hover { opacity: 1; }
@@ -280,7 +286,7 @@ function isBad(src: string) { return UNSAFE.includes(src) }
   color: rgba(255,255,255,0.7); outline: none;
   transition: border-color 0.15s;
 }
-.add-input:focus { border-color: rgba(0,212,170,0.3); }
+.add-input:focus { border-color: rgba(0,212,170,0.35); }
 .add-input::placeholder { color: rgba(255,255,255,0.15); }
 .add-btn {
   background: rgba(0,212,170,0.1); border: 1px solid rgba(0,212,170,0.2);
@@ -290,37 +296,67 @@ function isBad(src: string) { return UNSAFE.includes(src) }
 }
 .add-btn:hover { background: rgba(0,212,170,0.18); }
 
-/* ── Output ──────────────────────────────────────────────── */
-.output-col { display: flex; flex-direction: column; }
+/* ── Output column ───────────────────────────────────────── */
+.output-col {
+  position: sticky;
+  top: 88px;
+  max-height: calc(100vh - 104px);
+  overflow-y: auto;
+  scrollbar-width: none;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.output-col::-webkit-scrollbar { display: none; }
 
 .output-card {
-  background: #0f0f14; border: 1px solid rgba(255,255,255,0.06);
+  background: #0c0c12; border: 1px solid rgba(255,255,255,0.06);
   border-radius: 12px; overflow: hidden;
 }
 .output-header {
   display: flex; align-items: center; justify-content: space-between;
   padding: 13px 18px; border-bottom: 1px solid rgba(255,255,255,0.04);
 }
+
+/* Output title row with colored dot */
+.output-title-row {
+  display: flex; align-items: center; gap: 8px;
+}
+.output-dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: #00d4aa;
+  box-shadow: 0 0 6px rgba(0,212,170,0.5);
+  flex-shrink: 0;
+}
+.output-dot--dim {
+  background: rgba(0,212,170,0.35);
+  box-shadow: none;
+}
+.output-dot--pro {
+  background: #ec3586;
+  box-shadow: 0 0 6px rgba(236,53,134,0.4);
+}
+
 .output-label {
   font-family: 'Space Grotesk', sans-serif; font-size: 10px; font-weight: 700;
   letter-spacing: 0.14em; text-transform: uppercase;
-  color: rgba(255,255,255,0.25); margin: 0;
+  color: rgba(255,255,255,0.45); margin: 0;
 }
 .output-code {
   font-family: 'Fira Mono', monospace; font-size: 11px;
-  color: rgba(255,255,255,0.65); line-height: 1.7;
+  color: rgba(255,255,255,0.7); line-height: 1.7;
   padding: 16px 18px; margin: 0; white-space: pre-wrap; word-break: break-all;
 }
-.output-code--dim { color: rgba(255,255,255,0.35); }
+.output-code--dim { color: rgba(255,255,255,0.4); }
 
 .copy-btn {
   display: inline-flex; align-items: center; gap: 5px;
   font-family: 'Space Grotesk', sans-serif; font-size: 11px; font-weight: 700;
-  color: #ec3586; background: rgba(236,53,134,0.08);
-  border: 1px solid rgba(236,53,134,0.2);
+  color: #00d4aa; background: rgba(0,212,170,0.08);
+  border: 1px solid rgba(0,212,170,0.2);
   border-radius: 4px; padding: 5px 10px; cursor: pointer; transition: background 0.15s;
 }
-.copy-btn:hover { background: rgba(236,53,134,0.15); }
+.copy-btn:hover { background: rgba(0,212,170,0.16); }
 
 .pro-badge {
   font-family: 'Space Grotesk', sans-serif; font-size: 8px; font-weight: 700;

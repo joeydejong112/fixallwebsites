@@ -9,6 +9,16 @@ useSeoMeta({ title: 'Pricing — ScanPulse' })
 
 const loading = ref(false)
 const convexUserStr = ref<any>(null)
+const billingPeriod = ref<'monthly' | 'annual'>('monthly')
+const proMonthlyPrice = 15
+const proDisplayPrice = computed(() =>
+  billingPeriod.value === 'annual'
+    ? `$${(proMonthlyPrice * 0.9).toFixed(2).replace('.00', '')}`
+    : `$${proMonthlyPrice}`
+)
+const proPeriodLabel = computed(() =>
+  billingPeriod.value === 'annual' ? '/ mo · billed annually' : '/ month'
+)
 
 onMounted(async () => {
   if (userId.value) {
@@ -26,8 +36,10 @@ async function handleUpgrade() {
 
   loading.value = true
   try {
-    const action = convexUserStr.value?.plan === 'pro' ? api.stripe.portal : api.stripe.pay
-    const url = await client.action(action as any, { clerkId: userId.value })
+    const isPro = convexUserStr.value?.plan === 'pro'
+    const url = isPro
+      ? await client.action(api.stripe.portal as any, { clerkId: userId.value })
+      : await client.action(api.stripe.pay as any, { clerkId: userId.value, annual: billingPeriod.value === 'annual' })
     window.location.href = url
   } catch (err) {
     console.error(err)
@@ -55,13 +67,27 @@ async function handleUpgrade() {
         Checkout was canceled. If you had trouble, please try again or contact support.
       </div>
 
-      <div class="text-center mb-16">
+      <div class="text-center mb-12">
         <h1 class="font-display font-bold text-white leading-none tracking-[-0.04em] mb-4" style="font-size: clamp(2.5rem, 5vw, 4rem)">
           Simple, transparent pricing
         </h1>
-        <p class="font-body text-white/50 text-lg max-w-xl mx-auto">
+        <p class="font-body text-white/65 text-lg max-w-xl mx-auto mb-8">
           Start for free to see what's broken. Upgrade to Pro when you're ready for continuous monitoring and unrestricted scans.
         </p>
+
+        <!-- Billing toggle -->
+        <div class="inline-flex items-center gap-0 rounded-full border border-white/[0.1] overflow-hidden" style="background: rgba(255,255,255,0.03)">
+          <button
+            class="text-[12px] font-display font-semibold tracking-[0.12em] uppercase px-5 py-2.5 transition-colors"
+            :class="billingPeriod === 'monthly' ? 'text-white bg-white/[0.08]' : 'text-white/45 hover:text-white/65'"
+            @click="billingPeriod = 'monthly'"
+          >Monthly</button>
+          <button
+            class="text-[12px] font-display font-semibold tracking-[0.12em] uppercase px-5 py-2.5 transition-colors flex items-center gap-2"
+            :class="billingPeriod === 'annual' ? 'text-white bg-white/[0.08]' : 'text-white/45 hover:text-white/65'"
+            @click="billingPeriod = 'annual'"
+          >Annual <span class="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-success/15 text-success">−10%</span></button>
+        </div>
       </div>
 
       <div class="grid grid-cols-1 md:grid-cols-2 gap-8 w-full max-w-4xl">
@@ -72,7 +98,7 @@ async function handleUpgrade() {
             <h3 class="font-display font-bold text-xl text-white mb-2">Hobby</h3>
             <div class="flex items-baseline gap-1">
               <span class="font-display font-bold text-4xl text-white">$0</span>
-              <span class="text-white/30 font-body">/ forever</span>
+              <span class="text-white/50 font-body">/ forever</span>
             </div>
           </div>
 
@@ -107,9 +133,12 @@ async function handleUpgrade() {
           <div class="relative z-10 mb-8">
             <h3 class="font-display font-bold text-xl text-primary mb-2">Pro</h3>
             <div class="flex items-baseline gap-1">
-              <span class="font-display font-bold text-4xl text-white">$15</span>
-              <span class="text-white/30 font-body">/ month</span>
+              <span class="font-display font-bold text-4xl text-white">{{ proDisplayPrice }}</span>
+              <span class="text-white/50 font-body">{{ proPeriodLabel }}</span>
             </div>
+            <p v-if="billingPeriod === 'annual'" class="font-body text-white/50 text-[12px] mt-1.5">
+              $162 billed annually · <span class="text-success">save $18</span>
+            </p>
           </div>
 
           <ul class="relative z-10 space-y-4 mb-10 flex-1">

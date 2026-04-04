@@ -45,7 +45,7 @@
   .badge-primary { @apply badge bg-primary/10 text-primary border border-primary/20; }
   .section { @apply py-20 px-6 max-w-6xl mx-auto; }
   .section-title { @apply font-display font-bold text-4xl md:text-5xl text-white leading-tight; }
-  .section-subtitle { @apply font-body text-white/55 text-lg leading-relaxed; }
+  .section-subtitle { @apply font-body text-white/65 text-lg leading-relaxed; }
 }
 
 @layer utilities {

@@ -78,7 +78,7 @@ function arcPath(score: number, r = 42) {
         <span class="font-display font-medium text-white tracking-tight" style="font-size: 1.15rem">ScanPulse</span>
       </NuxtLink>
       <div class="flex-1" />
-      <span class="text-[10px] font-display font-semibold tracking-[0.16em] uppercase text-white/30">Public Report</span>
+      <span class="text-[10px] font-display font-semibold tracking-[0.16em] uppercase text-white/50">Public Report</span>
     </header>
 
     <!-- Grid bg -->
@@ -120,7 +120,7 @@ function arcPath(score: number, r = 42) {
             class="font-display font-bold text-white leading-tight tracking-[-0.03em] mb-3 break-all"
             style="font-size: clamp(1.1rem, 2vw, 1.5rem); max-width: 50ch"
           >{{ scan.url }}</h1>
-          <p v-if="scan._creationTime" class="text-white/25 text-xs font-body">Scanned on {{ new Date(scan._creationTime).toLocaleDateString() }} · 15 checks</p>
+          <p v-if="scan._creationTime" class="text-white/45 text-xs font-body">Scanned on {{ new Date(scan._creationTime).toLocaleDateString() }} · 15 checks</p>
         </div>
 
         <!-- Big score -->
@@ -145,7 +145,7 @@ function arcPath(score: number, r = 42) {
                 :class="scoreColor(scan.overallScore)"
                 style="font-size: 2.8rem; letter-spacing: -0.06em"
               >{{ scan.overallScore }}</span>
-              <span class="text-[9px] font-display font-semibold tracking-[0.14em] uppercase text-white/25 mt-1">Overall</span>
+              <span class="text-[9px] font-display font-semibold tracking-[0.14em] uppercase text-white/45 mt-1">Overall</span>
             </div>
           </div>
         </div>
@@ -228,15 +228,15 @@ function arcPath(score: number, r = 42) {
                   }"
                 >{{ issue.severity }}</span>
               </div>
-              <p class="text-white/35 text-xs font-body leading-relaxed">{{ issue.description }}</p>
+              <p class="text-white/55 text-xs font-body leading-relaxed">{{ issue.description }}</p>
             </div>
 
-            <span class="flex-shrink-0 text-[9px] font-display font-bold uppercase tracking-[0.14em] text-white/15">
+            <span class="flex-shrink-0 text-[9px] font-display font-bold uppercase tracking-[0.14em] text-white/35">
               {{ issue.pillar }}
             </span>
           </div>
 
-          <div v-if="!displayIssues.length" class="text-center py-12 text-white/20 text-sm font-body">
+          <div v-if="!displayIssues.length" class="text-center py-12 text-white/40 text-sm font-body">
             No {{ activeTab === 'all' ? '' : activeTab }} issues found.
           </div>
         </div>
@@ -270,7 +270,7 @@ function arcPath(score: number, r = 42) {
   font-size: 12px;
   font-weight: 600;
   letter-spacing: 0.01em;
-  color: rgba(255,255,255,0.3);
+  color: rgba(255,255,255,0.50);
   border-bottom: 2px solid transparent;
   margin-bottom: -1px;
   background: none;
@@ -280,12 +280,12 @@ function arcPath(score: number, r = 42) {
   cursor: pointer;
   transition: color 0.15s ease;
 }
-.results-tab:hover { color: rgba(255,255,255,0.6); }
+.results-tab:hover { color: rgba(255,255,255,0.75); }
 .results-tab--active { color: white; border-bottom-color: #ec3586; }
 .results-tab__count {
   font-size: 10px;
   font-weight: 700;
-  color: rgba(255,255,255,0.2);
+  color: rgba(255,255,255,0.40);
   background: rgba(255,255,255,0.05);
   padding: 1px 6px;
   border-radius: 20px;

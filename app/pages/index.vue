@@ -57,39 +57,39 @@ const sampleIssues = [
 
 const plans = [
   {
-    name: 'Free',
+    name: 'Hobby',
     price: '$0',
     period: 'forever',
     color: 'rgba(255,255,255,0.12)',
     accent: 'rgba(255,255,255,0.3)',
     scans: '1 free scan',
-    features: ['All 6 pillars · 84 checks', 'Core issue detection', '7-day history'],
+    features: ['All 6 pillars · 84 checks', 'Standard PDF report', 'Shareable result links'],
     cta: 'Start free',
     highlight: false,
   },
   {
     name: 'Pro',
-    price: '$19',
+    price: '$15',
     period: '/ month',
     color: '#ec3586',
     accent: '#ec3586',
-    scans: '100 scans / month',
-    features: ['Fix recommendations', '90-day history', 'Email alerts'],
+    scans: 'Unlimited scans',
+    features: ['Unlimited manual scans', 'Automated monitoring (Hourly, Daily, Weekly)', 'Email alerts on score regression', 'Instant specific fix recommendations', 'API access'],
     cta: 'Get Pro',
     highlight: true,
   },
-  {
-    name: 'Agency',
-    price: '$79',
-    period: '/ month',
-    color: '#6c5ce7',
-    accent: '#6c5ce7',
-    scans: 'Unlimited scans',
-    features: ['Multiple domains', 'White-label PDF reports', 'API access'],
-    cta: 'Contact us',
-    highlight: false,
-  },
 ]
+
+const billingPeriod = ref<'monthly' | 'annual'>('monthly')
+
+const displayedPlans = computed(() => plans.map(p => {
+  if (billingPeriod.value === 'annual' && p.price !== '$0') {
+    const monthly = parseFloat(p.price.replace('$', ''))
+    const discounted = (monthly * 0.9).toFixed(2).replace('.00', '')
+    return { ...p, price: `$${discounted}`, period: '/ mo · billed annually' }
+  }
+  return p
+}))
 
 function scrollToSection(index: number) {
   if (!scrollContainer.value) return
@@ -250,7 +250,7 @@ const pillars = [
 
         <!-- Subtext -->
         <p
-          class="font-body text-white/35 leading-relaxed mb-12"
+          class="font-body text-white/55 leading-relaxed mb-12"
           style="font-size:clamp(0.9rem,1.2vw,1.05rem); max-width:38ch"
         >
           Security, performance, and SEO — scanned in seconds.
@@ -261,15 +261,15 @@ const pillars = [
         <div class="flex gap-8 mb-12 flex-wrap">
           <div>
             <div class="font-display font-bold leading-none mb-1.5" style="font-size:2.6rem; color:#00d4aa">84</div>
-            <div class="text-[10px] font-display uppercase tracking-[0.12em] text-white/28">Total checks</div>
+            <div class="text-[10px] font-display uppercase tracking-[0.12em] text-white/45">Total checks</div>
           </div>
           <div>
             <div class="font-display font-bold leading-none mb-1.5" style="font-size:2.6rem; color:#ffaa00">6</div>
-            <div class="text-[10px] font-display uppercase tracking-[0.12em] text-white/28">Categories</div>
+            <div class="text-[10px] font-display uppercase tracking-[0.12em] text-white/45">Categories</div>
           </div>
           <div>
             <div class="font-display font-bold leading-none mb-1.5" style="font-size:2.6rem; color:#6c5ce7">~10s</div>
-            <div class="text-[10px] font-display uppercase tracking-[0.12em] text-white/28">Per scan</div>
+            <div class="text-[10px] font-display uppercase tracking-[0.12em] text-white/45">Per scan</div>
           </div>
         </div>
 
@@ -286,7 +286,7 @@ const pillars = [
         <div class="flex items-center gap-5 mt-8 flex-wrap">
           <div v-for="s in ['Free forever', '~10s results', '84 checks']" :key="s" class="flex items-center gap-1.5">
             <div class="w-1 h-1 rounded-full bg-success" />
-            <span class="text-white/25 text-[11px] font-body">{{ s }}</span>
+            <span class="text-white/48 text-[11px] font-body">{{ s }}</span>
           </div>
         </div>
 
@@ -297,7 +297,7 @@ const pillars = [
               <path d="M3 5l4 4 4-4" stroke="rgba(255,255,255,0.25)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
           </div>
-          <span class="text-[10px] font-display uppercase tracking-[0.16em] text-white/20">What we check</span>
+          <span class="text-[10px] font-display uppercase tracking-[0.16em] text-white/42">What we check</span>
         </div>
       </div>
 
@@ -306,7 +306,7 @@ const pillars = [
 
         <!-- Feed header -->
         <div class="absolute top-0 left-0 right-0 z-30 flex items-center justify-between px-7 py-5 border-b border-white/[0.04]" style="background: linear-gradient(to bottom, #07070a 70%, transparent)">
-          <span class="text-[10px] font-display font-semibold tracking-[0.18em] uppercase text-white/25">
+          <span class="text-[10px] font-display font-semibold tracking-[0.18em] uppercase text-white/48">
             Live Scan Results
           </span>
           <div class="flex items-center gap-2 rounded-full border px-3 py-1" style="background:rgba(0,212,170,0.06); border-color:rgba(0,212,170,0.15)">
@@ -329,11 +329,11 @@ const pillars = [
               <div class="flex-1 min-w-0">
                 <div class="text-[12px] font-display font-medium text-white/70 truncate">{{ item.title }}</div>
                 <div class="flex items-center gap-2 mt-0.5">
-                  <span class="text-[8px] font-display uppercase tracking-[0.14em] text-white/25">{{ item.pillar }}</span>
+                  <span class="text-[8px] font-display uppercase tracking-[0.14em] text-white/45">{{ item.pillar }}</span>
                   <span class="text-[9px] font-display font-bold tracking-[0.08em]" :style="{ color: item.color }">{{ item.status }}</span>
                 </div>
               </div>
-              <div class="text-[9px] font-body shrink-0 text-white/18">{{ item.url }}</div>
+              <div class="text-[9px] font-body shrink-0 text-white/40">{{ item.url }}</div>
             </div>
           </div>
         </div>
@@ -366,10 +366,10 @@ const pillars = [
             style="font-size: clamp(2.8rem, 4.5vw, 4.2rem)"
           >
             84 checks.<br />
-            <span class="text-white/30">Six pillars.</span><br />
+            <span class="text-white/50">Six pillars.</span><br />
             One score.
           </h2>
-          <p class="font-body text-white/35 leading-relaxed mb-12" style="max-width: 36ch; font-size: 0.95rem">
+          <p class="font-body text-white/55 leading-relaxed mb-12" style="max-width: 36ch; font-size: 0.95rem">
             Every check maps to a real-world impact — a vulnerability, a lost conversion, or a missed ranking.
           </p>
           <button
@@ -388,7 +388,7 @@ const pillars = [
               <path d="M3 5l4 4 4-4" stroke="rgba(255,255,255,0.25)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
           </div>
-          <span class="text-[10px] font-display uppercase tracking-[0.16em] text-white/20">How it works</span>
+          <span class="text-[10px] font-display uppercase tracking-[0.16em] text-white/42">How it works</span>
         </div>
       </div>
 
@@ -418,7 +418,7 @@ const pillars = [
           </div>
 
           <!-- Desc -->
-          <p class="font-body text-white/28 text-[11px] leading-relaxed mb-4" style="max-width: 22ch">
+          <p class="font-body text-white/50 text-[12px] leading-relaxed mb-4" style="max-width: 22ch">
             {{ pillar.desc }}
           </p>
 
@@ -430,7 +430,7 @@ const pillars = [
               class="flex items-center gap-2.5"
             >
               <div class="w-1 h-1 rounded-full shrink-0" :style="{ background: pillar.color }" />
-              <span class="text-[11px] font-body text-white/40">{{ check }}</span>
+              <span class="text-[12px] font-body text-white/55">{{ check }}</span>
             </li>
           </ul>
         </div>
@@ -451,7 +451,7 @@ const pillars = [
             <span class="text-[11px] font-display font-semibold tracking-[0.2em] uppercase text-primary">How it works</span>
           </div>
           <h2 class="font-display font-bold text-white leading-[0.88] tracking-[-0.04em]" style="font-size: clamp(2.2rem, 3.5vw, 3.2rem)">
-            Up and running<br /><span class="text-white/25">in three steps.</span>
+            Up and running<br /><span class="text-white/45">in three steps.</span>
           </h2>
         </div>
         <button
@@ -499,7 +499,7 @@ const pillars = [
           </div>
 
           <!-- Desc -->
-          <p class="font-body text-white/35 leading-relaxed" style="font-size: 0.88rem; max-width: 26ch">
+          <p class="font-body text-white/55 leading-relaxed" style="font-size: 0.93rem; max-width: 26ch">
             {{ step.desc }}
           </p>
 
@@ -515,7 +515,7 @@ const pillars = [
             <path d="M3 5l4 4 4-4" stroke="rgba(255,255,255,0.25)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
         </div>
-        <span class="text-[10px] font-display uppercase tracking-[0.16em] text-white/20">See a result</span>
+        <span class="text-[10px] font-display uppercase tracking-[0.16em] text-white/42">See a result</span>
       </div>
     </section>
 
@@ -538,10 +538,10 @@ const pillars = [
           style="font-size: clamp(2.2rem, 3.8vw, 3.4rem)"
         >
           Every issue.<br />
-          <span class="text-white/30">Exact fix.</span>
+          <span class="text-white/50">Exact fix.</span>
         </h2>
 
-        <p class="font-body text-white/35 leading-relaxed mb-12" style="font-size: 0.95rem; max-width: 34ch">
+        <p class="font-body text-white/55 leading-relaxed mb-12" style="font-size: 0.95rem; max-width: 34ch">
           Each failed check comes with a plain-English explanation so you know exactly what to do.
         </p>
 
@@ -549,19 +549,19 @@ const pillars = [
         <div class="flex gap-8 mb-10">
           <div>
             <div class="font-display font-bold leading-none mb-1" style="font-size: 2.8rem; letter-spacing: -0.04em; color: #ec3586">81</div>
-            <div class="text-[10px] font-display uppercase tracking-[0.12em] text-white/25">Overall</div>
+            <div class="text-[10px] font-display uppercase tracking-[0.12em] text-white/45">Overall</div>
           </div>
           <div>
             <div class="font-display font-bold leading-none mb-1" style="font-size: 2.8rem; letter-spacing: -0.04em; color: #00d4aa">94</div>
-            <div class="text-[10px] font-display uppercase tracking-[0.12em] text-white/25">Security</div>
+            <div class="text-[10px] font-display uppercase tracking-[0.12em] text-white/45">Security</div>
           </div>
           <div>
             <div class="font-display font-bold leading-none mb-1" style="font-size: 2.8rem; letter-spacing: -0.04em; color: #ffaa00">71</div>
-            <div class="text-[10px] font-display uppercase tracking-[0.12em] text-white/25">Perf</div>
+            <div class="text-[10px] font-display uppercase tracking-[0.12em] text-white/45">Perf</div>
           </div>
           <div>
             <div class="font-display font-bold leading-none mb-1" style="font-size: 2.8rem; letter-spacing: -0.04em; color: #6c5ce7">78</div>
-            <div class="text-[10px] font-display uppercase tracking-[0.12em] text-white/25">SEO</div>
+            <div class="text-[10px] font-display uppercase tracking-[0.12em] text-white/45">SEO</div>
           </div>
         </div>
 
@@ -580,7 +580,7 @@ const pillars = [
               <path d="M3 5l4 4 4-4" stroke="rgba(255,255,255,0.25)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
           </div>
-          <span class="text-[10px] font-display uppercase tracking-[0.16em] text-white/20">Pricing</span>
+          <span class="text-[10px] font-display uppercase tracking-[0.16em] text-white/42">Pricing</span>
         </div>
       </div>
 
@@ -589,8 +589,8 @@ const pillars = [
         <!-- URL bar -->
         <div class="flex items-center gap-3 mb-6 px-4 py-3 rounded-lg border border-white/[0.06]" style="background:rgba(255,255,255,0.02)">
           <div class="w-2 h-2 rounded-full bg-[#00d4aa]" />
-          <span class="font-body text-white/30 text-sm">stripe.com</span>
-          <span class="ml-auto font-display font-semibold text-xs tracking-widest text-white/20">SCAN COMPLETE</span>
+          <span class="font-body text-white/50 text-sm">stripe.com</span>
+          <span class="ml-auto font-display font-semibold text-xs tracking-widest text-white/42">SCAN COMPLETE</span>
         </div>
 
         <div
@@ -603,13 +603,13 @@ const pillars = [
           <div class="flex items-center gap-3">
             <div class="w-1.5 h-1.5 rounded-full shrink-0" :style="{ background: issue.color }" />
             <span class="font-body text-white/70 text-sm flex-1">{{ issue.title }}</span>
-            <span class="text-[9px] font-display font-semibold tracking-[0.12em] uppercase text-white/20 mr-3">{{ issue.pillar }}</span>
+            <span class="text-[9px] font-display font-semibold tracking-[0.12em] uppercase text-white/42 mr-3">{{ issue.pillar }}</span>
             <span
               class="text-[9px] font-display font-bold tracking-[0.1em] uppercase px-2 py-0.5 rounded"
               :style="{ color: issue.color, background: `${issue.color}15` }"
             >{{ issue.status }}</span>
           </div>
-          <div v-if="issue.fix" class="mt-2 ml-[21px] text-[11px] font-body text-white/25 leading-relaxed">
+          <div v-if="issue.fix" class="mt-2 ml-[21px] text-[12px] font-body text-white/48 leading-relaxed">
             {{ issue.fix }}
           </div>
         </div>
@@ -633,24 +633,33 @@ const pillars = [
             <span class="text-[11px] font-display font-semibold tracking-[0.2em] uppercase text-primary">Pricing</span>
           </div>
           <h2 class="font-display font-bold text-white leading-[0.88] tracking-[-0.04em]" style="font-size: clamp(2.2rem, 3.5vw, 3.2rem)">
-            Simple pricing.<br /><span class="text-white/25">No surprises.</span>
+            Simple pricing.<br /><span class="text-white/45">No surprises.</span>
           </h2>
         </div>
-        <!-- Toggle placeholder -->
-        <div class="flex items-center gap-3 px-4 py-2 rounded-full border border-white/[0.07]" style="background: rgba(255,255,255,0.03)">
-          <span class="text-[11px] font-display font-semibold tracking-[0.14em] uppercase text-white/50">Monthly</span>
-          <div class="w-px h-3 bg-white/10" />
-          <span class="text-[11px] font-display font-semibold tracking-[0.14em] uppercase text-white/20">Annual</span>
-        </div>
+        <!-- Billing toggle -->
+        <button
+          class="flex items-center gap-0 rounded-full border border-white/[0.1] overflow-hidden transition-colors"
+          style="background: rgba(255,255,255,0.03)"
+          @click="billingPeriod = billingPeriod === 'monthly' ? 'annual' : 'monthly'"
+        >
+          <span
+            class="text-[11px] font-display font-semibold tracking-[0.14em] uppercase px-4 py-2 transition-colors"
+            :class="billingPeriod === 'monthly' ? 'text-white bg-white/[0.08]' : 'text-white/40'"
+          >Monthly</span>
+          <span
+            class="text-[11px] font-display font-semibold tracking-[0.14em] uppercase px-4 py-2 transition-colors flex items-center gap-2"
+            :class="billingPeriod === 'annual' ? 'text-white bg-white/[0.08]' : 'text-white/40'"
+          >Annual <span class="text-[9px] font-bold tracking-[0.06em] px-1.5 py-0.5 rounded-full bg-success/15 text-success">−10%</span></span>
+        </button>
       </div>
 
       <!-- Divider -->
       <div class="relative z-10 shrink-0 h-px bg-white/[0.04]" />
 
       <!-- Plan columns — fill remaining height -->
-      <div class="relative z-10 flex-1 grid grid-cols-3 min-h-0">
+      <div class="relative z-10 flex-1 grid grid-cols-2 min-h-0">
         <div
-          v-for="(plan, i) in plans"
+          v-for="(plan, i) in displayedPlans"
           :key="plan.name"
           class="pricing-col relative flex flex-col px-12 xl:px-16 pt-10 pb-12 overflow-hidden"
           :class="[i < plans.length - 1 ? 'border-r border-white/[0.04]' : '', plan.highlight ? 'pricing-col--highlight' : '']"
@@ -672,8 +681,11 @@ const pillars = [
           <div class="mb-2">
             <div class="flex items-end gap-2 leading-none">
               <span class="font-display font-bold text-white" style="font-size: 3.8rem; letter-spacing: -0.05em; line-height: 1">{{ plan.price }}</span>
-              <span class="font-body text-white/30 text-sm pb-1.5">{{ plan.period }}</span>
+              <span class="font-body text-white/50 text-sm pb-1.5">{{ plan.period }}</span>
             </div>
+            <p v-if="billingPeriod === 'annual' && plan.highlight" class="font-body text-white/50 text-[11px] mt-1.5">
+              $162 billed annually · <span class="text-success">save $18</span>
+            </p>
           </div>
 
           <!-- Scan limit -->
@@ -687,7 +699,7 @@ const pillars = [
               <svg class="shrink-0 mt-0.5" width="13" height="13" viewBox="0 0 13 13" fill="none">
                 <path d="M2.5 6.5L5 9l5.5-5.5" :stroke="plan.accent" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
               </svg>
-              <span class="text-[13px] font-body text-white/50 leading-snug">{{ f }}</span>
+              <span class="text-[13px] font-body text-white/65 leading-snug">{{ f }}</span>
             </li>
           </ul>
 

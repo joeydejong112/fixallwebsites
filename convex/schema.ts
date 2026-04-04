@@ -41,6 +41,7 @@ export default defineSchema({
     greenHosting: v.optional(v.boolean()),
     domainExpiry: v.optional(v.string()),
     certExpiry: v.optional(v.string()),
+    aiScore: v.optional(v.number()),
     issues: v.optional(v.array(v.object({
       pillar: v.string(),
       severity: v.union(v.literal('critical'), v.literal('warning'), v.literal('pass')),

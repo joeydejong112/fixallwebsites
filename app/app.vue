@@ -5,7 +5,9 @@ import AppToast from '~/components/AppToast.vue'
 <template>
   <div>
     <NuxtRouteAnnouncer />
-    <NuxtPage />
+    <NuxtLayout>
+      <NuxtPage />
+    </NuxtLayout>
     <AppToast />
   </div>
 </template>

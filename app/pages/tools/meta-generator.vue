@@ -1,10 +1,10 @@
 <script setup lang="ts">
+definePageMeta({ layout: 'tool' })
 useHead({ title: 'Meta Tag Generator — ScanPulse Tools' })
 useSeoMeta({ description: 'Generate title, meta description, canonical, Open Graph, and Twitter Card tags instantly. Live Google snippet preview included — free.' })
 
 const { isSignedIn } = useAuth()
 
-// ── Form state ─────────────────────────────────────────────────────────────
 const form = reactive({
   title:       '',
   description: '',
@@ -21,7 +21,6 @@ const form = reactive({
 const noindex = ref(false)
 watch(noindex, v => { form.robots = v ? 'noindex, nofollow' : 'index, follow' })
 
-// ── Counters ───────────────────────────────────────────────────────────────
 const titleLen = computed(() => form.title.length)
 const descLen  = computed(() => form.description.length)
 
@@ -36,7 +35,6 @@ function descColor() {
   return 'counter--good'
 }
 
-// ── Generated HTML ─────────────────────────────────────────────────────────
 const generatedHtml = computed(() => {
   const lines: string[] = []
   lines.push(`<meta charset="${form.charset}">`)
@@ -48,7 +46,6 @@ const generatedHtml = computed(() => {
   return lines.join('\n')
 })
 
-// ── Copy ───────────────────────────────────────────────────────────────────
 const copied = ref(false)
 async function copyAll() {
   await navigator.clipboard.writeText(generatedHtml.value)
@@ -56,7 +53,6 @@ async function copyAll() {
   setTimeout(() => copied.value = false, 2000)
 }
 
-// ── Google preview helpers ─────────────────────────────────────────────────
 const previewTitle = computed(() =>
   form.title || 'Page Title'
 )
@@ -75,7 +71,6 @@ const previewUrlDisplay = computed(() => {
   }
 })
 
-// ── OG image preview ──────────────────────────────────────────────────────
 const ogImageValid = ref(false)
 watch(() => form.ogImage, url => {
   if (!url) { ogImageValid.value = false; return }
@@ -84,20 +79,29 @@ watch(() => form.ogImage, url => {
   img.onerror = () => ogImageValid.value = false
   img.src = url
 })
+
+// Syntax highlight the generated HTML
+const highlightedHtml = computed(() => {
+  return generatedHtml.value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    // Tag names: <meta, <title, <link, </title>
+    .replace(/(&lt;\/?)([\w]+)/g, '<span class="hl-tag">$1$2</span>')
+    // Attribute names
+    .replace(/\s([\w-]+)=/g, ' <span class="hl-attr">$1</span>=')
+    // Attribute values (quoted)
+    .replace(/="([^"]*?)"/g, '="<span class="hl-val">$1</span>"')
+})
 </script>
 
 <template>
   <div class="page-bg">
-    <NavBar />
-
     <div class="tool-shell">
-
-      <!-- Back -->
-      <NuxtLink to="/tools" class="back-link">← All Tools</NuxtLink>
 
       <!-- Header -->
       <div class="tool-header">
-        <div class="tool-badge" style="color:#6c5ce7;background:rgba(108,92,231,0.1)">
+        <div class="tool-badge">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M9.4 16.6L4.8 12l4.6-4.6L8 6l-6 6 6 6 1.4-1.4zm5.2 0l4.6-4.6-4.6-4.6L16 6l6 6-6 6-1.4-1.4z"/></svg>
           SEO
         </div>
@@ -108,10 +112,13 @@ watch(() => form.ogImage, url => {
       <!-- Two-column layout -->
       <div class="tool-columns">
 
-        <!-- ── Left: form ──────────────────────────────────────────── -->
+        <!-- Left: form -->
         <div class="tool-form-col">
           <div class="form-card">
-            <h2 class="form-section-title">Page details</h2>
+            <h2 class="form-section-title">
+              <span class="section-dot" />
+              Page details
+            </h2>
 
             <!-- Title -->
             <div class="field">
@@ -192,9 +199,12 @@ watch(() => form.ogImage, url => {
           </div>
 
           <!-- Pro: OG / Twitter -->
-          <div class="form-card" style="margin-top:16px">
+          <div class="form-card">
             <div class="form-section-header">
-              <h2 class="form-section-title" style="margin:0">Social sharing</h2>
+              <h2 class="form-section-title" style="margin:0">
+                <span class="section-dot" />
+                Social sharing
+              </h2>
               <span class="pro-badge">Pro</span>
             </div>
 
@@ -225,12 +235,15 @@ watch(() => form.ogImage, url => {
           </div>
         </div>
 
-        <!-- ── Right: output + preview ─────────────────────────────── -->
+        <!-- Right: output + preview -->
         <div class="tool-output-col">
 
           <!-- Google snippet preview -->
           <div class="preview-card">
-            <p class="preview-label">Google search preview</p>
+            <div class="output-title-row">
+              <span class="output-dot" />
+              <p class="preview-label">Google search preview</p>
+            </div>
             <div class="google-snippet">
               <div class="snippet-site">
                 <div class="snippet-favicon">G</div>
@@ -246,25 +259,31 @@ watch(() => form.ogImage, url => {
           <!-- Generated HTML -->
           <div class="output-card">
             <div class="output-header">
-              <p class="output-label">Generated HTML</p>
+              <div class="output-title-row">
+                <span class="output-dot" />
+                <p class="output-label">Generated HTML</p>
+              </div>
               <button class="copy-btn" @click="copyAll">
                 <svg v-if="!copied" width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
                 <svg v-else width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
                 {{ copied ? 'Copied!' : 'Copy all' }}
               </button>
             </div>
-            <pre class="output-code">{{ generatedHtml }}</pre>
+            <pre class="output-code" v-html="highlightedHtml" />
           </div>
 
           <!-- Pro: Platform-specific tabs -->
-          <div class="output-card" style="margin-top:16px">
+          <div class="output-card">
             <div class="output-header">
-              <p class="output-label">Platform-specific output</p>
+              <div class="output-title-row">
+                <span class="output-dot" />
+                <p class="output-label">Platform-specific output</p>
+              </div>
               <span class="pro-badge">Pro</span>
             </div>
             <ProGate feature="Get Next.js, Nuxt & WordPress output">
-              <div style="padding:20px">
-                <p style="font-family:'Space Grotesk',sans-serif;font-size:12px;color:rgba(255,255,255,0.3)">Next.js metadata, Nuxt useSeoMeta, WordPress Yoast formats...</p>
+              <div class="pro-placeholder">
+                <p>Next.js metadata, Nuxt useSeoMeta, WordPress Yoast formats...</p>
               </div>
             </ProGate>
           </div>
@@ -284,22 +303,8 @@ watch(() => form.ogImage, url => {
 .tool-shell {
   max-width: 1080px;
   margin: 0 auto;
-  padding: 100px 24px 80px;
+  padding: 48px 28px 80px;
 }
-
-/* ── Back link ───────────────────────────────────────────── */
-.back-link {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-family: 'DM Sans', sans-serif;
-  font-size: 13px;
-  color: rgba(255, 255, 255, 0.3);
-  text-decoration: none;
-  margin-bottom: 32px;
-  transition: color 0.15s ease;
-}
-.back-link:hover { color: rgba(255, 255, 255, 0.7); }
 
 /* ── Tool header ─────────────────────────────────────────── */
 .tool-header { margin-bottom: 36px; }
@@ -313,6 +318,9 @@ watch(() => form.ogImage, url => {
   font-weight: 700;
   letter-spacing: 0.16em;
   text-transform: uppercase;
+  color: #6c5ce7;
+  background: rgba(108, 92, 231, 0.1);
+  border: 1px solid rgba(108, 92, 231, 0.2);
   padding: 4px 10px;
   border-radius: 3px;
   margin-bottom: 12px;
@@ -330,7 +338,7 @@ watch(() => form.ogImage, url => {
 .tool-subtitle {
   font-family: 'DM Sans', sans-serif;
   font-size: 15px;
-  color: rgba(255, 255, 255, 0.38);
+  color: rgba(255, 255, 255, 0.60);
   line-height: 1.6;
   max-width: 580px;
 }
@@ -352,22 +360,45 @@ watch(() => form.ogImage, url => {
   align-items: start;
 }
 
+.tool-form-col {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.tool-output-col {
+  position: sticky;
+  top: 88px;
+  max-height: calc(100vh - 104px);
+  overflow-y: auto;
+  scrollbar-width: none;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.tool-output-col::-webkit-scrollbar { display: none; }
+
 @media (max-width: 768px) {
   .tool-columns { grid-template-columns: 1fr; }
+  .tool-output-col { position: static; max-height: none; }
 }
 
 /* ── Form card ───────────────────────────────────────────── */
 .form-card {
-  background: #0f0f14;
+  background: #0c0c12;
   border: 1px solid rgba(255, 255, 255, 0.06);
   border-radius: 12px;
-  padding: 24px;
+  padding: 22px;
   display: flex;
   flex-direction: column;
   gap: 20px;
 }
 
 .form-section-title {
+  display: flex;
+  align-items: center;
+  gap: 7px;
   font-family: 'Space Grotesk', sans-serif;
   font-size: 11px;
   font-weight: 700;
@@ -377,11 +408,18 @@ watch(() => form.ogImage, url => {
   margin: 0;
 }
 
+.section-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #6c5ce7;
+  flex-shrink: 0;
+}
+
 .form-section-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 4px;
 }
 
 /* ── Fields ──────────────────────────────────────────────── */
@@ -395,9 +433,9 @@ watch(() => form.ogImage, url => {
 
 .field-label {
   font-family: 'Space Grotesk', sans-serif;
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 600;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
   color: rgba(255, 255, 255, 0.4);
 }
@@ -416,15 +454,15 @@ watch(() => form.ogImage, url => {
   box-sizing: border-box;
 }
 
-.field-input:focus { border-color: rgba(236, 53, 134, 0.4); }
+.field-input:focus { border-color: rgba(108, 92, 231, 0.4); }
 .field-input::placeholder { color: rgba(255, 255, 255, 0.18); }
 .field-textarea { resize: vertical; min-height: 72px; }
 .field-select { cursor: pointer; }
 
 .field-hint {
   font-family: 'DM Sans', sans-serif;
-  font-size: 11px;
-  color: rgba(255, 255, 255, 0.22);
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.50);
   margin: 0;
 }
 
@@ -481,7 +519,7 @@ watch(() => form.ogImage, url => {
   transition: background 0.2s ease;
   flex-shrink: 0;
 }
-.toggle-input:checked + .toggle-track { background: #ec3586; }
+.toggle-input:checked + .toggle-track { background: #6c5ce7; }
 .toggle-thumb {
   position: absolute;
   top: 3px;
@@ -509,13 +547,27 @@ watch(() => form.ogImage, url => {
 }
 .og-thumb img { width: 100%; height: 100%; object-fit: cover; }
 
+/* ── Output title row (dot + label) ─────────────────────── */
+.output-title-row {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.output-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #6c5ce7;
+  flex-shrink: 0;
+}
+
 /* ── Google snippet preview ──────────────────────────────── */
 .preview-card {
-  background: #0f0f14;
+  background: #0c0c12;
   border: 1px solid rgba(255, 255, 255, 0.06);
   border-radius: 12px;
   padding: 20px 24px;
-  margin-bottom: 16px;
 }
 
 .preview-label {
@@ -524,8 +576,8 @@ watch(() => form.ogImage, url => {
   font-weight: 700;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.25);
-  margin-bottom: 16px;
+  color: rgba(255, 255, 255, 0.45);
+  margin: 0 0 14px;
 }
 
 .google-snippet {
@@ -591,7 +643,7 @@ watch(() => form.ogImage, url => {
 
 /* ── Output card ─────────────────────────────────────────── */
 .output-card {
-  background: #0f0f14;
+  background: #0c0c12;
   border: 1px solid rgba(255, 255, 255, 0.06);
   border-radius: 12px;
   overflow: hidden;
@@ -611,7 +663,7 @@ watch(() => form.ogImage, url => {
   font-weight: 700;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.25);
+  color: rgba(255, 255, 255, 0.45);
   margin: 0;
 }
 
@@ -623,25 +675,41 @@ watch(() => form.ogImage, url => {
   font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.04em;
-  color: #ec3586;
-  background: rgba(236, 53, 134, 0.08);
-  border: 1px solid rgba(236, 53, 134, 0.2);
+  color: #6c5ce7;
+  background: rgba(108, 92, 231, 0.08);
+  border: 1px solid rgba(108, 92, 231, 0.2);
   border-radius: 4px;
   padding: 5px 10px;
   cursor: pointer;
   transition: background 0.15s ease;
 }
-.copy-btn:hover { background: rgba(236, 53, 134, 0.15); }
+.copy-btn:hover { background: rgba(108, 92, 231, 0.16); }
 
 .output-code {
   font-family: 'Fira Mono', 'Cascadia Code', monospace;
   font-size: 12px;
-  color: rgba(255, 255, 255, 0.65);
+  color: rgba(255, 255, 255, 0.7);
   line-height: 1.7;
   padding: 18px;
   margin: 0;
   white-space: pre-wrap;
   word-break: break-all;
+}
+
+/* Syntax highlighting */
+.output-code :deep(.hl-tag)  { color: #79b8ff; }
+.output-code :deep(.hl-attr) { color: #b392f0; }
+.output-code :deep(.hl-val)  { color: #85e89d; }
+
+/* ── Pro placeholder ─────────────────────────────────────── */
+.pro-placeholder {
+  padding: 20px;
+}
+.pro-placeholder p {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 12px;
+  color: rgba(255,255,255,0.50);
+  margin: 0;
 }
 
 /* ── Pro badge ───────────────────────────────────────────── */

@@ -1,11 +1,11 @@
 <script setup lang="ts">
+definePageMeta({ layout: 'tool' })
 useHead({ title: 'Color Contrast Checker — ScanPulse Tools' })
 useSeoMeta({ description: 'Check foreground/background contrast ratios against WCAG 2.1 AA and AAA with live preview. Supports Hex, RGB, and HSL input — free.' })
 
 const fg = ref('#ffffff')
 const bg = ref('#1a1a2e')
 
-// ── Color parsing ─────────────────────────────────────────────────────────
 function hexToRgb(hex: string): [number, number, number] | null {
   const clean = hex.replace('#', '')
   if (clean.length !== 3 && clean.length !== 6) return null
@@ -67,21 +67,22 @@ function ratingColor(): string {
 
 <template>
   <div class="page-bg">
-    <NavBar />
     <div class="tool-shell">
 
-      <NuxtLink to="/tools" class="back-link">← All Tools</NuxtLink>
-
       <div class="tool-header">
-        <div class="tool-badge" style="color:#a29bfe;background:rgba(162,155,254,0.1)">Accessibility</div>
+        <div class="tool-badge">Accessibility</div>
         <h1 class="tool-title">Color Contrast Checker</h1>
         <p class="tool-subtitle">Calculate WCAG 2.1 contrast ratios instantly. See pass/fail for AA and AAA at normal and large text sizes, with a live preview.</p>
       </div>
 
       <div class="checker-grid">
 
-        <!-- ── Pickers ─────────────────────────────────────────────── -->
+        <!-- Pickers -->
         <div class="pickers-card">
+          <div class="card-section-label">
+            <span class="section-dot"></span>
+            Color pair
+          </div>
           <div class="picker-row">
             <div class="picker-group">
               <label class="picker-label">Foreground (text)</label>
@@ -91,7 +92,7 @@ function ratingColor(): string {
               </div>
             </div>
             <div class="picker-swap">
-              <button class="swap-btn" @click="[fg, bg] = [bg, fg]">
+              <button class="swap-btn" @click="[fg, bg] = [bg, fg]" title="Swap colors">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M16 17.01V10h-2v7.01h-3L15 21l4-3.99h-3zM9 3L5 6.99h3V14h2V6.99h3L9 3z"/></svg>
               </button>
             </div>
@@ -105,29 +106,40 @@ function ratingColor(): string {
           </div>
         </div>
 
-        <!-- ── Ratio display ───────────────────────────────────────── -->
+        <!-- Ratio display -->
         <div class="ratio-card" :style="{ background: bg }">
           <div class="ratio-inner">
             <p class="ratio-number" :style="{ color: fg }">{{ ratioDisplay }}</p>
-            <p class="ratio-rating" :style="{ color: ratingColor() }">{{ ratingLabel() }}</p>
+            <p class="ratio-label" :style="{ color: fg, opacity: 0.5 }">contrast ratio</p>
+            <div class="ratio-rating-pill" :style="{ color: ratingColor(), background: `${ratingColor()}18`, border: `1px solid ${ratingColor()}33` }">
+              {{ ratingLabel() }}
+            </div>
           </div>
         </div>
 
-        <!-- ── Live preview ────────────────────────────────────────── -->
+        <!-- Live preview -->
         <div class="preview-card" :style="{ background: bg }">
-          <p class="preview-text" :style="{ color: fg, fontSize: '16px' }">Normal text — The quick brown fox jumps over the lazy dog.</p>
-          <p class="preview-text" :style="{ color: fg, fontSize: '24px', fontWeight: '700', marginTop: '12px' }">Large text (24px bold)</p>
-          <p class="preview-text preview-small" :style="{ color: fg }">Small text 12px — harder to read at low contrast</p>
+          <div class="preview-stack">
+            <p class="preview-text" :style="{ color: fg, fontSize: '16px', lineHeight: '1.5' }">Normal text — The quick brown fox jumps over the lazy dog.</p>
+            <p class="preview-text" :style="{ color: fg, fontSize: '24px', fontWeight: '700', lineHeight: '1.3' }">Large text (24px bold)</p>
+            <p class="preview-text" :style="{ color: fg, fontSize: '12px', lineHeight: '1.5', opacity: 0.85 }">Small text 12px — harder to read at low contrast</p>
+          </div>
         </div>
 
-        <!-- ── WCAG checks ─────────────────────────────────────────── -->
+        <!-- WCAG checks -->
         <div class="checks-card">
-          <p class="checks-title">WCAG 2.1 Results</p>
+          <div class="card-section-label">
+            <span class="section-dot"></span>
+            WCAG 2.1 Results
+          </div>
           <div class="checks-list">
             <div v-for="check in checks" :key="check.label" class="check-row">
               <div class="check-info">
                 <span class="check-label">{{ check.label }}</span>
-                <span class="check-threshold">≥ {{ check.threshold }}:1</span>
+                <span class="check-meta">
+                  <span class="check-size">{{ check.size }}</span>
+                  <span class="check-threshold">≥ {{ check.threshold }}:1</span>
+                </span>
               </div>
               <span
                 class="check-badge"
@@ -139,10 +151,13 @@ function ratingColor(): string {
           </div>
         </div>
 
-        <!-- ── Pro features ────────────────────────────────────────── -->
+        <!-- Pro features -->
         <div class="pro-section">
           <div class="pro-header">
-            <span class="pro-label">Advanced</span>
+            <div class="pro-header-left">
+              <span class="section-dot section-dot--pink"></span>
+              <span class="pro-label">Advanced</span>
+            </div>
             <span class="pro-badge">Pro</span>
           </div>
           <ProGate feature="Auto color suggestions & colorblind simulation">
@@ -159,22 +174,18 @@ function ratingColor(): string {
 
 <style scoped>
 .page-bg { min-height: 100vh; background: #07070a; }
-.tool-shell { max-width: 860px; margin: 0 auto; padding: 100px 24px 80px; }
+.tool-shell { max-width: 860px; margin: 0 auto; padding: 48px 28px 80px; }
 
-.back-link {
-  display: inline-flex; align-items: center; gap: 6px;
-  font-family: 'DM Sans', sans-serif; font-size: 13px;
-  color: rgba(255,255,255,0.3); text-decoration: none;
-  margin-bottom: 32px; transition: color 0.15s;
-}
-.back-link:hover { color: rgba(255,255,255,0.7); }
-
+/* Header */
 .tool-header { margin-bottom: 32px; }
 .tool-badge {
   display: inline-flex; align-items: center; gap: 5px;
   font-family: 'Space Grotesk', sans-serif; font-size: 9px; font-weight: 700;
   letter-spacing: 0.16em; text-transform: uppercase;
   padding: 4px 10px; border-radius: 3px; margin-bottom: 12px;
+  color: #a29bfe;
+  background: rgba(162, 155, 254, 0.1);
+  border: 1px solid rgba(162, 155, 254, 0.2);
 }
 .tool-title {
   font-family: 'Space Grotesk', sans-serif;
@@ -183,131 +194,168 @@ function ratingColor(): string {
 }
 .tool-subtitle {
   font-family: 'DM Sans', sans-serif; font-size: 15px;
-  color: rgba(255,255,255,0.38); line-height: 1.6; max-width: 560px;
+  color: rgba(255,255,255,0.60); line-height: 1.6; max-width: 560px;
 }
 
-/* ── Grid ────────────────────────────────────────────────── */
+/* Section dot + label */
+.card-section-label {
+  display: flex; align-items: center; gap: 7px;
+  font-family: 'Space Grotesk', sans-serif; font-size: 10px; font-weight: 700;
+  letter-spacing: 0.13em; text-transform: uppercase;
+  color: rgba(255,255,255,0.45); margin-bottom: 16px;
+}
+.section-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: #a29bfe; flex-shrink: 0;
+}
+.section-dot--pink { background: #ec3586; }
+
+/* Grid */
 .checker-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  grid-template-rows: auto;
   gap: 16px;
 }
 @media (max-width: 640px) { .checker-grid { grid-template-columns: 1fr; } }
 
-/* ── Pickers ─────────────────────────────────────────────── */
+/* Pickers card */
 .pickers-card {
   grid-column: 1 / -1;
-  background: #0f0f14; border: 1px solid rgba(255,255,255,0.06);
-  border-radius: 12px; padding: 20px 24px;
+  background: #0c0c12;
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 12px;
+  padding: 20px 24px;
 }
 .picker-row {
-  display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+  display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
 }
 .picker-group { display: flex; flex-direction: column; gap: 8px; flex: 1; min-width: 140px; }
 .picker-label {
   font-family: 'Space Grotesk', sans-serif; font-size: 10px; font-weight: 700;
-  letter-spacing: 0.12em; text-transform: uppercase; color: rgba(255,255,255,0.3);
+  letter-spacing: 0.12em; text-transform: uppercase; color: rgba(255,255,255,0.45);
 }
-.picker-inputs { display: flex; align-items: center; gap: 8px; }
+.picker-inputs { display: flex; align-items: center; gap: 10px; }
 .color-swatch {
-  width: 40px; height: 40px; border-radius: 8px;
-  border: 1px solid rgba(255,255,255,0.1); cursor: pointer; padding: 0;
-  background: none;
+  width: 48px; height: 48px; border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.12); cursor: pointer; padding: 0;
+  background: none; flex-shrink: 0;
 }
 .hex-input {
-  flex: 1; background: rgba(255,255,255,0.04);
+  flex: 1;
+  background: rgba(255,255,255,0.04);
   border: 1px solid rgba(255,255,255,0.08);
-  border-radius: 6px; padding: 8px 10px;
+  border-radius: 6px; padding: 10px 12px;
   font-family: 'Fira Mono', monospace; font-size: 13px;
   color: rgba(255,255,255,0.7); outline: none;
 }
 .hex-input:focus { border-color: rgba(162,155,254,0.4); }
 
-.picker-swap { display: flex; align-items: center; }
+.picker-swap { display: flex; align-items: center; flex-shrink: 0; }
 .swap-btn {
-  width: 36px; height: 36px; border-radius: 50%;
-  background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08);
-  color: rgba(255,255,255,0.4); cursor: pointer; display: flex;
-  align-items: center; justify-content: center; transition: all 0.15s;
+  width: 40px; height: 40px; border-radius: 50%;
+  background: rgba(162,155,254,0.08);
+  border: 1px solid rgba(162,155,254,0.2);
+  color: #a29bfe; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.15s;
 }
-.swap-btn:hover { background: rgba(255,255,255,0.1); color: white; }
+.swap-btn:hover { background: rgba(162,155,254,0.18); }
 
-/* ── Ratio card ──────────────────────────────────────────── */
+/* Ratio card */
 .ratio-card {
   border-radius: 12px; overflow: hidden;
   display: flex; align-items: center; justify-content: center;
-  min-height: 120px; border: 1px solid rgba(255,255,255,0.06);
+  min-height: 160px;
+  border: 1px solid rgba(255,255,255,0.07);
   transition: background 0.15s;
+  padding: 28px 20px;
 }
-.ratio-inner { text-align: center; }
+.ratio-inner { text-align: center; display: flex; flex-direction: column; align-items: center; gap: 4px; }
 .ratio-number {
   font-family: 'Space Grotesk', sans-serif;
-  font-size: 2.4rem; font-weight: 800; letter-spacing: -0.04em;
-  margin: 0; transition: color 0.15s;
+  font-size: 3.2rem; font-weight: 800; letter-spacing: -0.04em;
+  margin: 0; transition: color 0.15s; line-height: 1;
 }
-.ratio-rating {
+.ratio-label {
+  font-family: 'DM Sans', sans-serif; font-size: 11px;
+  margin: 0 0 8px; transition: color 0.15s;
+}
+.ratio-rating-pill {
   font-family: 'Space Grotesk', sans-serif;
-  font-size: 11px; font-weight: 700; letter-spacing: 0.14em;
-  text-transform: uppercase; margin: 4px 0 0; transition: color 0.15s;
+  font-size: 10px; font-weight: 700; letter-spacing: 0.14em;
+  text-transform: uppercase;
+  padding: 3px 12px; border-radius: 20px;
+  transition: all 0.15s;
 }
 
-/* ── Preview card ────────────────────────────────────────── */
+/* Preview card */
 .preview-card {
   border-radius: 12px; padding: 24px;
-  border: 1px solid rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.07);
   transition: background 0.15s;
+  display: flex; align-items: flex-start;
+}
+.preview-stack {
+  display: flex; flex-direction: column; gap: 12px; width: 100%;
 }
 .preview-text {
-  font-family: 'DM Sans', sans-serif; line-height: 1.5; margin: 0;
+  font-family: 'DM Sans', sans-serif; margin: 0;
   transition: color 0.15s;
 }
-.preview-small { font-size: 12px; margin-top: 10px !important; }
 
-/* ── WCAG checks ─────────────────────────────────────────── */
+/* WCAG checks */
 .checks-card {
-  background: #0f0f14; border: 1px solid rgba(255,255,255,0.06);
+  background: #0c0c12;
+  border: 1px solid rgba(255,255,255,0.07);
   border-radius: 12px; padding: 20px;
-}
-.checks-title {
-  font-family: 'Space Grotesk', sans-serif; font-size: 10px; font-weight: 700;
-  letter-spacing: 0.14em; text-transform: uppercase;
-  color: rgba(255,255,255,0.25); margin: 0 0 14px;
 }
 .checks-list { display: flex; flex-direction: column; gap: 10px; }
 .check-row {
-  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
 }
-.check-info { display: flex; flex-direction: column; gap: 2px; }
+.check-info { display: flex; flex-direction: column; gap: 3px; }
 .check-label {
   font-family: 'DM Sans', sans-serif; font-size: 13px;
-  color: rgba(255,255,255,0.65);
+  color: rgba(255,255,255,0.7);
+}
+.check-meta { display: flex; align-items: center; gap: 8px; }
+.check-size {
+  font-family: 'Fira Mono', monospace; font-size: 10px;
+  color: rgba(255,255,255,0.50);
 }
 .check-threshold {
   font-family: 'Fira Mono', monospace; font-size: 10px;
-  color: rgba(255,255,255,0.22);
+  color: rgba(255,255,255,0.45);
 }
 .check-badge {
   font-family: 'Space Grotesk', sans-serif; font-size: 10px; font-weight: 700;
   letter-spacing: 0.1em; text-transform: uppercase;
   padding: 3px 10px; border-radius: 20px; flex-shrink: 0;
 }
-.check-badge--pass { color: #00d4aa; background: rgba(0,212,170,0.1); }
-.check-badge--fail { color: #ff4757; background: rgba(255,71,87,0.1); }
+.check-badge--pass {
+  color: #00d4aa; background: rgba(0,212,170,0.1);
+  border: 1px solid rgba(0,212,170,0.2);
+}
+.check-badge--fail {
+  color: #ff4757; background: rgba(255,71,87,0.1);
+  border: 1px solid rgba(255,71,87,0.2);
+}
 
-/* ── Pro ─────────────────────────────────────────────────── */
+/* Pro */
 .pro-section {
   grid-column: 1 / -1;
-  background: #0f0f14; border: 1px solid rgba(255,255,255,0.06);
+  background: #0c0c12;
+  border: 1px solid rgba(255,255,255,0.07);
   border-radius: 12px; overflow: hidden;
 }
 .pro-header {
   display: flex; align-items: center; justify-content: space-between;
   padding: 13px 18px; border-bottom: 1px solid rgba(255,255,255,0.04);
 }
+.pro-header-left { display: flex; align-items: center; gap: 7px; }
 .pro-label {
   font-family: 'Space Grotesk', sans-serif; font-size: 10px; font-weight: 700;
-  letter-spacing: 0.14em; text-transform: uppercase; color: rgba(255,255,255,0.25);
+  letter-spacing: 0.14em; text-transform: uppercase; color: rgba(255,255,255,0.45);
 }
 .pro-badge {
   font-family: 'Space Grotesk', sans-serif; font-size: 8px; font-weight: 700;
@@ -318,6 +366,6 @@ function ratingColor(): string {
 .pro-placeholder { padding: 20px; }
 .pro-placeholder-text {
   font-family: 'DM Sans', sans-serif; font-size: 12px;
-  color: rgba(255,255,255,0.2); margin: 0; line-height: 1.5;
+  color: rgba(255,255,255,0.50); margin: 0; line-height: 1.5;
 }
 </style>

@@ -36,7 +36,7 @@ const clerkAppearance = useClerkAppearance()
             <div class="live-core" />
           </div>
           <span
-            class="font-display text-white/30 tracking-[0.1em] uppercase"
+            class="font-display text-white/50 tracking-[0.1em] uppercase"
             style="font-size:11px"
           >3,847 scans today</span>
         </div>
@@ -137,7 +137,7 @@ const clerkAppearance = useClerkAppearance()
   font-family: 'DM Sans', sans-serif;
   font-size: 14px;
   font-weight: 400;
-  color: rgba(255, 255, 255, 0.42);
+  color: rgba(255, 255, 255, 0.58);
   letter-spacing: 0.01em;
   transition: color 0.15s ease;
   text-decoration: none;

@@ -269,7 +269,7 @@ function relativeTime(ts: number) {
             <div class="w-7 h-px bg-primary" />
             <span class="text-[11px] font-display font-semibold tracking-[0.2em] uppercase text-primary">Monitored Sites</span>
           </div>
-          <span class="font-body text-white/20 text-[12px]">{{ monitors.length }} active</span>
+          <span class="font-body text-white/42 text-[12px]">{{ monitors.length }} active</span>
         </div>
 
         <!-- Empty state -->
@@ -281,8 +281,8 @@ function relativeTime(ts: number) {
           <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="mb-4">
             <path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
           </svg>
-          <p class="font-display font-semibold text-white/25 text-[14px] mb-1">No sites monitored yet</p>
-          <p class="font-body text-white/15 text-[13px]">Scan a site and toggle the Watch button to start monitoring.</p>
+          <p class="font-display font-semibold text-white/48 text-[14px] mb-1">No sites monitored yet</p>
+          <p class="font-body text-white/38 text-[13px]">Scan a site and toggle the Watch button to start monitoring.</p>
         </div>
 
         <!-- Monitor cards -->
@@ -311,7 +311,7 @@ function relativeTime(ts: number) {
             <!-- Score + trend -->
             <div class="flex items-end justify-between mb-4">
               <div>
-                <div class="font-body text-white/25 text-[10px] uppercase tracking-[0.14em] mb-1">Overall score</div>
+                <div class="font-body text-white/45 text-[10px] uppercase tracking-[0.14em] mb-1">Overall score</div>
                 <div class="flex items-baseline gap-2">
                   <span
                     class="font-display font-bold leading-none"
@@ -334,13 +334,13 @@ function relativeTime(ts: number) {
 
             <!-- Last checked + actions -->
             <div class="flex items-center justify-between pt-3 border-t border-white/[0.05]">
-              <span class="font-body text-white/25 text-[12px]">
+              <span class="font-body text-white/45 text-[12px]">
                 {{ m.lastRunTime ? 'Checked ' + relativeTime(m.lastRunTime) : 'Not yet checked' }}
               </span>
               <div class="flex items-center gap-2">
                 <NuxtLink
                   :to="`/results?url=${encodeURIComponent(m.url)}`"
-                  class="font-body text-white/35 hover:text-white/70 text-[12px] transition-colors"
+                  class="font-body text-white/52 hover:text-white/80 text-[12px] transition-colors"
                 >View →</NuxtLink>
                 <button
                   class="font-body text-white/20 hover:text-danger text-[12px] transition-colors opacity-0 group-hover:opacity-100"
@@ -357,7 +357,7 @@ function relativeTime(ts: number) {
         <!-- Section label & Filter -->
         <div class="flex items-center justify-between mb-5">
           <div class="flex items-center gap-3">
-            <span class="text-[11px] font-display font-semibold tracking-[0.18em] uppercase text-white/30 hidden sm:inline-block">Recent scans</span>
+            <span class="text-[11px] font-display font-semibold tracking-[0.18em] uppercase text-white/50 hidden sm:inline-block">Recent scans</span>
           </div>
           
           <div class="flex items-center gap-1 bg-white/[0.03] p-1 rounded-lg border border-white/[0.04]">
@@ -366,7 +366,7 @@ function relativeTime(ts: number) {
               :key="f"
               @click="filterStatus = f as any"
               class="px-3 py-1.5 rounded-md text-[11px] font-display font-semibold tracking-[0.1em] uppercase transition-colors"
-              :class="filterStatus === f ? 'bg-primary text-white shadow-sm' : 'text-white/40 hover:text-white/80'"
+              :class="filterStatus === f ? 'bg-primary text-white shadow-sm' : 'text-white/55 hover:text-white/85'"
             >
               {{ f }}
             </button>
@@ -385,9 +385,9 @@ function relativeTime(ts: number) {
           style="background: rgba(255,255,255,0.01)"
         >
           <Logo :animate="false" class="w-12 h-12 mb-5 opacity-20" />
-          <p class="font-display font-semibold text-white/30 mb-1.5">No scans found</p>
-          <p v-if="scans.length" class="text-white/20 text-sm font-body">No scans match the current filter.</p>
-          <p v-else class="text-white/20 text-sm font-body">Enter a URL above to scan your first site.</p>
+          <p class="font-display font-semibold text-white/50 mb-1.5">No scans found</p>
+          <p v-if="scans.length" class="text-white/40 text-sm font-body">No scans match the current filter.</p>
+          <p v-else class="text-white/40 text-sm font-body">Enter a URL above to scan your first site.</p>
           <button v-if="scans.length" @click="filterStatus = 'all'" class="mt-4 text-[12px] font-display text-primary hover:text-primary-hover">
             Clear filter
           </button>
@@ -431,7 +431,7 @@ function relativeTime(ts: number) {
                       'text-danger/70':  scan.status === 'error',
                     }"
                   >{{ statusLabel(scan.status) }}</span>
-                  <span v-if="scan._creationTime" class="text-white/20 text-[11px] font-body">
+                  <span v-if="scan._creationTime" class="text-white/40 text-[11px] font-body">
                     · {{ relativeTime(scan._creationTime) }}
                   </span>
                 </div>
@@ -572,7 +572,7 @@ function relativeTime(ts: number) {
   font-weight: 600;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: rgba(255,255,255,0.25);
+  color: rgba(255,255,255,0.45);
 }
 
 /* ── Monitor card ────────────────────────────────────── */

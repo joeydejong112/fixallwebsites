@@ -1,20 +1,41 @@
 <script setup lang="ts">
+import { ref, onMounted } from 'vue'
+
 defineProps<{
   feature?: string
 }>()
+
+const { client, api } = useConvex()
+const { userId } = useAuth()
+
+const isPro = ref(false)
+const loading = ref(true)
+
+onMounted(async () => {
+  if (!userId.value) { loading.value = false; return }
+  try {
+    const user = await client.query(api.users.getUserByClerkId, { clerkId: userId.value })
+    isPro.value = user?.plan === 'pro'
+  } catch {
+    isPro.value = false
+  } finally {
+    loading.value = false
+  }
+})
 </script>
 
 <template>
-  <div class="pro-gate-wrapper">
-    <!-- Slot content (blurred beneath overlay) -->
+  <!-- Pro users: render content directly -->
+  <slot v-if="isPro || loading" />
+
+  <!-- Free users: blurred content + upgrade overlay -->
+  <div v-else class="pro-gate-wrapper">
     <div class="pro-gate-content">
       <slot />
     </div>
 
-    <!-- Overlay -->
     <div class="pro-gate-overlay">
       <div class="pro-gate-card">
-        <!-- Lock icon -->
         <div class="pro-gate-icon">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
             <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/>
@@ -41,6 +62,9 @@ defineProps<{
   position: relative;
   overflow: hidden;
   border-radius: inherit;
+  min-height: 240px;
+  display: flex;
+  flex-direction: column;
 }
 
 .pro-gate-content {
@@ -48,6 +72,7 @@ defineProps<{
   pointer-events: none;
   user-select: none;
   opacity: 0.4;
+  flex: 1;
 }
 
 .pro-gate-overlay {

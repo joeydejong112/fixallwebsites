@@ -49,7 +49,8 @@ const plan         = computed(() => convexUser.value?.plan ?? 'free')
 
 // ── Billing tab ───────────────────────────────────────────
 const FREE_SCAN_LIMIT = 1
-const billingLoading  = ref(false)
+const billingLoading        = ref(false)
+const settingsBillingPeriod = ref<'monthly' | 'annual'>('monthly')
 
 const scanCount       = computed(() => convexUser.value?.scanCount ?? 0)
 const scansRemaining  = computed(() => plan.value === 'pro' ? Infinity : Math.max(0, FREE_SCAN_LIMIT - scanCount.value))
@@ -152,8 +153,9 @@ async function handleBillingAction() {
   if (!userId.value) return
   billingLoading.value = true
   try {
-    const action = plan.value === 'pro' ? api.stripe.portal : api.stripe.pay
-    const url = await client.action(action as any, { clerkId: userId.value })
+    const url = plan.value === 'pro'
+      ? await client.action(api.stripe.portal as any, { clerkId: userId.value })
+      : await client.action(api.stripe.pay as any, { clerkId: userId.value, annual: settingsBillingPeriod.value === 'annual' })
     window.location.href = url
   } catch {
     toast.error('Failed to connect to billing portal. Please try again.')
@@ -191,7 +193,7 @@ async function handleBillingAction() {
             Dashboard
           </NuxtLink>
           <p class="font-display font-bold text-white tracking-[-0.03em] mt-4" style="font-size:1.35rem">Settings</p>
-          <p class="font-body text-white/30 text-[13px] mt-1">Manage your account</p>
+          <p class="font-body text-white/50 text-[13px] mt-1">Manage your account</p>
         </div>
 
         <!-- Nav list (desktop vertical) -->
@@ -270,7 +272,7 @@ async function handleBillingAction() {
               <!-- Name + email -->
               <div class="flex-1 min-w-0">
                 <div class="font-display font-semibold text-white text-[15px] truncate">{{ displayName }}</div>
-                <div class="font-body text-white/40 text-[13px] truncate mt-0.5">{{ displayEmail }}</div>
+                <div class="font-body text-white/58 text-[13px] truncate mt-0.5">{{ displayEmail }}</div>
               </div>
               <!-- Plan badge -->
               <div
@@ -300,11 +302,28 @@ async function handleBillingAction() {
             <h2 class="settings-heading">Billing &amp; Usage</h2>
             <p class="settings-subtext">Manage your plan, usage, and subscription.</p>
 
+            <!-- Billing period toggle (free users only) -->
+            <div v-if="plan !== 'pro'" class="mt-8 mb-4 flex items-center gap-3">
+              <span class="font-body text-white/50 text-[13px]">Billing period:</span>
+              <div class="inline-flex items-center gap-0 rounded-full border border-white/[0.1] overflow-hidden" style="background:rgba(255,255,255,0.03)">
+                <button
+                  class="text-[11px] font-display font-semibold tracking-[0.12em] uppercase px-4 py-1.5 transition-colors"
+                  :class="settingsBillingPeriod === 'monthly' ? 'text-white bg-white/[0.08]' : 'text-white/40 hover:text-white/65'"
+                  @click="settingsBillingPeriod = 'monthly'"
+                >Monthly</button>
+                <button
+                  class="text-[11px] font-display font-semibold tracking-[0.12em] uppercase px-4 py-1.5 transition-colors flex items-center gap-1.5"
+                  :class="settingsBillingPeriod === 'annual' ? 'text-white bg-white/[0.08]' : 'text-white/40 hover:text-white/65'"
+                  @click="settingsBillingPeriod = 'annual'"
+                >Annual <span class="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-success/15 text-success">−10%</span></button>
+              </div>
+            </div>
+
             <!-- Plan card -->
-            <div class="mt-8 p-6 rounded-2xl border bg-dark-surface flex items-center justify-between gap-6"
-              :class="plan === 'pro' ? 'border-primary/25' : 'border-white/[0.06]'">
+            <div class="p-6 rounded-2xl border bg-dark-surface flex items-center justify-between gap-6"
+              :class="plan === 'pro' ? 'border-primary/25 mt-8' : 'border-white/[0.06]'">
               <div>
-                <div class="font-body text-white/40 text-[12px] uppercase tracking-[0.14em] mb-1">Current plan</div>
+                <div class="font-body text-white/55 text-[12px] uppercase tracking-[0.14em] mb-1">Current plan</div>
                 <div class="flex items-center gap-3">
                   <span class="font-display font-bold text-white text-2xl">{{ plan === 'pro' ? 'Pro' : 'Hobby' }}</span>
                   <span
@@ -314,7 +333,7 @@ async function handleBillingAction() {
                       : 'bg-white/[0.05] text-white/40 border border-white/[0.08]'"
                   >{{ plan === 'pro' ? 'Pro' : 'Free' }}</span>
                 </div>
-                <div class="font-body text-white/30 text-[13px] mt-1">
+                <div class="font-body text-white/50 text-[13px] mt-1">
                   {{ plan === 'pro' ? 'Unlimited scans · Monitoring · API access · PDF reports' : '1 scan · Basic report' }}
                 </div>
               </div>
@@ -326,7 +345,7 @@ async function handleBillingAction() {
               >
                 <span v-if="billingLoading">Loading…</span>
                 <span v-else-if="plan === 'pro'">Manage subscription</span>
-                <span v-else>Upgrade to Pro →</span>
+                <span v-else>Upgrade to Pro {{ settingsBillingPeriod === 'annual' ? '(Annual)' : '' }} →</span>
               </button>
             </div>
 
@@ -405,7 +424,7 @@ async function handleBillingAction() {
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.3)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3"/>
               </svg>
-              <button class="font-body text-white/30 hover:text-white/60 text-[13px] transition-colors" @click="handleBillingAction">
+              <button class="font-body text-white/50 hover:text-white/75 text-[13px] transition-colors" @click="handleBillingAction">
                 View invoices &amp; manage subscription in Stripe portal
               </button>
             </div>
@@ -430,7 +449,7 @@ async function handleBillingAction() {
                   <div class="flex items-center justify-between">
                     <div>
                       <div class="font-display font-semibold text-white text-[15px]">Enable email alerts</div>
-                      <div class="font-body text-white/40 text-[13px] mt-0.5">Send an email when overall score drops below your threshold</div>
+                      <div class="font-body text-white/55 text-[13px] mt-0.5">Send an email when overall score drops below your threshold</div>
                     </div>
                     <div class="toggle toggle--off" />
                   </div>
@@ -474,8 +493,8 @@ async function handleBillingAction() {
                   <div class="font-display font-semibold text-white text-[15px]">Score threshold</div>
                   <div class="font-display font-bold text-primary text-xl">{{ alertThreshold }}</div>
                 </div>
-                <p class="font-body text-white/40 text-[13px] mb-5">
-                  Alert me when overall score drops below <strong class="text-white/70">{{ alertThreshold }}</strong>
+                <p class="font-body text-white/55 text-[13px] mb-5">
+                  Alert me when overall score drops below <strong class="text-white/80">{{ alertThreshold }}</strong>
                 </p>
                 <div class="relative">
                   <input
@@ -487,9 +506,9 @@ async function handleBillingAction() {
                     class="alert-slider"
                   />
                   <div class="flex justify-between mt-2">
-                    <span class="font-body text-white/20 text-[11px]">0</span>
-                    <span class="font-body text-white/20 text-[11px]">50</span>
-                    <span class="font-body text-white/20 text-[11px]">100</span>
+                    <span class="font-body text-white/40 text-[11px]">0</span>
+                    <span class="font-body text-white/40 text-[11px]">50</span>
+                    <span class="font-body text-white/40 text-[11px]">100</span>
                   </div>
                 </div>
               </div>
@@ -497,7 +516,7 @@ async function handleBillingAction() {
               <!-- Email override -->
               <div class="notif-card" :class="{ 'opacity-40 pointer-events-none': !alertEnabled }">
                 <label class="block font-display font-semibold text-white text-[15px] mb-1">Alert email</label>
-                <p class="font-body text-white/40 text-[13px] mb-4">Leave blank to use your Clerk account email ({{ displayEmail }})</p>
+                <p class="font-body text-white/55 text-[13px] mb-4">Leave blank to use your Clerk account email ({{ displayEmail }})</p>
                 <input
                   v-model="alertEmail"
                   type="email"
@@ -556,7 +575,7 @@ async function handleBillingAction() {
                 <div class="flex items-center justify-between gap-4 mb-4">
                   <div>
                     <div class="font-display font-semibold text-white text-[15px]">API Keys</div>
-                    <div class="font-body text-white/40 text-[13px] mt-0.5">Each key grants full API access. Revoke immediately if compromised.</div>
+                    <div class="font-body text-white/55 text-[13px] mt-0.5">Each key grants full API access. Revoke immediately if compromised.</div>
                   </div>
                   <button
                     class="billing-btn billing-btn--primary shrink-0"
@@ -581,17 +600,17 @@ async function handleBillingAction() {
 
                 <!-- Keys table -->
                 <div v-if="apiKeyList.length > 0">
-                  <div class="grid grid-cols-[1fr_auto_auto_auto] gap-x-4 gap-y-0 text-[10px] font-display font-semibold tracking-[0.12em] uppercase text-white/25 px-2 mb-2">
+                  <div class="grid grid-cols-[1fr_auto_auto_auto] gap-x-4 gap-y-0 text-[10px] font-display font-semibold tracking-[0.12em] uppercase text-white/45 px-2 mb-2">
                     <span>Key</span><span>Created</span><span>Last used</span><span></span>
                   </div>
                   <div v-for="k in apiKeyList" :key="k._id" class="grid grid-cols-[1fr_auto_auto_auto] gap-x-4 items-center px-2 py-3 border-b border-white/[0.04] last:border-0">
                     <code class="font-mono text-[13px] text-white/70 truncate">{{ k.prefix }}…</code>
-                    <span class="font-body text-white/30 text-[12px] whitespace-nowrap">{{ formatDate(k.createdAt) }}</span>
-                    <span class="font-body text-white/30 text-[12px] whitespace-nowrap">{{ k.lastUsedAt ? formatDate(k.lastUsedAt) : 'Never' }}</span>
+                    <span class="font-body text-white/50 text-[12px] whitespace-nowrap">{{ formatDate(k.createdAt) }}</span>
+                    <span class="font-body text-white/50 text-[12px] whitespace-nowrap">{{ k.lastUsedAt ? formatDate(k.lastUsedAt) : 'Never' }}</span>
                     <button class="font-body text-danger/60 hover:text-danger text-[12px] transition-colors" @click="revokeKey(k._id)">Revoke</button>
                   </div>
                 </div>
-                <div v-else class="text-center py-6 font-body text-white/20 text-sm">
+                <div v-else class="text-center py-6 font-body text-white/40 text-sm">
                   No API keys yet — generate one above.
                 </div>
               </div>
@@ -634,7 +653,7 @@ curl "https://yourdomain.com/api/scan?id=SCAN_ID" \
                 </svg>
                 <div>
                   <div class="font-display font-semibold text-white/80 text-[14px] mb-2">The following will be permanently deleted:</div>
-                  <ul class="space-y-1.5 font-body text-white/45 text-[13px]">
+                  <ul class="space-y-1.5 font-body text-white/60 text-[13px]">
                     <li class="flex items-center gap-2"><span class="w-1 h-1 rounded-full bg-danger/50 shrink-0" />All scan history and results</li>
                     <li class="flex items-center gap-2"><span class="w-1 h-1 rounded-full bg-danger/50 shrink-0" />All monitored sites</li>
                     <li class="flex items-center gap-2"><span class="w-1 h-1 rounded-full bg-danger/50 shrink-0" />All API keys</li>
@@ -698,7 +717,7 @@ curl "https://yourdomain.com/api/scan?id=SCAN_ID" \
   gap: 6px;
   font-family: 'DM Sans', sans-serif;
   font-size: 13px;
-  color: rgba(255, 255, 255, 0.35);
+  color: rgba(255, 255, 255, 0.55);
   text-decoration: none;
   transition: color 0.15s ease;
 }
@@ -809,7 +828,7 @@ curl "https://yourdomain.com/api/scan?id=SCAN_ID" \
   font-weight: 600;
   letter-spacing: 0.16em;
   text-transform: uppercase;
-  color: rgba(255,255,255,0.3);
+  color: rgba(255,255,255,0.50);
   margin-bottom: 8px;
 }
 .usage-value {
@@ -835,7 +854,7 @@ curl "https://yourdomain.com/api/scan?id=SCAN_ID" \
 .usage-sub {
   font-family: 'DM Sans', sans-serif;
   font-size: 12px;
-  color: rgba(255,255,255,0.3);
+  color: rgba(255,255,255,0.50);
 }
 
 /* ── Notification cards ───────────────────────────────── */
@@ -940,7 +959,7 @@ curl "https://yourdomain.com/api/scan?id=SCAN_ID" \
 .settings-subtext {
   font-family: 'DM Sans', sans-serif;
   font-size: 14px;
-  color: rgba(255, 255, 255, 0.45);
+  color: rgba(255, 255, 255, 0.62);
   line-height: 1.6;
 }
 </style>

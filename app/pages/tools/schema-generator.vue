@@ -1,4 +1,5 @@
 <script setup lang="ts">
+definePageMeta({ layout: 'tool' })
 useHead({ title: 'Schema Markup Generator (JSON-LD) — ScanPulse Tools' })
 useSeoMeta({ description: 'Generate valid JSON-LD structured data for Article, BlogPosting, and Organization with a guided form. Copy or download the script block — free.' })
 
@@ -6,7 +7,6 @@ type SchemaType = 'Article' | 'BlogPosting' | 'Organization'
 
 const schemaType = ref<SchemaType>('Article')
 
-// ── Article / BlogPosting ──────────────────────────────────────────────────
 const article = reactive({
   headline:       '',
   url:            '',
@@ -20,7 +20,6 @@ const article = reactive({
   image:          '',
 })
 
-// ── Organization ──────────────────────────────────────────────────────────
 const org = reactive({
   name:      '',
   url:       '',
@@ -30,7 +29,6 @@ const org = reactive({
   sameAs:    '',
 })
 
-// ── Generated JSON-LD ─────────────────────────────────────────────────────
 const jsonLd = computed(() => {
   if (schemaType.value === 'Organization') {
     const obj: Record<string, any> = {
@@ -46,7 +44,6 @@ const jsonLd = computed(() => {
     return JSON.stringify(obj, null, 2)
   }
 
-  // Article / BlogPosting
   const obj: Record<string, any> = {
     '@context': 'https://schema.org',
     '@type': schemaType.value,
@@ -88,13 +85,11 @@ function downloadJson() {
 
 <template>
   <div class="page-bg">
-    <NavBar />
     <div class="tool-shell">
 
-      <NuxtLink to="/tools" class="back-link">← All Tools</NuxtLink>
-
+      <!-- Header -->
       <div class="tool-header">
-        <div class="tool-badge" style="color:#6c5ce7;background:rgba(108,92,231,0.1)">SEO</div>
+        <div class="tool-badge">SEO</div>
         <h1 class="tool-title">Schema Markup Generator</h1>
         <p class="tool-subtitle">Generate valid JSON-LD structured data to help search engines understand your content. Fill in the form and copy the ready-to-paste <code>&lt;script&gt;</code> block.</p>
       </div>
@@ -118,7 +113,7 @@ function downloadJson() {
 
       <div class="tool-columns">
 
-        <!-- ── Form ───────────────────────────────────────────────── -->
+        <!-- Form -->
         <div class="form-card">
 
           <!-- Article / BlogPosting -->
@@ -198,11 +193,16 @@ function downloadJson() {
           </template>
         </div>
 
-        <!-- ── Output ─────────────────────────────────────────────── -->
+        <!-- Output -->
         <div class="output-col">
+
+          <!-- JSON-LD output -->
           <div class="output-card">
             <div class="output-header">
-              <p class="output-label">Generated JSON-LD</p>
+              <div class="output-title-row">
+                <span class="output-dot" />
+                <p class="output-label">JSON-LD Output</p>
+              </div>
               <div class="output-actions">
                 <button class="copy-btn" @click="copyScript">
                   <svg v-if="!copiedScript" width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
@@ -218,20 +218,23 @@ function downloadJson() {
             <pre class="output-code">{{ scriptBlock }}</pre>
           </div>
 
-          <!-- Pro -->
-          <div class="output-card" style="margin-top:16px">
+          <!-- Pro: Validation -->
+          <div class="output-card">
             <div class="output-header">
-              <p class="output-label">Validation & rich results preview</p>
+              <div class="output-title-row">
+                <span class="output-dot" />
+                <p class="output-label">Validation &amp; rich results preview</p>
+              </div>
               <span class="pro-badge">Pro</span>
             </div>
             <ProGate feature="Validate against Schema.org & preview rich results">
-              <div style="padding:20px">
-                <p style="font-family:'DM Sans',sans-serif;font-size:12px;color:rgba(255,255,255,0.2);margin:0">Validate required fields, check for errors, and see a mock Google Rich Results preview card.</p>
+              <div class="pro-placeholder">
+                <p>Validate required fields, check for errors, and see a mock Google Rich Results preview card.</p>
               </div>
             </ProGate>
           </div>
-        </div>
 
+        </div>
       </div>
     </div>
   </div>
@@ -239,134 +242,316 @@ function downloadJson() {
 
 <style scoped>
 .page-bg { min-height: 100vh; background: #07070a; }
-.tool-shell { max-width: 1080px; margin: 0 auto; padding: 100px 24px 80px; }
-.back-link {
-  display: inline-flex; align-items: center; gap: 6px;
-  font-family: 'DM Sans', sans-serif; font-size: 13px;
-  color: rgba(255,255,255,0.3); text-decoration: none; margin-bottom: 32px; transition: color 0.15s;
+
+.tool-shell {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 48px 28px 80px;
 }
-.back-link:hover { color: rgba(255,255,255,0.7); }
+
 .tool-header { margin-bottom: 24px; }
+
 .tool-badge {
-  display: inline-flex; align-items: center; gap: 5px;
-  font-family: 'Space Grotesk', sans-serif; font-size: 9px; font-weight: 700;
-  letter-spacing: 0.16em; text-transform: uppercase;
-  padding: 4px 10px; border-radius: 3px; margin-bottom: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #6c5ce7;
+  background: rgba(108, 92, 231, 0.1);
+  border: 1px solid rgba(108, 92, 231, 0.2);
+  padding: 4px 10px;
+  border-radius: 3px;
+  margin-bottom: 12px;
 }
+
 .tool-title {
-  font-family: 'Space Grotesk', sans-serif; font-size: clamp(1.8rem, 4vw, 2.6rem);
-  font-weight: 800; color: white; letter-spacing: -0.03em; margin-bottom: 10px;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: clamp(1.8rem, 4vw, 2.6rem);
+  font-weight: 800;
+  color: white;
+  letter-spacing: -0.03em;
+  margin-bottom: 10px;
 }
+
 .tool-subtitle {
-  font-family: 'DM Sans', sans-serif; font-size: 15px;
-  color: rgba(255,255,255,0.38); line-height: 1.6; max-width: 580px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 15px;
+  color: rgba(255,255,255,0.60);
+  line-height: 1.6;
+  max-width: 580px;
 }
+
 .tool-subtitle code {
-  font-family: monospace; font-size: 13px; background: rgba(255,255,255,0.07);
-  padding: 1px 5px; border-radius: 3px; color: rgba(255,255,255,0.55);
+  font-family: monospace;
+  font-size: 13px;
+  background: rgba(255,255,255,0.07);
+  padding: 1px 5px;
+  border-radius: 3px;
+  color: rgba(255,255,255,0.55);
 }
 
 /* ── Type selector ───────────────────────────────────────── */
 .type-selector {
-  display: flex; align-items: center; gap: 6px;
-  flex-wrap: wrap; margin-bottom: 24px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-bottom: 24px;
 }
+
 .type-btn {
-  font-family: 'Space Grotesk', sans-serif; font-size: 12px; font-weight: 700;
-  padding: 7px 14px; border-radius: 6px;
-  background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);
-  color: rgba(255,255,255,0.4); cursor: pointer; transition: all 0.15s;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 7px 16px;
+  border-radius: 6px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+  color: rgba(255,255,255,0.4);
+  cursor: pointer;
+  transition: all 0.15s;
+  letter-spacing: 0.02em;
 }
-.type-btn:hover { background: rgba(255,255,255,0.08); }
+
+.type-btn:hover {
+  background: rgba(255,255,255,0.08);
+  color: rgba(255,255,255,0.6);
+}
+
 .type-btn--active {
-  background: rgba(108,92,231,0.12); border-color: rgba(108,92,231,0.3); color: #a29bfe;
+  background: rgba(108,92,231,0.14);
+  border-color: rgba(108,92,231,0.35);
+  color: #a29bfe;
 }
-.pro-types { display: flex; align-items: center; gap: 5px; margin-left: 4px; }
+
+.pro-types {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-left: 4px;
+}
+
 .pro-type-chip {
-  font-family: 'Space Grotesk', sans-serif; font-size: 11px; font-weight: 600;
-  padding: 5px 10px; border-radius: 5px;
-  background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05);
-  color: rgba(255,255,255,0.15); cursor: default;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 5px 10px;
+  border-radius: 5px;
+  background: rgba(255,255,255,0.02);
+  border: 1px solid rgba(255,255,255,0.05);
+  color: rgba(255,255,255,0.35);
+  cursor: default;
 }
+
 .pro-badge-sm {
-  font-family: 'Space Grotesk', sans-serif; font-size: 8px; font-weight: 700;
-  letter-spacing: 0.12em; text-transform: uppercase;
-  color: #ec3586; background: rgba(236,53,134,0.1);
-  border: 1px solid rgba(236,53,134,0.2); padding: 3px 7px; border-radius: 3px;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #ec3586;
+  background: rgba(236,53,134,0.1);
+  border: 1px solid rgba(236,53,134,0.2);
+  padding: 3px 7px;
+  border-radius: 3px;
 }
 
 /* ── Columns ─────────────────────────────────────────────── */
 .tool-columns {
-  display: grid; grid-template-columns: 1fr 1fr; gap: 20px; align-items: start;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  align-items: start;
 }
-@media (max-width: 768px) { .tool-columns { grid-template-columns: 1fr; } }
+
+@media (max-width: 768px) {
+  .tool-columns { grid-template-columns: 1fr; }
+  .output-col { position: static; max-height: none; }
+}
 
 /* ── Form ────────────────────────────────────────────────── */
 .form-card {
-  background: #0f0f14; border: 1px solid rgba(255,255,255,0.06);
-  border-radius: 12px; padding: 22px; display: flex; flex-direction: column; gap: 14px;
+  background: #0c0c12;
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 12px;
+  padding: 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
 }
+
 .field { display: flex; flex-direction: column; gap: 6px; }
 .field-row { display: flex; gap: 12px; }
 .field-row .field { flex: 1; }
+
 .field-label {
-  font-family: 'Space Grotesk', sans-serif; font-size: 10px; font-weight: 700;
-  letter-spacing: 0.1em; text-transform: uppercase; color: rgba(255,255,255,0.35);
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.4);
 }
+
 .field-input {
-  background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);
-  border-radius: 6px; padding: 8px 12px;
-  font-family: 'DM Sans', sans-serif; font-size: 13px; color: rgba(255,255,255,0.7);
-  outline: none; width: 100%; box-sizing: border-box; transition: border-color 0.15s;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 6px;
+  padding: 8px 12px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  color: rgba(255,255,255,0.8);
+  outline: none;
+  width: 100%;
+  box-sizing: border-box;
+  transition: border-color 0.15s;
 }
+
 .field-input:focus { border-color: rgba(108,92,231,0.4); }
 .field-input::placeholder { color: rgba(255,255,255,0.15); }
 .field-textarea { resize: vertical; min-height: 64px; }
+
 .section-divider {
-  font-family: 'Space Grotesk', sans-serif; font-size: 9px; font-weight: 700;
-  letter-spacing: 0.16em; text-transform: uppercase; color: rgba(255,255,255,0.2);
-  padding: 4px 0; border-top: 1px solid rgba(255,255,255,0.05); margin-top: 4px;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.50);
+  padding: 6px 10px;
+  border-left: 2px solid #6c5ce7;
+  background: rgba(108,92,231,0.05);
+  border-radius: 0 4px 4px 0;
 }
 
-/* ── Output ──────────────────────────────────────────────── */
-.output-col { display: flex; flex-direction: column; }
+/* ── Output column ───────────────────────────────────────── */
+.output-col {
+  position: sticky;
+  top: 88px;
+  max-height: calc(100vh - 104px);
+  overflow-y: auto;
+  scrollbar-width: none;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.output-col::-webkit-scrollbar { display: none; }
+
+/* ── Output title row ────────────────────────────────────── */
+.output-title-row {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.output-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #6c5ce7;
+  flex-shrink: 0;
+}
+
+/* ── Output card ─────────────────────────────────────────── */
 .output-card {
-  background: #0f0f14; border: 1px solid rgba(255,255,255,0.06);
-  border-radius: 12px; overflow: hidden;
+  background: #0c0c12;
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 12px;
+  overflow: hidden;
 }
+
 .output-header {
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 13px 18px; border-bottom: 1px solid rgba(255,255,255,0.04);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 13px 18px;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
 }
+
 .output-label {
-  font-family: 'Space Grotesk', sans-serif; font-size: 10px; font-weight: 700;
-  letter-spacing: 0.14em; text-transform: uppercase; color: rgba(255,255,255,0.25); margin: 0;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.45);
+  margin: 0;
 }
+
 .output-actions { display: flex; gap: 6px; }
+
 .output-code {
-  font-family: 'Fira Mono', monospace; font-size: 11px; color: rgba(255,255,255,0.6);
-  line-height: 1.7; padding: 16px 18px; margin: 0; white-space: pre-wrap; word-break: break-all;
+  font-family: 'Fira Mono', monospace;
+  font-size: 12px;
+  color: rgba(255,255,255,0.75);
+  line-height: 1.8;
+  padding: 16px 18px;
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-all;
 }
+
+/* ── Buttons ─────────────────────────────────────────────── */
 .copy-btn {
-  display: inline-flex; align-items: center; gap: 5px;
-  font-family: 'Space Grotesk', sans-serif; font-size: 11px; font-weight: 700;
-  color: #ec3586; background: rgba(236,53,134,0.08);
-  border: 1px solid rgba(236,53,134,0.2);
-  border-radius: 4px; padding: 5px 10px; cursor: pointer; transition: background 0.15s;
-}
-.copy-btn:hover { background: rgba(236,53,134,0.15); }
-.dl-btn {
-  display: inline-flex; align-items: center; gap: 5px;
-  font-family: 'Space Grotesk', sans-serif; font-size: 11px; font-weight: 700;
-  color: #6c5ce7; background: rgba(108,92,231,0.1);
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  color: #6c5ce7;
+  background: rgba(108,92,231,0.08);
   border: 1px solid rgba(108,92,231,0.2);
-  border-radius: 4px; padding: 5px 10px; cursor: pointer; transition: background 0.15s;
+  border-radius: 4px;
+  padding: 5px 10px;
+  cursor: pointer;
+  transition: background 0.15s;
 }
-.dl-btn:hover { background: rgba(108,92,231,0.18); }
+.copy-btn:hover { background: rgba(108,92,231,0.16); }
+
+.dl-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  color: #6c5ce7;
+  background: transparent;
+  border: 1px solid rgba(108,92,231,0.3);
+  border-radius: 4px;
+  padding: 5px 10px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.dl-btn:hover { background: rgba(108,92,231,0.1); }
+
+/* ── Pro ─────────────────────────────────────────────────── */
 .pro-badge {
-  font-family: 'Space Grotesk', sans-serif; font-size: 8px; font-weight: 700;
-  letter-spacing: 0.12em; text-transform: uppercase;
-  color: #ec3586; background: rgba(236,53,134,0.1);
-  border: 1px solid rgba(236,53,134,0.2); padding: 3px 8px; border-radius: 3px;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #ec3586;
+  background: rgba(236,53,134,0.1);
+  border: 1px solid rgba(236,53,134,0.2);
+  padding: 3px 8px;
+  border-radius: 3px;
+}
+
+.pro-placeholder {
+  padding: 20px;
+}
+.pro-placeholder p {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 12px;
+  color: rgba(255,255,255,0.50);
+  margin: 0;
 }
 </style>
