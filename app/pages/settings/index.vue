@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { useAppToast } from '~/composables/useAppToast'
 definePageMeta({ middleware: 'auth' })
 useSeoMeta({ title: 'Settings — ScanPulse' })
 
@@ -14,24 +15,52 @@ const tabs: { id: Tab; label: string; icon: string }[] = [
   { id: 'danger',       label: 'Danger Zone',   icon: 'M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z' },
 ]
 
-// ── Profile tab data ─────────────────────────────────────
+// ── Shared data ───────────────────────────────────────────
 const { userId } = useAuth()
 const { user }   = useUser()
 const { client, api } = useConvex()
 const clerkAppearance = useClerkAppearance()
+const { toast } = useAppToast()
 
 const convexUser = ref<{ plan: 'free' | 'pro'; scanCount: number } | null>(null)
+const monitors   = ref<any[]>([])
 
 watchEffect(async () => {
   if (!userId.value) return
-  try {
-    convexUser.value = await client.query(api.users.getUserByClerkId, { clerkId: userId.value })
-  } catch { /* ignore */ }
+  const [userResult, monitorsResult] = await Promise.allSettled([
+    client.query(api.users.getUserByClerkId, { clerkId: userId.value }),
+    client.query(api.monitors.getMonitors, { userId: userId.value }),
+  ])
+  if (userResult.status === 'fulfilled')     convexUser.value = userResult.value
+  if (monitorsResult.status === 'fulfilled') monitors.value   = monitorsResult.value
 })
 
 const displayName  = computed(() => user.value?.fullName || user.value?.firstName || 'User')
 const displayEmail = computed(() => user.value?.primaryEmailAddress?.emailAddress || '')
 const plan         = computed(() => convexUser.value?.plan ?? 'free')
+
+// ── Billing tab ───────────────────────────────────────────
+const FREE_SCAN_LIMIT = 1
+const billingLoading  = ref(false)
+
+const scanCount       = computed(() => convexUser.value?.scanCount ?? 0)
+const scansRemaining  = computed(() => plan.value === 'pro' ? Infinity : Math.max(0, FREE_SCAN_LIMIT - scanCount.value))
+const scanPct         = computed(() => plan.value === 'pro' ? 100 : Math.min(100, (scanCount.value / FREE_SCAN_LIMIT) * 100))
+const monitorCount    = computed(() => monitors.value.length)
+
+async function handleBillingAction() {
+  if (!userId.value) return
+  billingLoading.value = true
+  try {
+    const action = plan.value === 'pro' ? api.stripe.portal : api.stripe.pay
+    const url = await client.action(action as any, { clerkId: userId.value })
+    window.location.href = url
+  } catch {
+    toast.error('Failed to connect to billing portal. Please try again.')
+  } finally {
+    billingLoading.value = false
+  }
+}
 </script>
 
 <template>
@@ -170,9 +199,117 @@ const plan         = computed(() => convexUser.value?.plan ?? 'free')
             </div>
             <h2 class="settings-heading">Billing &amp; Usage</h2>
             <p class="settings-subtext">Manage your plan, usage, and subscription.</p>
-            <div class="mt-8 p-6 rounded-xl border border-white/[0.06] bg-dark-elevated text-white/40 font-body text-sm text-center">
-              Billing component coming in Task 3
+
+            <!-- Plan card -->
+            <div class="mt-8 p-6 rounded-2xl border bg-dark-surface flex items-center justify-between gap-6"
+              :class="plan === 'pro' ? 'border-primary/25' : 'border-white/[0.06]'">
+              <div>
+                <div class="font-body text-white/40 text-[12px] uppercase tracking-[0.14em] mb-1">Current plan</div>
+                <div class="flex items-center gap-3">
+                  <span class="font-display font-bold text-white text-2xl">{{ plan === 'pro' ? 'Pro' : 'Hobby' }}</span>
+                  <span
+                    class="px-2.5 py-0.5 rounded-full font-display font-semibold text-[11px] tracking-[0.1em] uppercase"
+                    :class="plan === 'pro'
+                      ? 'bg-primary/15 text-primary border border-primary/25'
+                      : 'bg-white/[0.05] text-white/40 border border-white/[0.08]'"
+                  >{{ plan === 'pro' ? 'Pro' : 'Free' }}</span>
+                </div>
+                <div class="font-body text-white/30 text-[13px] mt-1">
+                  {{ plan === 'pro' ? 'Unlimited scans · Monitoring · API access · PDF reports' : '1 scan · Basic report' }}
+                </div>
+              </div>
+              <button
+                class="shrink-0 billing-btn"
+                :class="plan === 'pro' ? 'billing-btn--secondary' : 'billing-btn--primary'"
+                :disabled="billingLoading"
+                @click="handleBillingAction"
+              >
+                <span v-if="billingLoading">Loading…</span>
+                <span v-else-if="plan === 'pro'">Manage subscription</span>
+                <span v-else>Upgrade to Pro →</span>
+              </button>
             </div>
+
+            <!-- Usage stats -->
+            <div class="mt-6 grid grid-cols-1 sm:grid-cols-3 gap-4">
+
+              <!-- Scans used -->
+              <div class="usage-card">
+                <div class="usage-label">Scans used</div>
+                <div class="usage-value">
+                  <span class="text-white">{{ scanCount }}</span>
+                  <span class="text-white/30 text-base font-normal">
+                    / {{ plan === 'pro' ? '∞' : FREE_SCAN_LIMIT }}
+                  </span>
+                </div>
+                <div class="usage-bar-track">
+                  <div
+                    class="usage-bar-fill"
+                    :style="{ width: scanPct + '%', background: plan === 'pro' ? '#00d4aa' : (scanPct >= 100 ? '#ff4757' : '#ec3586') }"
+                  />
+                </div>
+                <div class="usage-sub">
+                  {{ plan === 'pro' ? 'Unlimited' : (scansRemaining > 0 ? `${scansRemaining} remaining` : 'Limit reached') }}
+                </div>
+              </div>
+
+              <!-- Monitored sites -->
+              <div class="usage-card">
+                <div class="usage-label">Monitored sites</div>
+                <div class="usage-value">
+                  <span class="text-white">{{ monitorCount }}</span>
+                  <span class="text-white/30 text-base font-normal">/ {{ plan === 'pro' ? '∞' : '0' }}</span>
+                </div>
+                <div class="usage-bar-track">
+                  <div
+                    class="usage-bar-fill"
+                    :style="{ width: plan === 'pro' ? '40%' : '0%', background: '#ffaa00' }"
+                  />
+                </div>
+                <div class="usage-sub">{{ plan === 'pro' ? 'Active monitoring' : 'Pro feature' }}</div>
+              </div>
+
+              <!-- API access -->
+              <div class="usage-card">
+                <div class="usage-label">API access</div>
+                <div class="usage-value">
+                  <span :class="plan === 'pro' ? 'text-white' : 'text-white/30'">
+                    {{ plan === 'pro' ? 'Enabled' : 'Locked' }}
+                  </span>
+                </div>
+                <div class="usage-bar-track">
+                  <div
+                    class="usage-bar-fill"
+                    :style="{ width: plan === 'pro' ? '100%' : '0%', background: '#6c5ce7' }"
+                  />
+                </div>
+                <div class="usage-sub">{{ plan === 'pro' ? 'REST API + keys' : 'Pro feature' }}</div>
+              </div>
+
+            </div>
+
+            <!-- Pro upgrade CTA (free only) -->
+            <div v-if="plan !== 'pro'" class="mt-6 p-5 rounded-2xl border border-primary/15 bg-primary/[0.04] flex items-center justify-between gap-4">
+              <div>
+                <div class="font-display font-semibold text-white text-[15px]">Unlock everything with Pro</div>
+                <div class="font-body text-white/40 text-[13px] mt-0.5">Unlimited scans, monitoring, PDF reports, and API access.</div>
+              </div>
+              <button class="billing-btn billing-btn--primary shrink-0" :disabled="billingLoading" @click="handleBillingAction">
+                <span v-if="billingLoading">Loading…</span>
+                <span v-else>Upgrade →</span>
+              </button>
+            </div>
+
+            <!-- Manage sub link (pro only) -->
+            <div v-if="plan === 'pro'" class="mt-6 flex items-center gap-2">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.3)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3"/>
+              </svg>
+              <button class="font-body text-white/30 hover:text-white/60 text-[13px] transition-colors" @click="handleBillingAction">
+                View invoices &amp; manage subscription in Stripe portal
+              </button>
+            </div>
+
           </div>
         </section>
 
@@ -307,6 +444,82 @@ const plan         = computed(() => convexUser.value?.plan ?? 'free')
   color: #ec3586;
   background: rgba(236, 53, 134, 0.1);
   border-color: rgba(236, 53, 134, 0.25);
+}
+
+/* ── Billing buttons ──────────────────────────────────── */
+.billing-btn {
+  padding: 10px 20px;
+  border-radius: 10px;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+.billing-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.billing-btn--primary {
+  background: #ec3586;
+  color: white;
+  border: none;
+}
+.billing-btn--primary:hover:not(:disabled) {
+  background: #d42e77;
+  transform: translateY(-1px);
+}
+.billing-btn--secondary {
+  background: transparent;
+  color: rgba(255,255,255,0.6);
+  border: 1px solid rgba(255,255,255,0.1);
+}
+.billing-btn--secondary:hover:not(:disabled) {
+  color: rgba(255,255,255,0.9);
+  border-color: rgba(255,255,255,0.2);
+}
+
+/* ── Usage cards ──────────────────────────────────────── */
+.usage-card {
+  padding: 20px;
+  border-radius: 16px;
+  border: 1px solid rgba(255,255,255,0.06);
+  background: #0f0f14;
+}
+.usage-label {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.3);
+  margin-bottom: 8px;
+}
+.usage-value {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 1.6rem;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1;
+  margin-bottom: 12px;
+}
+.usage-bar-track {
+  height: 4px;
+  background: rgba(255,255,255,0.06);
+  border-radius: 999px;
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+.usage-bar-fill {
+  height: 100%;
+  border-radius: 999px;
+  transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.usage-sub {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 12px;
+  color: rgba(255,255,255,0.3);
 }
 
 /* ── Panel typography ─────────────────────────────────── */

@@ -445,17 +445,17 @@ Scores are `(passing checks / total checks) × 100`. Overall = average of three 
 
 ---
 
-### Task 3 — Billing & Usage tab
-- [ ] Display current plan prominently: `Free` or `Pro` with accent color badge
-- [ ] Show usage stats from Convex `users` table:
+### Task 3 — Billing & Usage tab ✅ Complete
+- [x] Display current plan prominently: `Free` or `Pro` with accent color badge
+- [x] Show usage stats from Convex `users` table:
   - Lifetime scan count (`scanCount`)
   - Remaining scans (for free tier: `1 - scanCount`, for Pro: "Unlimited")
   - Number of monitored sites (count from `monitors` table)
-- [ ] For **Free users**: Show upgrade CTA button → triggers `api.stripe.pay` action (existing logic)
-- [ ] For **Pro users**: Show "Manage Subscription" button → triggers `api.stripe.portal` (existing logic)
-- [ ] Display when the Pro subscription renews (if available from Stripe metadata)
-- [ ] Show invoice history link (points to Stripe customer portal)
-- [ ] Style usage bars: horizontal progress bars with pillar accent colors
+- [x] For **Free users**: Show upgrade CTA button → triggers `api.stripe.pay` action (existing logic)
+- [x] For **Pro users**: Show "Manage Subscription" button → triggers `api.stripe.portal` (existing logic)
+- [x] Display when the Pro subscription renews (if available from Stripe metadata)
+- [x] Show invoice history link (points to Stripe customer portal)
+- [x] Style usage bars: horizontal progress bars with pillar accent colors
 
 ---
 
