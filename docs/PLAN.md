@@ -425,14 +425,14 @@ Scores are `(passing checks / total checks) × 100`. Overall = average of three 
 
 ---
 
-### Task 1 — Settings layout & sidebar navigation
-- [ ] Create `app/pages/settings/index.vue` as the settings shell page
-- [ ] Build a vertical sidebar nav with icons for each tab: Profile, Billing, Notifications, Developer, Danger Zone
-- [ ] Use `activeTab` ref to switch between tab content panels (no sub-routes needed)
-- [ ] Apply auth middleware — redirect unauthenticated users to `/sign-in`
-- [ ] Add "Settings" link to NavBar (gear icon) when user is signed in
-- [ ] Style sidebar with dark theme: `bg-dark-surface`, `border-white/[0.06]`, active tab accent `#ec3586`
-- [ ] Make layout responsive — sidebar collapses to horizontal tabs on mobile
+### Task 1 — Settings layout & sidebar navigation ✅ Complete
+- [x] Create `app/pages/settings/index.vue` as the settings shell page
+- [x] Build a vertical sidebar nav with icons for each tab: Profile, Billing, Notifications, Developer, Danger Zone
+- [x] Use `activeTab` ref to switch between tab content panels (no sub-routes needed)
+- [x] Apply auth middleware — redirect unauthenticated users to `/sign-in`
+- [x] Add "Settings" link to NavBar (gear icon) when user is signed in
+- [x] Style sidebar with dark theme: `bg-dark-surface`, `border-white/[0.06]`, active tab accent `#ec3586`
+- [x] Make layout responsive — sidebar collapses to horizontal tabs on mobile
 
 ---
 
