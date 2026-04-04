@@ -9,6 +9,7 @@
  */
 
 import type * as alerts from "../alerts.js";
+import type * as apiKeys from "../apiKeys.js";
 import type * as checks_accessibility from "../checks/accessibility.js";
 import type * as checks_dns from "../checks/dns.js";
 import type * as checks_performance from "../checks/performance.js";
@@ -34,6 +35,7 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   alerts: typeof alerts;
+  apiKeys: typeof apiKeys;
   "checks/accessibility": typeof checks_accessibility;
   "checks/dns": typeof checks_dns;
   "checks/performance": typeof checks_performance;

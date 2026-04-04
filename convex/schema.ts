@@ -52,6 +52,16 @@ export default defineSchema({
     .index('by_user', ['userId'])
     .index('by_user_status', ['userId', 'status']),
 
+  apiKeys: defineTable({
+    userId:      v.string(),
+    key:         v.string(),   // SHA-256 hash of raw key
+    prefix:      v.string(),   // "sp_live_XXXXXXXX" — safe to display
+    createdAt:   v.number(),
+    lastUsedAt:  v.optional(v.number()),
+  })
+    .index('by_user', ['userId'])
+    .index('by_key',  ['key']),
+
   monitoredSites: defineTable({
     userId: v.string(),
     url: v.string(),

@@ -1,6 +1,6 @@
 import { httpRouter } from 'convex/server'
 import { httpAction } from './_generated/server'
-import { internal } from './_generated/api'
+import { api, internal } from './_generated/api'
 import Stripe from 'stripe'
 
 const http = httpRouter()
@@ -164,6 +164,56 @@ http.route({
 
     return new Response(null, { status: 200 })
   })
+})
+
+// ── Helper: validate Bearer API key ───────────────────────────────────────
+async function resolveApiKey(ctx: any, req: Request) {
+  const auth = req.headers.get('Authorization') ?? ''
+  if (!auth.startsWith('Bearer ')) return null
+  const raw = auth.slice(7).trim()
+  return await ctx.runQuery(internal.apiKeys.validateApiKey, { raw })
+}
+
+// ── POST /api/scan ─────────────────────────────────────────────────────────
+http.route({
+  path: '/api/scan',
+  method: 'POST',
+  handler: httpAction(async (ctx, req) => {
+    const apiKey = await resolveApiKey(ctx, req)
+    if (!apiKey) return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { 'Content-Type': 'application/json' } })
+
+    let body: any
+    try { body = await req.json() } catch { return new Response(JSON.stringify({ error: 'Invalid JSON' }), { status: 400, headers: { 'Content-Type': 'application/json' } }) }
+
+    const url = body?.url
+    if (!url || typeof url !== 'string') return new Response(JSON.stringify({ error: 'Missing url' }), { status: 400, headers: { 'Content-Type': 'application/json' } })
+
+    const scanId = await ctx.runMutation(api.scans.createScan, { userId: apiKey.userId, url })
+    ctx.runAction(api.scanAction.runScan, { scanId, url }).catch(() => {})  // fire-and-forget
+
+    await ctx.runMutation(internal.apiKeys.touchLastUsed, { keyId: apiKey._id })
+
+    return new Response(JSON.stringify({ scanId, status: 'running' }), { status: 202, headers: { 'Content-Type': 'application/json' } })
+  }),
+})
+
+// ── GET /api/scan/:id ──────────────────────────────────────────────────────
+http.route({
+  path: '/api/scan',
+  method: 'GET',
+  handler: httpAction(async (ctx, req) => {
+    const apiKey = await resolveApiKey(ctx, req)
+    if (!apiKey) return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { 'Content-Type': 'application/json' } })
+
+    const scanId = new URL(req.url).searchParams.get('id') as any
+    if (!scanId) return new Response(JSON.stringify({ error: 'Missing id' }), { status: 400, headers: { 'Content-Type': 'application/json' } })
+
+    const scan = await ctx.runQuery(api.scans.getScan, { scanId })
+    if (!scan) return new Response(JSON.stringify({ error: 'Not found' }), { status: 404, headers: { 'Content-Type': 'application/json' } })
+    if (scan.userId !== apiKey.userId) return new Response(JSON.stringify({ error: 'Forbidden' }), { status: 403, headers: { 'Content-Type': 'application/json' } })
+
+    return new Response(JSON.stringify(scan), { status: 200, headers: { 'Content-Type': 'application/json' } })
+  }),
 })
 
 export default http

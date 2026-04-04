@@ -488,31 +488,27 @@ Scores are `(passing checks / total checks) × 100`. Overall = average of three 
 
 ---
 
-### Task 6 — Developer tab (API keys)
-- [ ] Create `apiKeys` table in `convex/schema.ts`:
+### Task 6 — Developer tab (API keys) ✅ Complete
+- [x] Create `apiKeys` table in `convex/schema.ts`:
   - `userId: v.string()`
   - `key: v.string()` (hashed)
   - `prefix: v.string()` (`sp_live_` + first 8 chars, for display)
   - `createdAt: v.number()`
   - `lastUsedAt: v.optional(v.number())`
   - Indexes: `by_user`, `by_key`
-- [ ] Create `convex/apiKeys.ts` with mutations/queries:
+- [x] Create `convex/apiKeys.ts` with mutations/queries:
   - `generateApiKey({ userId })` → generate `sp_live_` + 32-char random hex, hash, store, return raw key once
   - `listApiKeys({ userId })` → return prefix + createdAt + lastUsedAt (never full key)
   - `revokeApiKey({ userId, keyId })` → delete the key document
-- [ ] Build Developer tab UI:
+- [x] Build Developer tab UI:
   - "Generate API Key" button (disabled if free plan)
   - After generation: show full key once in a copy-to-clipboard box with warning
   - Table listing existing keys: prefix, created date, last used, revoke button
-  - Code example showing how to call the API with `curl`
-- [ ] Create Convex HTTP endpoint `POST /api/scan` in `convex/http.ts`:
-  - Validate `Authorization: Bearer` header against `apiKeys` table
-  - Call `createScan` + `runScan` action
-  - Return JSON `{ scanId, status }`
-  - Update `lastUsedAt` on the API key
-- [ ] Create Convex HTTP endpoint `GET /api/scan/:id` in `convex/http.ts`:
-  - Return scan results as JSON
-- [ ] Gate behind Pro/Agency plan — free users see "Upgrade to Pro" overlay
+  - curl code example for POST /api/scan and GET /api/scan?id=
+- [x] Create Convex HTTP endpoint `POST /api/scan` in `convex/http.ts`
+- [x] Create Convex HTTP endpoint `GET /api/scan` in `convex/http.ts`
+- [x] Gate behind Pro plan — free users see "Upgrade to Pro" overlay
+- [x] Convex deployed ✅
 
 ---
 

@@ -80,6 +80,55 @@ async function saveAlertPreferences() {
   }
 }
 
+// ── Developer tab ─────────────────────────────────────────
+const apiKeyList       = ref<any[]>([])
+const apiKeyGenerating = ref(false)
+const newRawKey        = ref('')
+const keyCopied        = ref(false)
+
+async function loadApiKeys() {
+  if (!userId.value) return
+  try { apiKeyList.value = await client.query(api.apiKeys.listApiKeys, { clerkId: userId.value }) } catch { /* ignore */ }
+}
+
+watch(activeTab, (tab) => { if (tab === 'developer') loadApiKeys() })
+
+async function generateKey() {
+  if (!userId.value) return
+  apiKeyGenerating.value = true
+  newRawKey.value = ''
+  try {
+    newRawKey.value = await client.mutation(api.apiKeys.generateApiKey, { clerkId: userId.value })
+    await loadApiKeys()
+  } catch (e: any) {
+    toast.error(e?.message ?? 'Failed to generate key.')
+  } finally {
+    apiKeyGenerating.value = false
+  }
+}
+
+async function revokeKey(keyId: string) {
+  if (!userId.value) return
+  try {
+    await client.mutation(api.apiKeys.revokeApiKey, { clerkId: userId.value, keyId: keyId as any })
+    if (newRawKey.value) newRawKey.value = ''
+    await loadApiKeys()
+    toast.success('API key revoked.')
+  } catch {
+    toast.error('Failed to revoke key.')
+  }
+}
+
+async function copyKey() {
+  await navigator.clipboard.writeText(newRawKey.value)
+  keyCopied.value = true
+  setTimeout(() => { keyCopied.value = false }, 2000)
+}
+
+function formatDate(ts: number) {
+  return new Date(ts).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+}
+
 async function handleBillingAction() {
   if (!userId.value) return
   billingLoading.value = true
@@ -461,9 +510,87 @@ async function handleBillingAction() {
               <span>DEVELOPER</span>
             </div>
             <h2 class="settings-heading">API access</h2>
-            <p class="settings-subtext">Generate and manage API keys to integrate ScanPulse into your workflow.</p>
-            <div class="mt-8 p-6 rounded-xl border border-white/[0.06] bg-dark-elevated text-white/40 font-body text-sm text-center">
-              API keys component coming in Task 6
+            <p class="settings-subtext">Generate API keys to run scans and fetch results programmatically.</p>
+
+            <!-- Pro lock -->
+            <div v-if="plan !== 'pro'" class="mt-8 relative">
+              <div class="pointer-events-none opacity-25 select-none" aria-hidden="true">
+                <div class="notif-card font-body text-white/40 text-sm">API key table preview</div>
+              </div>
+              <div class="absolute inset-0 flex flex-col items-center justify-center gap-4 rounded-2xl bg-dark/60 backdrop-blur-sm border border-white/[0.06]">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.3)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/>
+                </svg>
+                <div class="text-center">
+                  <div class="font-display font-semibold text-white/70 text-[15px]">Pro only</div>
+                  <div class="font-body text-white/35 text-[13px] mt-1">Upgrade to Pro to access the API</div>
+                </div>
+                <button class="billing-btn billing-btn--primary" @click="activeTab = 'billing'">Upgrade to Pro →</button>
+              </div>
+            </div>
+
+            <!-- API keys panel (Pro) -->
+            <div v-else class="mt-8 space-y-5">
+
+              <!-- Generate button + new key reveal -->
+              <div class="notif-card">
+                <div class="flex items-center justify-between gap-4 mb-4">
+                  <div>
+                    <div class="font-display font-semibold text-white text-[15px]">API Keys</div>
+                    <div class="font-body text-white/40 text-[13px] mt-0.5">Each key grants full API access. Revoke immediately if compromised.</div>
+                  </div>
+                  <button
+                    class="billing-btn billing-btn--primary shrink-0"
+                    :disabled="apiKeyGenerating"
+                    @click="generateKey"
+                  >{{ apiKeyGenerating ? 'Generating…' : '+ New key' }}</button>
+                </div>
+
+                <!-- One-time reveal -->
+                <div v-if="newRawKey" class="mb-4 p-4 rounded-xl bg-dark border border-primary/20">
+                  <div class="flex items-center gap-2 mb-2">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="#ffaa00"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
+                    <span class="font-display font-semibold text-[#ffaa00] text-[12px] tracking-[0.1em] uppercase">Copy now — shown only once</span>
+                  </div>
+                  <div class="flex items-center gap-3">
+                    <code class="flex-1 font-mono text-[13px] text-white/80 bg-transparent truncate">{{ newRawKey }}</code>
+                    <button class="billing-btn billing-btn--secondary shrink-0 text-[12px] py-2 px-3" @click="copyKey">
+                      {{ keyCopied ? 'Copied!' : 'Copy' }}
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Keys table -->
+                <div v-if="apiKeyList.length > 0">
+                  <div class="grid grid-cols-[1fr_auto_auto_auto] gap-x-4 gap-y-0 text-[10px] font-display font-semibold tracking-[0.12em] uppercase text-white/25 px-2 mb-2">
+                    <span>Key</span><span>Created</span><span>Last used</span><span></span>
+                  </div>
+                  <div v-for="k in apiKeyList" :key="k._id" class="grid grid-cols-[1fr_auto_auto_auto] gap-x-4 items-center px-2 py-3 border-b border-white/[0.04] last:border-0">
+                    <code class="font-mono text-[13px] text-white/70 truncate">{{ k.prefix }}…</code>
+                    <span class="font-body text-white/30 text-[12px] whitespace-nowrap">{{ formatDate(k.createdAt) }}</span>
+                    <span class="font-body text-white/30 text-[12px] whitespace-nowrap">{{ k.lastUsedAt ? formatDate(k.lastUsedAt) : 'Never' }}</span>
+                    <button class="font-body text-danger/60 hover:text-danger text-[12px] transition-colors" @click="revokeKey(k._id)">Revoke</button>
+                  </div>
+                </div>
+                <div v-else class="text-center py-6 font-body text-white/20 text-sm">
+                  No API keys yet — generate one above.
+                </div>
+              </div>
+
+              <!-- curl example -->
+              <div class="notif-card">
+                <div class="font-display font-semibold text-white text-[15px] mb-4">Usage example</div>
+                <pre class="bg-dark rounded-xl p-4 text-[12px] font-mono text-white/60 overflow-x-auto leading-relaxed"><code><span class="text-white/30"># Run a scan</span>
+curl -X POST https://hip-bass-536.eu-west-1.convex.site/api/scan \
+  -H "Authorization: Bearer sp_live_YOUR_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"url":"https://example.com"}'
+
+<span class="text-white/30"># Fetch results</span>
+curl "https://hip-bass-536.eu-west-1.convex.site/api/scan?id=SCAN_ID" \
+  -H "Authorization: Bearer sp_live_YOUR_KEY"</code></pre>
+              </div>
+
             </div>
           </div>
         </section>
