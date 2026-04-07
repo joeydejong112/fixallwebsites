@@ -926,4 +926,336 @@ location = /404.html { root /var/www/html; internal; }`,
 ErrorDocument 404 /404.html`,
     },
   },
+
+  // ─── AI READINESS ──────────────────────────────────────────────────────────
+
+  'No llms.txt found': {
+    generic: `# Create /public/llms.txt (served at https://yourdomain.com/llms.txt)
+# Format: plain markdown summarising your site for LLM ingestion
+
+# Site Name
+Your Site Name
+
+## Summary
+One-paragraph description of what your site does and who it serves.
+
+## Key Pages
+- /docs — Full documentation
+- /pricing — Pricing tiers
+- /blog — Latest articles
+- /api — API reference
+
+## Contact
+support@yourdomain.com`,
+    platforms: {
+      nextjs: `// Place the file at: public/llms.txt
+// It will be served automatically at /llms.txt`,
+      nuxt: `// Place the file at: public/llms.txt
+// Nuxt serves all files in public/ at the root path`,
+      nginx: `# Place llms.txt in your web root
+# No extra config needed — Nginx serves static files automatically`,
+      cloudflare: `# For Cloudflare Pages / Workers, place llms.txt in your /public directory
+# Or use a Cloudflare Worker to serve it at /llms.txt`,
+    },
+  },
+
+  'No llms-full.txt found': {
+    generic: `# Create /public/llms-full.txt for AI pipelines needing extended context
+# This file can contain full page text, all docs, or structured content
+# for RAG (Retrieval-Augmented Generation) systems.
+
+# Site Name
+Your Site Name
+
+## About
+Extended description of your site, products, and services...
+
+## Documentation
+[Full documentation content here]
+
+## FAQ
+Q: What is this product?
+A: ...`,
+    platforms: {
+      nextjs: `// Place at: public/llms-full.txt`,
+      nuxt: `// Place at: public/llms-full.txt`,
+    },
+  },
+
+  'AI crawlers blocked in robots.txt': {
+    generic: `# Remove Disallow: / rules for AI crawlers in robots.txt
+# To allow all AI crawlers:
+
+User-agent: GPTBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: anthropic-ai
+Allow: /`,
+    platforms: {
+      nginx: `# Serve robots.txt as a static file from your web root
+# Edit /var/www/html/robots.txt or equivalent`,
+      cloudflare: `# Use a Cloudflare Worker to serve a dynamic robots.txt:
+# Or simply edit your static robots.txt in the repo`,
+      nextjs: `// app/robots.ts (Next.js 13+)
+export default function robots() {
+  return {
+    rules: [
+      { userAgent: '*', allow: '/' },
+      { userAgent: 'GPTBot', allow: '/' },
+      { userAgent: 'Google-Extended', allow: '/' },
+      { userAgent: 'ClaudeBot', allow: '/' },
+      { userAgent: 'PerplexityBot', allow: '/' },
+    ],
+    sitemap: 'https://yourdomain.com/sitemap.xml',
+  }
+}`,
+      nuxt: `// nuxt.config.ts — use nuxt-simple-robots or a static file
+// Place robots.txt in /public/robots.txt`,
+    },
+  },
+
+  'No answer-engine schema markup': {
+    generic: `<!-- Add FAQPage JSON-LD to answer questions directly in AI responses -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "What is your product?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "A clear, concise answer that AI can cite directly."
+      }
+    }
+  ]
+}
+</script>`,
+    platforms: {
+      nextjs: `// app/page.tsx
+export default function Page() {
+  const faqSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: [
+      {
+        '@type': 'Question',
+        name: 'What is your product?',
+        acceptedAnswer: { '@type': 'Answer', text: 'Your answer here.' },
+      },
+    ],
+  }
+  return (
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
+      />
+      {/* page content */}
+    </>
+  )
+}`,
+      nuxt: `<!-- pages/index.vue -->
+<script setup>
+useHead({
+  script: [{
+    type: 'application/ld+json',
+    innerHTML: JSON.stringify({
+      '@context': 'https://schema.org',
+      '@type': 'FAQPage',
+      mainEntity: [{
+        '@type': 'Question',
+        name: 'What is your product?',
+        acceptedAnswer: { '@type': 'Answer', text: 'Your answer here.' }
+      }]
+    })
+  }]
+})
+</script>`,
+    },
+  },
+
+  'Missing author authority signals': {
+    generic: `<!-- Add Person or Organization JSON-LD for E-E-A-T signals -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Person",
+  "name": "Author Name",
+  "url": "https://yourdomain.com/about",
+  "sameAs": [
+    "https://linkedin.com/in/yourprofile",
+    "https://twitter.com/yourhandle"
+  ]
+}
+</script>
+
+<!-- Or add rel="author" to your page <head> -->
+<link rel="author" href="/humans.txt">`,
+    platforms: {
+      nextjs: `// Include author JSON-LD in your layout or page component
+// See the generic snippet above for the JSON-LD structure`,
+      nuxt: `// Use useHead() to inject the JSON-LD script tag
+// See the generic snippet above for the JSON-LD structure`,
+    },
+  },
+
+  'No semantic content elements': {
+    generic: `<!-- Wrap your main content in semantic HTML5 elements -->
+<body>
+  <header>...</header>
+  <nav>...</nav>
+  <main>
+    <article>
+      <h1>Page Title</h1>
+      <section>
+        <h2>Section Heading</h2>
+        <p>Content paragraph...</p>
+      </section>
+    </article>
+  </main>
+  <footer>...</footer>
+</body>`,
+    platforms: {
+      nextjs: `// Use semantic elements in your JSX
+export default function Page() {
+  return (
+    <main>
+      <article>
+        <h1>Title</h1>
+        <section>Content</section>
+      </article>
+    </main>
+  )
+}`,
+      nuxt: `<!-- Use semantic elements in your Vue template -->
+<template>
+  <main>
+    <article>
+      <h1>Title</h1>
+      <section>Content</section>
+    </article>
+  </main>
+</template>`,
+    },
+  },
+
+  'No content freshness signal': {
+    generic: `<!-- Add dateModified to your JSON-LD schema -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Article",
+  "headline": "Your Article Title",
+  "datePublished": "2024-01-01",
+  "dateModified": "2024-06-15"
+}
+</script>
+
+<!-- Or add Open Graph article:modified_time meta tag -->
+<meta property="article:modified_time" content="2024-06-15T00:00:00+00:00">`,
+    platforms: {
+      nextjs: `// app/blog/[slug]/page.tsx
+export async function generateMetadata({ params }) {
+  const post = await getPost(params.slug)
+  return {
+    openGraph: {
+      modifiedTime: post.updatedAt,
+      publishedTime: post.createdAt,
+    },
+  }
+}`,
+      nuxt: `// pages/blog/[slug].vue
+useSeoMeta({
+  articleModifiedTime: post.updatedAt,
+  articlePublishedTime: post.createdAt,
+})`,
+    },
+  },
+
+  'Broken heading continuity': {
+    generic: `<!-- Ensure headings flow H1 → H2 → H3 without skipping levels -->
+
+<!-- ✅ Correct -->
+<h1>Main Title</h1>
+<h2>Section</h2>
+<h3>Subsection</h3>
+
+<!-- ❌ Avoid — skips H2 -->
+<h1>Main Title</h1>
+<h3>Subsection</h3>
+
+Tip: Use only one H1 per page. Use H2 for major sections,
+H3 for sub-topics within those sections.`,
+  },
+
+  'No citation-friendly formatting': {
+    generic: `<!-- Use structured formats that LLMs can extract facts from -->
+
+<!-- Ordered list for steps -->
+<ol>
+  <li>First step</li>
+  <li>Second step</li>
+</ol>
+
+<!-- Unordered list for features -->
+<ul>
+  <li>Feature one</li>
+  <li>Feature two</li>
+</ul>
+
+<!-- Table for comparisons -->
+<table>
+  <thead><tr><th>Plan</th><th>Price</th><th>Scans</th></tr></thead>
+  <tbody>
+    <tr><td>Free</td><td>$0</td><td>1</td></tr>
+    <tr><td>Pro</td><td>$29/mo</td><td>Unlimited</td></tr>
+  </tbody>
+</table>`,
+  },
+
+  'No Open Graph article metadata': {
+    generic: `<!-- Add Open Graph article metadata to your <head> -->
+<meta property="article:published_time" content="2024-01-01T00:00:00+00:00">
+<meta property="article:modified_time" content="2024-06-15T00:00:00+00:00">
+<meta property="article:author" content="https://yourdomain.com/about/author-name">
+<meta property="article:section" content="Technology">
+<meta property="article:tag" content="web performance">`,
+    platforms: {
+      nextjs: `// app/blog/[slug]/page.tsx
+export async function generateMetadata({ params }) {
+  return {
+    openGraph: {
+      type: 'article',
+      publishedTime: post.createdAt,
+      modifiedTime: post.updatedAt,
+      authors: ['https://yourdomain.com/about'],
+      section: 'Technology',
+      tags: ['web performance'],
+    },
+  }
+}`,
+      nuxt: `// pages/blog/[slug].vue
+useSeoMeta({
+  ogType: 'article',
+  articlePublishedTime: post.createdAt,
+  articleModifiedTime: post.updatedAt,
+  articleAuthor: 'https://yourdomain.com/about',
+  articleSection: 'Technology',
+})`,
+    },
+  },
 }

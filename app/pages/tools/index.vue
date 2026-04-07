@@ -16,6 +16,7 @@ const TOOLS = [
   { slug: 'schema-generator', title: 'Schema Markup Generator', subtitle: 'JSON-LD', desc: 'Guided form for Article, BlogPosting, and Organization JSON-LD structured data. Live script block preview, copy to clipboard or download as .json.', short: 'Article · Organization · JSON-LD · copy/download', pillar: 'SEO', color: '#6c5ce7', fixes: 3, icon: `<path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm4 18H6V4h7v5h5v11z"/>` },
   { slug: 'contrast-checker', title: 'Color Contrast Checker', subtitle: 'Checker', desc: 'Pick foreground and background colors to get WCAG 2.1 contrast ratio with pass/fail badges for AA Normal, AA Large, AAA Normal, and AAA Large.', short: 'WCAG AA · AAA · ratio · live preview', pillar: 'Accessibility', color: '#a29bfe', fixes: 0, icon: `<path d="M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9c.83 0 1.5-.67 1.5-1.5 0-.39-.15-.74-.39-1.01-.23-.26-.38-.61-.38-.99 0-.83.67-1.5 1.5-1.5H16c2.76 0 5-2.24 5-5 0-4.42-4.03-8-9-8z"/>` },
   { slug: 'email-auth', title: 'SPF / DKIM / DMARC Generator', subtitle: 'Generator', desc: 'Build SPF and DMARC TXT records with provider dropdowns, policy selectors, and reporting email. Get per-provider DKIM setup instructions.', short: 'providers · policy · TXT records · DKIM guide', pillar: 'DNS & Email', color: '#fd79a8', fixes: 3, icon: `<path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/>` },
+  { slug: 'ai-optimizer', title: 'AI Optimizer & llms.txt Generator', subtitle: 'Generator', desc: 'Generate a valid llms.txt file for LLM ingestion, build AI-friendly robots.txt rules, and test how well your content is structured for answer engines like ChatGPT and Perplexity.', short: 'llms.txt · AI crawlers · robots.txt snippets', pillar: 'AI Readiness', color: '#ff7675', fixes: 3, icon: `<path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z"/><path d="M21 3L3 21"/>` },
 ]
 
 const PILLARS = [
@@ -25,6 +26,7 @@ const PILLARS = [
   { key: 'SEO', label: 'SEO', color: '#6c5ce7' },
   { key: 'Accessibility', label: 'Accessibility', color: '#a29bfe' },
   { key: 'DNS & Email', label: 'DNS & Email', color: '#fd79a8' },
+  { key: 'AI Readiness', label: 'AI Readiness', color: '#ff7675' },
 ]
 
 const active      = ref('all')
@@ -44,24 +46,24 @@ const pillarCount = (key: string) => key === 'all' ? TOOLS.length : TOOLS.filter
       <div class="hero-inner">
         <p class="eyebrow">Fix-It Toolbox</p>
         <h1 class="title">
-          <span class="title-num">9</span> tools.<br>
+          <span class="title-num">10</span> tools.<br>
           Every issue<br>covered.
         </h1>
         <p class="subtitle">Free browser-based tools that solve the exact issues ScanPulse flags — no account required.</p>
 
         <div class="stat-strip">
           <div class="stat">
-            <span class="stat-n">9</span>
+            <span class="stat-n">10</span>
             <span class="stat-l">Free tools</span>
           </div>
           <div class="stat-div" />
           <div class="stat">
-            <span class="stat-n">84</span>
+            <span class="stat-n">94</span>
             <span class="stat-l">Checks covered</span>
           </div>
           <div class="stat-div" />
           <div class="stat">
-            <span class="stat-n">5</span>
+            <span class="stat-n">6</span>
             <span class="stat-l">Pillars</span>
           </div>
           <div class="stat-div" />

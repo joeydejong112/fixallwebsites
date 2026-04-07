@@ -80,6 +80,10 @@ const TOOL_LINKS: Record<string, string> = {
   'No DMARC record found':            '/tools/email-auth',
   'DMARC policy not enforcing':       '/tools/email-auth',
   'No DKIM record detected':          '/tools/email-auth',
+  // AI Readiness
+  'No llms.txt found':                '/tools/ai-optimizer',
+  'No llms-full.txt found':           '/tools/ai-optimizer',
+  'AI crawlers blocked in robots.txt': '/tools/ai-optimizer',
 }
 
 onMounted(async () => {
@@ -144,6 +148,7 @@ const pillars = computed(() => [
   { key: 'performance',   label: 'Performance',   color: '#ffaa00', score: scan.value?.performanceScore },
   { key: 'seo',           label: 'SEO',            color: '#6c5ce7', score: scan.value?.seoScore },
   { key: 'accessibility', label: 'Accessibility', color: '#a29bfe', score: scan.value?.accessibilityScore },
+  { key: 'ai',            label: 'AI Readiness',  color: '#ff7675', score: scan.value?.aiScore },
 ])
 
 const bonusCards = computed(() => [
@@ -159,9 +164,9 @@ function daysUntil(dateStr?: string | null): number | null {
 const certDays   = computed(() => daysUntil(scan.value?.certExpiry))
 const domainDays = computed(() => daysUntil(scan.value?.domainExpiry))
 
-type TabKey = 'all' | 'security' | 'performance' | 'seo' | 'accessibility' | 'dns' | 'trust'
+type TabKey = 'all' | 'security' | 'performance' | 'seo' | 'accessibility' | 'ai' | 'dns' | 'trust'
 const activeTab = ref<TabKey>('all')
-const issueTabs: TabKey[] = ['all', 'security', 'performance', 'seo', 'accessibility', 'dns', 'trust']
+const issueTabs: TabKey[] = ['all', 'security', 'performance', 'seo', 'accessibility', 'ai', 'dns', 'trust']
 
 const displayIssues = computed(() => {
   if (!scan.value?.issues) return []
@@ -216,7 +221,7 @@ function arcPath(score: number, r = 42) {
         {{ scan?.status === 'running' ? 'Scanning…' : 'Initialising…' }}
       </p>
       <p class="text-white/50 font-body text-sm mb-1">{{ scan?.url }}</p>
-      <p class="text-white/40 font-body text-xs">Running 84 checks across security, performance, SEO, accessibility, DNS & trust</p>
+      <p class="text-white/40 font-body text-xs">Running 94 checks across security, performance, SEO, accessibility, AI readiness, DNS & trust</p>
 
       <!-- Animated progress dots -->
       <div class="flex gap-1.5 mt-8">
@@ -275,7 +280,7 @@ function arcPath(score: number, r = 42) {
             class="font-display font-bold text-white leading-tight tracking-[-0.03em] mb-3 break-all"
             style="font-size: clamp(1.4rem, 2.5vw, 1.8rem); max-width: 50ch"
           >{{ scan.url }}</h1>
-          <p class="text-white/45 text-sm font-body">Scanned just now · 84 checks</p>
+          <p class="text-white/45 text-sm font-body">Scanned just now · 94 checks</p>
         </div>
 
         <!-- Big score -->
@@ -315,8 +320,8 @@ function arcPath(score: number, r = 42) {
         </div>
       </div>
 
-      <!-- ── Pillar score bars (4 pillars in overall score) ── -->
-      <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
+      <!-- ── Pillar score bars (5 pillars in overall score) ── -->
+      <div class="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-4">
         <div
           v-for="p in pillars"
           :key="p.key"
@@ -418,7 +423,7 @@ function arcPath(score: number, r = 42) {
             :class="activeTab === tab ? 'results-tab--active' : ''"
             @click="activeTab = tab"
           >
-            <span class="capitalize">{{ tab === 'dns' ? 'DNS' : tab === 'seo' ? 'SEO' : tab }}</span>
+            <span class="capitalize">{{ tab === 'dns' ? 'DNS' : tab === 'seo' ? 'SEO' : tab === 'ai' ? 'AI' : tab }}</span>
             <span class="results-tab__count">{{ issueCount(tab) }}</span>
           </button>
         </div>

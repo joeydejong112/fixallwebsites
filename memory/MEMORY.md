@@ -297,17 +297,17 @@ Scores: `(passing / total) × 100`. Overall = average of three pillars.
 
 ## Last Session
 
-**Date**: 2026-04-02
+**Date**: 2026-04-07
 **What was done**:
-- Marked `GOOGLE_PSI_API_KEY` env var task as complete in PLAN.md (was already done)
-- Completed Phase 2.5 Task 11 — FIX_SNIPPETS expansion
-  - Created `app/utils/fixSnippets.ts` (new file, `app/utils/` directory created)
-  - `FIX_SNIPPETS` record keyed by issue title, `{ generic, platforms? }` structure
-  - Covers all 84 checks: 21 security, 18 performance, 19 SEO, 12 accessibility, 8 DNS, 6 trust
-  - Security + performance + SEO checks include platform-specific snippets (nextjs, nuxt, nginx, apache, cloudflare)
-  - Updated docs/PLAN.md (Task 11 marked complete)
+- Completed all 6 Phase 5 tasks (AI Searchability / AEO):
+  - Task 1: Schema already had `aiScore` — marked complete
+  - Task 2: Created `convex/checks/ai.ts` — 10 AI Readiness checks (llms.txt, AI crawlers, FAQPage schema, E-E-A-T, semantic HTML, content freshness, heading continuity, citation formatting, OG article metadata)
+  - Task 3: Updated `convex/scanAction.ts` — parallel fetches for llms.txt/llms-full.txt, GET robots.txt for content, JSON-LD extraction, 5-pillar overall score
+  - Task 4: Added 10 AI snippets to `app/utils/fixSnippets.ts` with platform-specific examples
+  - Task 5: Results page — AI pillar card (`#ff7675`), 5-col grid, AI tab; landing page — 94 checks, 7 pillars, AI pillar card
+  - Task 6: Created `app/pages/tools/ai-optimizer.vue` — llms.txt generator + AI crawler robots.txt builder; added to tools hub
 
-**Where we left off**: Task 11 done. Next up: Task 12 (UI updates for new pillars and scores).
+**Where we left off**: All Phase 5 tasks complete. Next phase TBD.
 
 **Branch**: `main` (all work committed directly, no open branches)
 

@@ -723,77 +723,65 @@ _Last updated: 2026-04-02 — Phase 4 (Fix-It Tools) planned with Free/Pro gatin
 
 ---
 
-### Task 1 — Schema migration
+### Task 1 — Schema migration ✅ Complete
 
-- [ ] Add `aiScore: v.optional(v.number())` to `scans` table in `convex/schema.ts`
-- [ ] Update `updateScan` in `convex/scans.ts` to accept new `aiScore` field
-- [ ] Run `npx convex deploy --yes`
-
----
-
-### Task 2 — AI Readiness checks module (10 checks)
-
-- [ ] Create `convex/checks/ai.ts` exporting `runAiChecks(html, headers, robotsTxt, jsonLd, llmsTxtResult, llmsFullTxtResult): PillarResult`
-- [ ] Check 1: `llms.txt` present — 200 status from parallel HEAD to `/llms.txt` or `/.well-known/llms.txt`
-- [ ] Check 2: `llms-full.txt` present — 200 status from parallel HEAD for extended AI ingestion content
-- [ ] Check 3: AI crawler allow-list — parse `robotsTxt` for `GPTBot`, `ChatGPT-User`, `Google-Extended`, `ClaudeBot`, `PerplexityBot`, `anthropic-ai`; flag if any are `Disallow: /`
-- [ ] Check 4: Answer-Engine Schema — parse `jsonLd` for `FAQPage`, `HowTo`, `QAPage`, or `Article` types (AIs extract structured answers from these)
-- [ ] Check 5: Author Authority (E-E-A-T) — detect `Person` or `Organization` in `jsonLd`, or `rel="author"` / `<meta name="author">` in HTML
-- [ ] Check 6: Semantic Content Isolation — check `html` for `<main>`, `<article>`, or `<section>` usage to help LLM parsers separate content from boilerplate
-- [ ] Check 7: Content Freshness — detect `dateModified` in `jsonLd` or `<meta property="article:modified_time">` (RAG pipelines prefer recent data)
-- [ ] Check 8: Heading Continuity — ensure `H1` → `H2` → `H3` flows without skipped levels, providing clean outlines for AI parsers
-- [ ] Check 9: Citation-Friendly Formatting — detect `<ol>`, `<ul>`, `<dl>`, or `<table>` tags; LLMs prefer structured lists/tables for factual extraction
-- [ ] Check 10: Open Graph Article Data — check for `article:published_time`, `article:author`, `article:section` providing metadata context for browsing agents
+- [x] Add `aiScore: v.optional(v.number())` to `scans` table in `convex/schema.ts`
+- [x] Update `updateScan` in `convex/scans.ts` to accept new `aiScore` field
+- [x] Run `npx convex deploy --yes`
 
 ---
 
-### Task 3 — Orchestrator update
+### Task 2 — AI Readiness checks module (10 checks) ✅ Complete
 
-- [ ] Add parallel HEAD requests in `convex/scanAction.ts` for `/llms.txt`, `/.well-known/llms.txt`, `/llms-full.txt`
-- [ ] Pass results to `runAiChecks()` alongside existing `html`, `headers`, `robotsTxt`, `jsonLd`
-- [ ] Compute `aiScore: (passing / total) * 100`
-- [ ] Update overall score calculation: `avg(security, performance, seo, accessibility, ai)` — 5 pillars; DNS and Trust remain bonus
-- [ ] Save `aiScore` via `updateScan`
-
----
-
-### Task 4 — Expand FIX_SNIPPETS for AI checks
-
-- [ ] Update `app/utils/fixSnippets.ts` with generic fix instructions for all 10 AI Readiness checks
-- [ ] Add platform-specific snippets where applicable:
-  - `llms.txt` creation guide (generic markdown file)
-  - `robots.txt` AI bot rules (Nginx, Vercel, Cloudflare)
-  - JSON-LD `FAQPage` / `HowTo` templates (Next.js, Nuxt, WordPress)
+- [x] Create `convex/checks/ai.ts` exporting `runAiChecks(html, headers, robotsTxt, jsonLd, llmsTxtResult, llmsFullTxtResult): PillarResult`
+- [x] Check 1: `llms.txt` present
+- [x] Check 2: `llms-full.txt` present
+- [x] Check 3: AI crawler allow-list
+- [x] Check 4: Answer-Engine Schema
+- [x] Check 5: Author Authority (E-E-A-T)
+- [x] Check 6: Semantic Content Isolation
+- [x] Check 7: Content Freshness
+- [x] Check 8: Heading Continuity
+- [x] Check 9: Citation-Friendly Formatting
+- [x] Check 10: Open Graph Article Data
 
 ---
 
-### Task 5 — UI updates for AI Readiness pillar
+### Task 3 — Orchestrator update ✅ Complete
 
-- [ ] Add AI Readiness pillar card (color: `#ff7675`) to results page — update grid to 5-col for main pillars
-- [ ] Add `AI` tab to the tabbed issue list in `/results`
-- [ ] Update overall score ring to reflect 5-pillar average
-- [ ] Update landing page pillar strip to show 7 categories and 94 check count
-- [ ] Update landing page stats ticker: `94+ checks · 7 pillars`
-
----
-
-### Task 6 — AI Optimizer & `llms.txt` Generator tool
-> Fixes: AI Readiness Checks 1, 2, 3
-
-- [ ] Create `app/pages/tools/ai-optimizer.vue`
-- [ ] 🟢 FREE: **`llms.txt` Generator**:
-  - Form fields: Site Name, Short Description, Target Audience, Key URLs (Docs, Pricing, API, Blog)
-  - Live output: valid markdown formatted for LLM ingestion
-  - Download as `llms.txt` file + copy-to-clipboard
-- [ ] 🟢 FREE: **AI Crawler robots.txt Builder**:
-  - Dropdown per agent: `GPTBot`, `ChatGPT-User`, `Google-Extended`, `ClaudeBot`, `PerplexityBot`, `anthropic-ai`
-  - Toggle each: Allow / Block
-  - Output: pasteable `robots.txt` snippet
-  - Copy-to-clipboard
-- [ ] 🔒 PRO: **"Live AI Parse Test"**: enter URL → backend strips nav/footer/scripts → returns exact markdown an LLM would "see" (helps debug Semantic Isolation, Check 6)
-- [ ] Add to `/tools` hub with pillar badge "AI Readiness"
-- [ ] Cross-link from scan results when AI checks fail: "Fix with our tool →"
+- [x] Add parallel HEAD/GET requests in `convex/scanAction.ts` for `/llms.txt`, `/.well-known/llms.txt`, `/llms-full.txt`, and robots.txt content
+- [x] Pass results to `runAiChecks()` alongside existing `html`, `headers`, `robotsTxt`, `jsonLd`
+- [x] Compute `aiScore: (passing / total) * 100`
+- [x] Update overall score calculation: `avg(security, performance, seo, accessibility, ai)` — 5 pillars; DNS and Trust remain bonus
+- [x] Save `aiScore` via `updateScan`
 
 ---
 
-_Last updated: 2026-04-02 — Phase 5 (AI Searchability / AEO) planned_
+### Task 4 — Expand FIX_SNIPPETS for AI checks ✅ Complete
+
+- [x] Update `app/utils/fixSnippets.ts` with generic fix instructions for all 10 AI Readiness checks
+- [x] Platform-specific snippets for llms.txt (Next.js, Nuxt, Nginx, Cloudflare), robots.txt AI rules, and JSON-LD FAQPage (Next.js, Nuxt)
+
+---
+
+### Task 5 — UI updates for AI Readiness pillar ✅ Complete
+
+- [x] Add AI Readiness pillar card (color: `#ff7675`) to results page — updated grid to 5-col
+- [x] Add `AI` tab to the tabbed issue list in `/results`
+- [x] Overall score ring reflects 5-pillar average (computed in scanAction.ts)
+- [x] Landing page pillar strip updated — 7 pillars, AI Readiness entry with 10 checks
+- [x] Landing page stats updated: `94 checks · 7 pillars`
+
+---
+
+### Task 6 — AI Optimizer & `llms.txt` Generator tool ✅ Complete
+
+- [x] Created `app/pages/tools/ai-optimizer.vue`
+- [x] 🟢 FREE: `llms.txt` Generator with live preview + download + copy
+- [x] 🟢 FREE: AI Crawler robots.txt Builder with Allow/Block/Partial toggles per agent
+- [x] Added to `/tools` hub with AI Readiness pillar badge
+- [x] Cross-linked from scan results for AI check failures
+
+---
+
+_Last updated: 2026-04-07 — Phase 5 Tasks 1–6 complete_

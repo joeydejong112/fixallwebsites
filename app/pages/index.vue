@@ -33,7 +33,7 @@ const steps = [
   {
     num: '02',
     title: 'We scan in seconds',
-    desc: '84 checks fire simultaneously across security, performance, SEO, accessibility, DNS, and trust pillars.',
+    desc: '94 checks fire simultaneously across security, performance, SEO, accessibility, AI readiness, DNS, and trust pillars.',
     color: '#ffaa00',
   },
   {
@@ -63,7 +63,7 @@ const plans = [
     color: 'rgba(255,255,255,0.12)',
     accent: 'rgba(255,255,255,0.3)',
     scans: '1 free scan',
-    features: ['All 6 pillars · 84 checks', 'Standard PDF report', 'Shareable result links'],
+    features: ['All 7 pillars · 94 checks', 'Standard PDF report', 'Shareable result links'],
     cta: 'Start free',
     highlight: false,
   },
@@ -169,6 +169,14 @@ const pillars = [
     count: 12,
     desc: 'Reach every user — and pass WCAG audits.',
     checks: ['Alt text coverage', 'Form labels & ARIA', 'Heading hierarchy', 'Skip-nav & landmarks', 'Focus visibility'],
+  },
+  {
+    id: 'ai',
+    color: '#ff7675',
+    label: 'AI Readiness',
+    count: 10,
+    desc: 'Get discovered and cited by AI search engines.',
+    checks: ['llms.txt presence', 'AI crawler allow-list', 'Answer-engine schema', 'Author authority (E-E-A-T)', 'Content freshness signals'],
   },
   {
     id: 'dns',
@@ -284,7 +292,7 @@ const pillars = [
 
         <!-- Trust chips -->
         <div class="flex items-center gap-5 mt-8 flex-wrap">
-          <div v-for="s in ['Free forever', '~10s results', '84 checks']" :key="s" class="flex items-center gap-1.5">
+          <div v-for="s in ['Free forever', '~10s results', '94 checks']" :key="s" class="flex items-center gap-1.5">
             <div class="w-1 h-1 rounded-full bg-success" />
             <span class="text-white/48 text-[11px] font-body">{{ s }}</span>
           </div>
@@ -365,8 +373,8 @@ const pillars = [
             class="font-display font-bold text-white leading-[0.9] tracking-[-0.03em] mb-8"
             style="font-size: clamp(2.8rem, 4.5vw, 4.2rem)"
           >
-            84 checks.<br />
-            <span class="text-white/50">Six pillars.</span><br />
+            94 checks.<br />
+            <span class="text-white/50">Seven pillars.</span><br />
             One score.
           </h2>
           <p class="font-body text-white/55 leading-relaxed mb-12" style="max-width: 36ch; font-size: 0.95rem">
