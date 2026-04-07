@@ -549,6 +549,10 @@ async function handleBillingAction() {
             </div>
             <h2 class="settings-heading">API access</h2>
             <p class="settings-subtext">Generate API keys to run scans and fetch results programmatically.</p>
+            <NuxtLink to="/api-docs" class="inline-flex items-center gap-1.5 text-xs text-primary hover:text-primary/80 transition-colors mt-2">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+              View API documentation →
+            </NuxtLink>
 
             <!-- Pro lock -->
             <div v-if="plan !== 'pro'" class="mt-8 relative">

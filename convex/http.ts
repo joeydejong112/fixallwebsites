@@ -180,6 +180,113 @@ async function resolveApiKey(ctx: any, req: Request) {
   return await ctx.runQuery(internal.apiKeys.validateApiKey, { raw })
 }
 
+// ── Helper: resolve API key AND verify Pro plan ────────────────────────────
+async function resolveProApiKey(ctx: any, req: Request) {
+  const key = await resolveApiKey(ctx, req)
+  if (!key) return null
+  const plan = await ctx.runQuery(internal.users.getUserPlanInternal, { clerkId: key.userId })
+  if (plan !== 'pro') return null
+  return key
+}
+
+// ── CORS headers for v1 API ────────────────────────────────────────────────
+const CORS = {
+  'Access-Control-Allow-Origin': '*',
+  'Content-Type': 'application/json',
+}
+
+function json(data: unknown, status = 200) {
+  return new Response(JSON.stringify(data), { status, headers: CORS })
+}
+
+// ── Normalize scan doc to public API shape ─────────────────────────────────
+function normalizeScan(scan: any) {
+  return {
+    scanId:    scan._id,
+    url:       scan.url,
+    status:    scan.status,
+    scores: scan.status === 'done' ? {
+      overall:       scan.overallScore       ?? null,
+      security:      scan.securityScore      ?? null,
+      performance:   scan.performanceScore   ?? null,
+      seo:           scan.seoScore           ?? null,
+      accessibility: scan.accessibilityScore ?? null,
+      ai:            scan.aiScore            ?? null,
+    } : null,
+    issues:       scan.status === 'done' ? (scan.issues ?? []) : null,
+    errorMessage: scan.status === 'error' ? (scan.errorMessage ?? null) : undefined,
+    scannedAt:    new Date(scan._creationTime).toISOString(),
+  }
+}
+
+// ── POST /api/v1/scan ──────────────────────────────────────────────────────
+http.route({
+  path: '/api/v1/scan',
+  method: 'POST',
+  handler: httpAction(async (ctx, req) => {
+    const apiKey = await resolveProApiKey(ctx, req)
+    if (!apiKey) return json({ error: 'Unauthorized — valid Pro API key required' }, 401)
+
+    let body: any
+    try { body = await req.json() } catch { return json({ error: 'Invalid JSON body' }, 400) }
+
+    const url = body?.url
+    if (!url || typeof url !== 'string') return json({ error: 'Missing or invalid "url" field' }, 422)
+    try { new URL(url) } catch { return json({ error: 'Invalid URL format' }, 422) }
+
+    const scanId = await ctx.runMutation(api.scans.createScan, { userId: apiKey.userId, url })
+    ctx.runAction(api.scanAction.runScan, { scanId, url }).catch(() => {})
+
+    await ctx.runMutation(api.apiKeys.touchLastUsed, { keyId: apiKey._id })
+
+    return json({
+      scanId,
+      status:  'pending',
+      pollUrl: `/api/v1/scan/${scanId}`,
+    }, 201)
+  }),
+})
+
+// ── GET /api/v1/scan/:scanId ───────────────────────────────────────────────
+http.route({
+  pathPrefix: '/api/v1/scan/',
+  method: 'GET',
+  handler: httpAction(async (ctx, req) => {
+    const apiKey = await resolveProApiKey(ctx, req)
+    if (!apiKey) return json({ error: 'Unauthorized — valid Pro API key required' }, 401)
+
+    const scanId = req.url.split('/api/v1/scan/')[1]?.split('?')[0] as any
+    if (!scanId) return json({ error: 'Missing scanId in path' }, 400)
+
+    const scan = await ctx.runQuery(api.scans.getScan, { scanId })
+    if (!scan)                          return json({ error: 'Scan not found' }, 404)
+    if (scan.userId !== apiKey.userId)  return json({ error: 'Forbidden' }, 403)
+
+    return json(normalizeScan(scan))
+  }),
+})
+
+// ── GET /api/v1/scans ──────────────────────────────────────────────────────
+http.route({
+  path: '/api/v1/scans',
+  method: 'GET',
+  handler: httpAction(async (ctx, req) => {
+    const apiKey = await resolveProApiKey(ctx, req)
+    if (!apiKey) return json({ error: 'Unauthorized — valid Pro API key required' }, 401)
+
+    const params = new URL(req.url).searchParams
+    const statusFilter = params.get('status')
+    const limitParam   = parseInt(params.get('limit') ?? '20', 10)
+    const limit        = Math.min(Math.max(1, isNaN(limitParam) ? 20 : limitParam), 100)
+
+    let scans = await ctx.runQuery(api.scans.getScansByUser, { userId: apiKey.userId })
+    if (statusFilter) scans = scans.filter((s: any) => s.status === statusFilter)
+    scans = scans.slice(0, limit)
+
+    return json({ scans: scans.map(normalizeScan), count: scans.length })
+  }),
+})
+
 // ── POST /api/scan ─────────────────────────────────────────────────────────
 http.route({
   path: '/api/scan',

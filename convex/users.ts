@@ -30,6 +30,14 @@ export const upsertUser = internalMutation({
   },
 })
 
+export const getUserPlanInternal = internalQuery({
+  args: { clerkId: v.string() },
+  handler: async (ctx, { clerkId }) => {
+    const user = await ctx.db.query('users').withIndex('by_clerk', q => q.eq('clerkId', clerkId)).unique()
+    return user?.plan ?? null
+  },
+})
+
 export const getUserByClerkId = query({
   args: { clerkId: v.string() },
   handler: async (ctx, { clerkId }) => {

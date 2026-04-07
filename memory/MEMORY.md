@@ -313,7 +313,12 @@ Scores: `(passing / total) × 100`. Overall = average of three pillars.
   - T3: `app/pages/compare/[scanIdA]/[scanIdB].vue` — polling results page: dual score rings with delta badge, pillar comparison table sorted by gap, "Fix to catch up" issue diff, "You're ahead" strengths section, share/PDF export
   - T4: Dashboard Competitor Scans widget (last 3 from localStorage), NavBar "Compare" link (pink); Convex deployed
 
-**Where we left off**: Phase 8 complete. Next: Phase 9 (Public API, Pro).
+- Completed Phase 9 (Public API) — all 6 tasks:
+  - T1-T4: `convex/http.ts` — added `/api/v1/scan` POST (Pro check, 201 + pollUrl), `/api/v1/scan/{scanId}` GET (ownership check, normalized response), `/api/v1/scans` GET (?status, ?limit, max 100); `resolveProApiKey` helper verifies Pro plan via `getUserPlanInternal`; `normalizeScan` returns scores object + ISO scannedAt
+  - T5: `app/pages/api-docs.vue` — full API reference with endpoint cards, curl/JS/Python code tabs, live "Try it" section (fires real POST), error codes table
+  - T6: `docs/API.md` — complete REST reference + GitHub Actions CI/CD health gate workflow example; Settings Developer tab now links to /api-docs; Convex deployed
+
+**Where we left off**: Phase 9 complete. Next: Phase 10 (Marketing & SEO Polish).
 
 **Branch**: `main` (all work committed directly, no open branches)
 
