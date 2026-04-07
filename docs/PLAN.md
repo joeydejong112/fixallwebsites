@@ -785,3 +785,369 @@ _Last updated: 2026-04-02 — Phase 4 (Fix-It Tools) planned with Free/Pro gatin
 ---
 
 _Last updated: 2026-04-07 — Phase 5 Tasks 1–6 complete_
+
+---
+
+## Phase 6 — Bulk Scan (Pro)
+
+> **Goal**: Let Pro users scan up to 50 URLs in a single job. Upload a CSV or paste URLs, watch real-time progress, then export a full results spreadsheet. Turns ScanPulse into an agency tool — audit an entire client site map in one click.
+>
+> **Gating**: Entire feature locked behind Pro. Free users see a `<ProGate>` upgrade prompt at `/bulk-scan`.
+
+---
+
+### Task 1 — Schema migration ✅ Complete
+
+- [x] `bulkScans` table added to `convex/schema.ts`
+- [x] `bulkScanId: v.optional(v.id('bulkScans'))` added to `scans` table
+- [x] `by_bulk` index added to `scans`
+- [x] Deployed
+
+---
+
+### Task 2 — Convex functions for bulk scan lifecycle ✅ Complete
+
+- [x] `convex/bulkScans.ts`: `createBulkScan` (Pro-gated, max 50), `getBulkScan`, `getBulkScanWithScans`, `getBulkScansByUser`, `updateBulkScan`, `deleteBulkScan`, `getNextPendingScan`
+
+---
+
+### Task 3 — `runBulkScan` action (orchestrator) ✅ Complete
+
+- [x] `convex/bulkScanAction.ts`: `startBulkScan` (public) + `processNextScan` (internal) chained via `ctx.scheduler.runAfter(0, ...)` — one URL per invocation
+
+---
+
+### Task 4 — `/bulk-scan` input page ✅ Complete
+
+- [x] `app/pages/bulk-scan/index.vue`: ProGate, paste/CSV tab, client-side validation, 50-URL counter + bar, scan name, submit
+
+---
+
+### Task 5 — `/bulk-scan/[id]` results page ✅ Complete
+
+- [x] `app/pages/bulk-scan/[id].vue`: live progress bar, elapsed + estimated time, sortable score table with skeleton rows, delete button
+
+---
+
+### Task 6 — CSV export ✅ Complete
+
+- [x] `app/utils/exportBulkCsv.ts`: all pillar scores + issue counts, Blob download
+- [x] Wired into results page
+
+---
+
+### Task 7 — Dashboard & navigation integration ✅ Complete
+
+- [x] Bulk Scans widget added to `/dashboard` — last 5 jobs with progress bar + status badge
+- [x] "Bulk Scan" NavBar link (pink, Pro accent)
+- [x] Both pages use `definePageMeta({ middleware: 'auth' })`
+
+---
+
+_Last updated: 2026-04-07 — Phase 6 (Bulk Scan) complete_
+
+---
+
+## Phase 7 — Score History & Trend Charts
+
+> **Goal**: Track every scan result per URL over time and surface trends — rising or falling scores, regression alerts, and a sparkline chart per pillar. Turns ScanPulse from a one-shot scanner into a continuous health monitor.
+>
+> **Gating**: History view and charts are Pro. Free users see the last scan only.
+
+---
+
+### Task 1 — Schema: score snapshots
+
+- [ ] Add `scoreHistory` table to `convex/schema.ts`:
+  ```ts
+  scoreHistory: defineTable({
+    userId:             v.string(),
+    url:                v.string(),        // normalised (no trailing slash, lowercase)
+    scanId:             v.id('scans'),
+    ts:                 v.number(),        // _creationTime copy for easy range queries
+    overallScore:       v.optional(v.number()),
+    securityScore:      v.optional(v.number()),
+    performanceScore:   v.optional(v.number()),
+    seoScore:           v.optional(v.number()),
+    accessibilityScore: v.optional(v.number()),
+    aiScore:            v.optional(v.number()),
+  })
+    .index('by_user_url', ['userId', 'url'])
+    .index('by_user_url_ts', ['userId', 'url', 'ts'])
+  ```
+- [ ] Run `npx convex deploy --yes`
+
+---
+
+### Task 2 — Write snapshot on scan completion
+
+- [ ] Create `convex/scoreHistory.ts`:
+  - `recordSnapshot` internalMutation: insert one `scoreHistory` doc from a completed scan
+  - `getHistory` query: `by_user_url_ts` index, `.order('asc').take(90)` — last 90 snapshots per URL
+  - `getHistoryForUser` query: distinct URLs with latest snapshot each (for dashboard overview)
+- [ ] Call `recordSnapshot` from `scanAction.ts` after a successful `updateScan` (status `done`)
+
+---
+
+### Task 3 — Trend chart component
+
+Create `app/components/TrendChart.vue`:
+
+- [ ] Accept `{ snapshots: ScoreSnapshot[], pillar: string, color: string }` props
+- [ ] Render an SVG sparkline (no external chart lib — pure SVG path from score values)
+- [ ] Show min / max / latest score labels
+- [ ] Highlight regressions (drop >10pts between consecutive points) with a red dot
+- [ ] Tooltip on hover showing date + score
+- [ ] Animate path draw on mount (CSS stroke-dashoffset transition)
+
+---
+
+### Task 4 — `/history/[url]` page
+
+Create `app/pages/history/[url].vue` (URL base64-encoded in param):
+
+- [ ] `<ProGate>` — free users see latest scan only, no chart
+- [ ] Hero: URL + overall trend direction badge (`↑ +12 this month` / `↓ -5`)
+- [ ] Full trend chart for overall score (90-day window)
+- [ ] Per-pillar sparklines row (6 small charts: security, performance, SEO, a11y, AI, DNS)
+- [ ] Score history table: date · overall · per-pillar scores · issues count — paginated, newest first
+- [ ] Regression alert row: highlighted in red when overall drops >10pts vs previous scan
+- [ ] "Scan now" CTA to add a new data point
+
+---
+
+### Task 5 — Dashboard trend widgets
+
+- [ ] Add mini sparkline to each scan history row in `/dashboard` (overall score over last 5 scans for that URL)
+- [ ] Add "Score Trends" card to dashboard overview: top 3 URLs by activity with direction badge
+- [ ] Link each URL to `/history/[url]`
+
+---
+
+### Task 6 — Regression alert emails
+
+- [ ] Add `regressionThreshold` field to `alertPreferences` (default: 10 pts)
+- [ ] In `recordSnapshot`: after insert, compare new overall score to previous snapshot — if drop ≥ threshold and user has alerts enabled, schedule email via Resend
+- [ ] Email template: "Your score for example.com dropped from 84 → 71 — view details"
+
+---
+
+_Last updated: 2026-04-07 — Phase 7 (Score History) planned_
+
+---
+
+## Phase 8 — Competitor Scan (Pro)
+
+> **Goal**: Side-by-side scan of two URLs — your site vs a competitor. Shows score deltas per pillar, highlights where you're behind, and prioritises fixes by competitive impact.
+>
+> **Gating**: Pro only. Free users see a teaser with blurred competitor column.
+
+---
+
+### Task 1 — `/compare` input page
+
+Create `app/pages/compare/index.vue`:
+
+- [ ] `definePageMeta({ middleware: 'auth' })`
+- [ ] `<ProGate>` wraps the compare tool
+- [ ] Two URL inputs: "Your site" + "Competitor"
+- [ ] Swap button (flip the two URLs)
+- [ ] "Compare" CTA → triggers two parallel scans → redirects to `/compare/[scanIdA]/[scanIdB]`
+- [ ] Recent comparisons list (stored in localStorage, last 5 pairs)
+
+---
+
+### Task 2 — Parallel scan orchestration
+
+- [ ] Add `compareScans` action in `convex/compare.ts`:
+  - Accept `{ userId, urlA, urlB }`
+  - Call `createScan` for both URLs
+  - Fire both `runScan` actions concurrently via `Promise.all` (two separate action calls via scheduler)
+  - Return `{ scanIdA, scanIdB }`
+- [ ] No new schema needed — reuses existing `scans` table
+
+---
+
+### Task 3 — `/compare/[scanIdA]/[scanIdB]` results page
+
+Create `app/pages/compare/[scanIdA]/[scanIdB].vue`:
+
+- [ ] Poll both scans until both reach `done` or `error`
+- [ ] **Hero**: two score rings side by side with URL labels; delta badge between them (`+12` / `-5`)
+- [ ] **Pillar comparison table**:
+  - Rows: Security · Performance · SEO · Accessibility · AI · DNS · Trust
+  - Columns: Your Score · Competitor Score · Delta · Winner badge
+  - Rows sorted by delta (biggest gap first = highest opportunity)
+- [ ] **Issue diff section**: issues your site has that competitor doesn't = "Fix these to catch up"
+- [ ] **Strengths section**: issues competitor has that you don't = "You're ahead here"
+- [ ] **Share button**: copy link to results
+- [ ] **Export PDF** via `window.print()`
+
+---
+
+### Task 4 — Dashboard integration
+
+- [ ] "New comparison" CTA on dashboard for Pro users
+- [ ] Last 3 comparisons shown with URL pair + score delta badge
+
+---
+
+_Last updated: 2026-04-07 — Phase 8 (Competitor Scan) planned_
+
+---
+
+## Phase 9 — Public API (Pro)
+
+> **Goal**: A documented REST API at `/api/v1/scan` so developers and agencies can run ScanPulse scans programmatically — from CI pipelines, Slack bots, custom dashboards. Authenticated via the API key system already built.
+>
+> **Gating**: Pro only. Rate-limited to 60 req/min per key.
+
+---
+
+### Task 1 — API HTTP router
+
+- [ ] Create `convex/api/v1.ts` (HTTP action, edge runtime — no `"use node"`):
+  - `POST /api/v1/scan` — submit a URL for scanning
+  - `GET /api/v1/scan/:scanId` — poll scan status + results
+  - `GET /api/v1/scans` — list scans for the authenticated key owner (last 20)
+- [ ] Auth middleware helper: extract `Authorization: Bearer sp_live_...` header → hash → look up `apiKeys` table → resolve `userId` + verify Pro plan
+- [ ] Rate limiting: track request count per key per minute using a `rateLimit` in-memory pattern (Convex scheduled mutation to reset counters) — reject with 429 if exceeded
+
+---
+
+### Task 2 — `POST /api/v1/scan` endpoint
+
+- [ ] Validate `{ url }` body — return 422 on invalid URL
+- [ ] Call `createScan` mutation → get `scanId`
+- [ ] Fire `runScan` action asynchronously (don't await)
+- [ ] Return `201` with `{ scanId, status: "pending", pollUrl: "/api/v1/scan/{scanId}" }`
+
+---
+
+### Task 3 — `GET /api/v1/scan/:scanId` endpoint
+
+- [ ] Verify key owner matches `scan.userId`
+- [ ] Return scan doc as JSON — normalise field names to camelCase
+- [ ] When `status === "done"`: include all scores and issues array
+- [ ] When `status === "error"`: include `errorMessage`
+- [ ] Response shape:
+  ```json
+  {
+    "scanId": "...",
+    "url": "https://example.com",
+    "status": "done",
+    "scores": { "overall": 74, "security": 80, "performance": 65, "seo": 72, "accessibility": 90, "ai": 60 },
+    "issues": [{ "pillar": "security", "severity": "critical", "title": "...", "description": "..." }],
+    "scannedAt": "2026-04-07T10:00:00Z"
+  }
+  ```
+
+---
+
+### Task 4 — `GET /api/v1/scans` endpoint
+
+- [ ] Return last 20 scans for key owner
+- [ ] Support `?status=done` filter and `?limit=N` (max 100)
+- [ ] Paginate via `?cursor=` using Convex pagination
+
+---
+
+### Task 5 — API docs page
+
+Create `app/pages/api-docs.vue`:
+
+- [ ] Link from Settings → Developer tab (already has API key management)
+- [ ] Document all 3 endpoints with request/response examples
+- [ ] Code snippets: `curl`, `fetch` (JS), `requests` (Python)
+- [ ] Interactive "Try it" section: paste your API key + a URL → fires live request → shows response
+
+---
+
+### Task 6 — CI/CD integration guide
+
+- [ ] Add `docs/API.md` with GitHub Actions workflow example:
+  ```yaml
+  - name: ScanPulse health check
+    run: |
+      SCAN=$(curl -s -X POST https://hip-bass-536.eu-west-1.convex.site/api/v1/scan \
+        -H "Authorization: Bearer $SCANPULSE_API_KEY" \
+        -d '{"url":"https://yoursite.com"}' | jq -r '.scanId')
+      # poll until done, fail if overall < 70
+  ```
+
+---
+
+_Last updated: 2026-04-07 — Phase 9 (Public API) planned_
+
+---
+
+## Phase 10 — Marketing & SEO Polish
+
+> **Goal**: Make ScanPulse rank for high-intent keywords ("website security checker", "free SEO audit tool", "WCAG accessibility checker") and convert organic visitors to signups. Each tool page is already an SEO landing page — this phase sharpens copy, adds social proof, improves Core Web Vitals, and builds linkable assets.
+
+---
+
+### Task 1 — On-page SEO audit of key routes
+
+- [ ] Run ScanPulse on itself — fix every flagged issue
+- [ ] Unique `<title>` + `<meta description>` on every page (scanner, tools, pricing, dashboard)
+- [ ] Add `<link rel="canonical">` to all pages
+- [ ] Add `dateModified` + `FAQPage` JSON-LD to landing page
+- [ ] Ensure each tool page has a unique H1 matching its target keyword
+
+---
+
+### Task 2 — Landing page copy & conversion improvements
+
+- [ ] A/B test hero headline variants (store chosen variant in localStorage)
+- [ ] Add social proof strip: "Join 1,200+ developers scanning their sites" (dynamic counter from Convex scan count)
+- [ ] Add "As used by" logo strip (placeholder logos initially)
+- [ ] Add testimonial cards (3 quotes with avatar, name, role)
+- [ ] Improve pricing section: add feature comparison table (Free vs Pro side by side)
+- [ ] Add FAQ section targeting long-tail keywords
+
+---
+
+### Task 3 — Tool SEO landing pages
+
+Each tool page (`/tools/*`) should:
+- [ ] Have a unique meta description mentioning the specific problem it solves
+- [ ] Include a short "What is X?" intro paragraph (150–200 words) targeting the keyword
+- [ ] Add FAQ JSON-LD with 3–5 questions per tool
+- [ ] Internal link to related tools and the main scanner
+
+---
+
+### Task 4 — Blog / content engine
+
+- [ ] Create `app/pages/blog/index.vue` — blog index listing posts
+- [ ] Create `app/pages/blog/[slug].vue` — blog post template
+- [ ] Store posts as static `.md` files in `content/blog/` using Nuxt Content module
+- [ ] Initial 3 posts:
+  - "What is HSTS and why your site needs it" (targets security header keywords)
+  - "How to pass a WCAG accessibility audit in 2026"
+  - "What is llms.txt and why AI search engines need it"
+- [ ] Each post cross-links to the relevant scanner check + fix-it tool
+
+---
+
+### Task 5 — Performance & Core Web Vitals
+
+- [ ] Audit and fix LCP on landing page (preload hero font, defer non-critical scripts)
+- [ ] Add `loading="lazy"` and explicit `width`/`height` to all images
+- [ ] Ensure no layout shift from Clerk auth hydration (skeleton loader)
+- [ ] Add `<link rel="preconnect">` for Google Fonts, Convex cloud
+- [ ] Run Lighthouse CI in GitHub Actions: fail build if LCP > 2.5s or CLS > 0.1
+
+---
+
+### Task 6 — Open Graph & social preview
+
+- [ ] Dynamic OG image for scan results: generate a card showing URL + scores (edge function using `@vercel/og` or similar)
+- [ ] Static OG images for all tool pages (branded card with tool name + pillar colour)
+- [ ] Twitter Card `summary_large_image` on all pages
+- [ ] Test all previews with opengraph.xyz
+
+---
+
+_Last updated: 2026-04-07 — Phase 10 (Marketing & SEO Polish) planned_

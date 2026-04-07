@@ -11,6 +11,7 @@ const { toast, confirm } = useAppToast()
 
 const scans       = ref<any[]>([])
 const monitors    = ref<any[]>([])
+const bulkScans   = ref<any[]>([])
 const convexUser  = ref<{ plan: 'free' | 'pro'; scanCount: number } | null>(null)
 const loading     = ref(true)
 const scanning    = ref(false)
@@ -22,14 +23,16 @@ let unsubscribeMonitors: (() => void) | null = null
 async function loadUserData(id: string) {
   loading.value = true
   try {
-    const [userScans, user, userMonitors] = await Promise.allSettled([
+    const [userScans, user, userMonitors, userBulkScans] = await Promise.allSettled([
       client.query(api.scans.getScansByUser, { userId: id }),
       client.query(api.users.getUserByClerkId, { clerkId: id }),
-      client.query(api.monitors.getMonitors, { userId: id })
+      client.query(api.monitors.getMonitors, { userId: id }),
+      client.query(api.bulkScans.getBulkScansByUser, { userId: id }),
     ])
     scans.value      = userScans.status === 'fulfilled' ? userScans.value : []
     convexUser.value = user.status === 'fulfilled' ? user.value : null
     monitors.value   = userMonitors.status === 'fulfilled' ? userMonitors.value : []
+    bulkScans.value  = userBulkScans.status === 'fulfilled' ? userBulkScans.value : []
 
     if (wsClient) {
       if (unsubscribeScans) unsubscribeScans()
@@ -259,6 +262,63 @@ function relativeTime(ts: number) {
             </div>
             <ScanInput @scan="handleScan" />
           </div>
+        </div>
+      </div>
+
+      <!-- ── Bulk Scans Widget ────────────────────────────────── -->
+      <div class="mb-12">
+        <div class="flex items-center justify-between mb-5">
+          <div class="flex items-center gap-3">
+            <div class="w-7 h-px bg-primary" />
+            <span class="text-[11px] font-display font-semibold tracking-[0.2em] uppercase text-primary">Bulk Scans</span>
+          </div>
+          <NuxtLink to="/bulk-scan" class="flex items-center gap-1.5 text-[11px] font-display font-semibold text-primary/70 hover:text-primary transition-colors">
+            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+            New bulk scan
+          </NuxtLink>
+        </div>
+
+        <!-- Empty state -->
+        <div
+          v-if="!bulkScans.length"
+          class="flex flex-col items-center justify-center py-10 border border-dashed border-white/[0.06] rounded-2xl"
+          style="background:rgba(255,255,255,0.01)"
+        >
+          <p class="font-display font-semibold text-white/48 text-[14px] mb-1">No bulk scans yet</p>
+          <p class="font-body text-white/38 text-[13px] mb-4">Scan up to 50 URLs in one job — Pro feature.</p>
+          <NuxtLink to="/bulk-scan" class="btn-primary text-xs px-4 py-2">Start a bulk scan</NuxtLink>
+        </div>
+
+        <!-- Bulk scan rows -->
+        <div v-else class="space-y-2">
+          <NuxtLink
+            v-for="b in bulkScans.slice(0, 5)"
+            :key="b._id"
+            :to="`/bulk-scan/${b._id}`"
+            class="flex items-center gap-4 px-4 py-3 rounded-xl bg-white/[0.02] border border-white/[0.05] hover:border-white/[0.09] hover:bg-white/[0.035] transition-all group"
+          >
+            <div class="flex-1 min-w-0">
+              <p class="font-display font-semibold text-white/80 text-sm truncate">{{ b.name }}</p>
+              <p class="text-white/35 font-body text-xs mt-0.5">{{ b.totalUrls }} URLs · {{ b.completedUrls }} complete</p>
+            </div>
+            <!-- Progress bar (while running) -->
+            <div v-if="b.status === 'running' || b.status === 'pending'" class="w-24 h-1.5 bg-white/[0.05] rounded-full overflow-hidden">
+              <div
+                class="h-full rounded-full bg-primary transition-all"
+                :style="{ width: Math.round((b.completedUrls / b.totalUrls) * 100) + '%' }"
+              />
+            </div>
+            <span
+              class="flex-shrink-0 text-[9px] font-display font-bold uppercase tracking-[0.12em] px-2 py-1 rounded-full"
+              :class="{
+                'bg-success/10 text-success':   b.status === 'done',
+                'bg-primary/10 text-primary':   b.status === 'running',
+                'bg-white/5 text-white/30':     b.status === 'pending',
+                'bg-danger/10 text-danger':     b.status === 'error',
+              }"
+            >{{ b.status }}</span>
+            <svg class="w-3.5 h-3.5 text-white/20 group-hover:text-white/50 transition-colors flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+          </NuxtLink>
         </div>
       </div>
 

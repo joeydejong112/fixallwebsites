@@ -299,15 +299,18 @@ Scores: `(passing / total) × 100`. Overall = average of three pillars.
 
 **Date**: 2026-04-07
 **What was done**:
-- Completed all 6 Phase 5 tasks (AI Searchability / AEO):
-  - Task 1: Schema already had `aiScore` — marked complete
-  - Task 2: Created `convex/checks/ai.ts` — 10 AI Readiness checks (llms.txt, AI crawlers, FAQPage schema, E-E-A-T, semantic HTML, content freshness, heading continuity, citation formatting, OG article metadata)
-  - Task 3: Updated `convex/scanAction.ts` — parallel fetches for llms.txt/llms-full.txt, GET robots.txt for content, JSON-LD extraction, 5-pillar overall score
-  - Task 4: Added 10 AI snippets to `app/utils/fixSnippets.ts` with platform-specific examples
-  - Task 5: Results page — AI pillar card (`#ff7675`), 5-col grid, AI tab; landing page — 94 checks, 7 pillars, AI pillar card
-  - Task 6: Created `app/pages/tools/ai-optimizer.vue` — llms.txt generator + AI crawler robots.txt builder; added to tools hub
+- Completed Phase 5 (AI Searchability / AEO) — all 6 tasks
+- Wrote plans for Phases 6–10 (Bulk Scan, Score History, Competitor Scan, Public API, Marketing)
+- Completed Phase 6 (Bulk Scan) — all 7 tasks:
+  - T1: `bulkScans` table + `bulkScanId`/`by_bulk` on `scans`, deployed
+  - T2: `convex/bulkScans.ts` — createBulkScan (Pro-gated, max 50 URLs), lifecycle queries/mutations
+  - T3: `convex/bulkScanAction.ts` — `startBulkScan` + `processNextScan` chained via scheduler (one URL/invocation)
+  - T4: `app/pages/bulk-scan/index.vue` — ProGate, paste/CSV input, client-side validation, 50-URL counter
+  - T5: `app/pages/bulk-scan/[id].vue` — live progress bar, sortable score table, skeleton rows, delete
+  - T6: `app/utils/exportBulkCsv.ts` — CSV export utility
+  - T7: Dashboard bulk scans widget (last 5 jobs), NavBar "Bulk Scan" link (pink)
 
-**Where we left off**: All Phase 5 tasks complete. Next phase TBD.
+**Where we left off**: Phase 6 complete. Next: Phase 7 (Score History & Trend Charts).
 
 **Branch**: `main` (all work committed directly, no open branches)
 

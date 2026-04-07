@@ -10,6 +10,8 @@
 
 import type * as alerts from "../alerts.js";
 import type * as apiKeys from "../apiKeys.js";
+import type * as bulkScanAction from "../bulkScanAction.js";
+import type * as bulkScans from "../bulkScans.js";
 import type * as checks_accessibility from "../checks/accessibility.js";
 import type * as checks_ai from "../checks/ai.js";
 import type * as checks_dns from "../checks/dns.js";
@@ -37,6 +39,8 @@ import type {
 declare const fullApi: ApiFromModules<{
   alerts: typeof alerts;
   apiKeys: typeof apiKeys;
+  bulkScanAction: typeof bulkScanAction;
+  bulkScans: typeof bulkScans;
   "checks/accessibility": typeof checks_accessibility;
   "checks/ai": typeof checks_ai;
   "checks/dns": typeof checks_dns;

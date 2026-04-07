@@ -49,9 +49,11 @@ export default defineSchema({
       description: v.string(),
     }))),
     errorMessage: v.optional(v.string()),
+    bulkScanId: v.optional(v.id('bulkScans')),
   })
     .index('by_user', ['userId'])
-    .index('by_user_status', ['userId', 'status']),
+    .index('by_user_status', ['userId', 'status'])
+    .index('by_bulk', ['bulkScanId']),
 
   apiKeys: defineTable({
     userId:      v.string(),
@@ -72,4 +74,18 @@ export default defineSchema({
     lastScore: v.optional(v.number()),
     lastAlertSentAt: v.optional(v.number()),
   }).index('by_user', ['userId']).index('by_active', ['isActive']),
+
+  bulkScans: defineTable({
+    userId:        v.string(),
+    name:          v.string(),
+    status:        v.union(
+      v.literal('pending'),
+      v.literal('running'),
+      v.literal('done'),
+      v.literal('error'),
+    ),
+    totalUrls:     v.number(),
+    completedUrls: v.number(),
+    errorCount:    v.number(),
+  }).index('by_user', ['userId']),
 })

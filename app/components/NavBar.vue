@@ -46,6 +46,7 @@ const clerkAppearance = useClerkAppearance()
           <template v-if="isSignedIn">
             <NuxtLink to="/pricing" class="nav-link">Pricing</NuxtLink>
             <NuxtLink to="/tools" class="nav-link">Tools</NuxtLink>
+            <NuxtLink to="/bulk-scan" class="nav-link nav-link--pro">Bulk Scan</NuxtLink>
             <NuxtLink to="/dashboard" class="nav-link">Dashboard</NuxtLink>
             <NuxtLink to="/settings" class="nav-icon" aria-label="Settings">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
@@ -144,6 +145,12 @@ const clerkAppearance = useClerkAppearance()
 }
 .nav-link:hover {
   color: rgba(255, 255, 255, 0.9);
+}
+.nav-link--pro {
+  color: rgba(236, 53, 134, 0.7);
+}
+.nav-link--pro:hover {
+  color: #ec3586;
 }
 
 /* ── Settings icon link ───────────────────────────────── */
