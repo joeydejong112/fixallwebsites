@@ -47,6 +47,7 @@ const clerkAppearance = useClerkAppearance()
             <NuxtLink to="/pricing" class="nav-link">Pricing</NuxtLink>
             <NuxtLink to="/tools" class="nav-link">Tools</NuxtLink>
             <NuxtLink to="/bulk-scan" class="nav-link nav-link--pro">Bulk Scan</NuxtLink>
+            <NuxtLink to="/compare" class="nav-link nav-link--pro">Compare</NuxtLink>
             <NuxtLink to="/dashboard" class="nav-link">Dashboard</NuxtLink>
             <NuxtLink to="/settings" class="nav-icon" aria-label="Settings">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">

@@ -307,7 +307,13 @@ Scores: `(passing / total) × 100`. Overall = average of three pillars.
   - T5: `app/pages/history/index.vue` — full history page (query param `?url=`): 6-pillar summary cards, full overall trend chart, per-pillar sparkline grid, scan log table linking back to scan results
   - T6: Dashboard sparklines — loads last 15 scores per unique URL via `getRecentHistory`, renders `TrendChart` + "history" link in each scan row; Convex deployed successfully
 
-**Where we left off**: Phase 7 complete. Next: Phase 8 (Competitor Scan, Pro).
+- Completed Phase 8 (Competitor Scan) — all 4 tasks:
+  - T1: `app/pages/compare/index.vue` — two URL inputs, swap button, ProGate, recent comparisons from localStorage
+  - T2: `convex/compare.ts` — `compareScans` action: creates two scans, fires both `runScan` concurrently via scheduler
+  - T3: `app/pages/compare/[scanIdA]/[scanIdB].vue` — polling results page: dual score rings with delta badge, pillar comparison table sorted by gap, "Fix to catch up" issue diff, "You're ahead" strengths section, share/PDF export
+  - T4: Dashboard Competitor Scans widget (last 3 from localStorage), NavBar "Compare" link (pink); Convex deployed
+
+**Where we left off**: Phase 8 complete. Next: Phase 9 (Public API, Pro).
 
 **Branch**: `main` (all work committed directly, no open branches)
 

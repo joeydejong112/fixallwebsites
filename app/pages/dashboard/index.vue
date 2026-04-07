@@ -14,7 +14,15 @@ const monitors    = ref<any[]>([])
 const bulkScans   = ref<any[]>([])
 const convexUser  = ref<{ plan: 'free' | 'pro'; scanCount: number } | null>(null)
 const urlSparklines = ref<Map<string, number[]>>(new Map())
+const recentComparisons = ref<{ urlA: string; urlB: string; scanIdA: string; scanIdB: string }[]>([])
 const loading     = ref(true)
+
+onMounted(() => {
+  try {
+    const raw = localStorage.getItem('sp_recent_comparisons')
+    if (raw) recentComparisons.value = JSON.parse(raw)
+  } catch {}
+})
 const scanning    = ref(false)
 const filterStatus = ref<'all' | 'pass' | 'warning' | 'critical'>('all')
 const router      = useRouter()
@@ -332,6 +340,46 @@ function relativeTime(ts: number) {
                 'bg-danger/10 text-danger':     b.status === 'error',
               }"
             >{{ b.status }}</span>
+            <svg class="w-3.5 h-3.5 text-white/20 group-hover:text-white/50 transition-colors flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+          </NuxtLink>
+        </div>
+      </div>
+
+      <!-- ── Competitor Comparisons Widget ──────────────────────── -->
+      <div class="mb-12">
+        <div class="flex items-center justify-between mb-5">
+          <div class="flex items-center gap-3">
+            <div class="w-7 h-px bg-primary" />
+            <span class="text-[11px] font-display font-semibold tracking-[0.2em] uppercase text-primary">Competitor Scans</span>
+          </div>
+          <NuxtLink to="/compare" class="flex items-center gap-1.5 text-[11px] font-display font-semibold text-primary/70 hover:text-primary transition-colors">
+            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+            New comparison
+          </NuxtLink>
+        </div>
+
+        <div
+          v-if="!recentComparisons.length"
+          class="flex flex-col items-center justify-center py-10 border border-dashed border-white/[0.06] rounded-2xl"
+          style="background:rgba(255,255,255,0.01)"
+        >
+          <p class="font-display font-semibold text-white/48 text-[14px] mb-1">No comparisons yet</p>
+          <p class="font-body text-white/38 text-[13px] mb-4">Compare your site against a competitor — Pro feature.</p>
+          <NuxtLink to="/compare" class="btn-primary text-xs px-4 py-2">Start a comparison</NuxtLink>
+        </div>
+
+        <div v-else class="space-y-2">
+          <NuxtLink
+            v-for="c in recentComparisons.slice(0, 3)"
+            :key="`${c.scanIdA}-${c.scanIdB}`"
+            :to="`/compare/${c.scanIdA}/${c.scanIdB}`"
+            class="flex items-center gap-4 px-4 py-3 rounded-xl bg-white/[0.02] border border-white/[0.05] hover:border-white/[0.09] hover:bg-white/[0.035] transition-all group"
+          >
+            <div class="flex-1 min-w-0 flex items-center gap-2">
+              <span class="font-display font-semibold text-white/75 text-sm truncate">{{ (() => { try { return new URL(c.urlA).hostname } catch { return c.urlA } })() }}</span>
+              <span class="text-muted text-xs flex-shrink-0">vs</span>
+              <span class="font-display text-white/45 text-sm truncate">{{ (() => { try { return new URL(c.urlB).hostname } catch { return c.urlB } })() }}</span>
+            </div>
             <svg class="w-3.5 h-3.5 text-white/20 group-hover:text-white/50 transition-colors flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
           </NuxtLink>
         </div>
