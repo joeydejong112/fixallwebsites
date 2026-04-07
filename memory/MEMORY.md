@@ -299,18 +299,15 @@ Scores: `(passing / total) × 100`. Overall = average of three pillars.
 
 **Date**: 2026-04-07
 **What was done**:
-- Completed Phase 5 (AI Searchability / AEO) — all 6 tasks
-- Wrote plans for Phases 6–10 (Bulk Scan, Score History, Competitor Scan, Public API, Marketing)
-- Completed Phase 6 (Bulk Scan) — all 7 tasks:
-  - T1: `bulkScans` table + `bulkScanId`/`by_bulk` on `scans`, deployed
-  - T2: `convex/bulkScans.ts` — createBulkScan (Pro-gated, max 50 URLs), lifecycle queries/mutations
-  - T3: `convex/bulkScanAction.ts` — `startBulkScan` + `processNextScan` chained via scheduler (one URL/invocation)
-  - T4: `app/pages/bulk-scan/index.vue` — ProGate, paste/CSV input, client-side validation, 50-URL counter
-  - T5: `app/pages/bulk-scan/[id].vue` — live progress bar, sortable score table, skeleton rows, delete
-  - T6: `app/utils/exportBulkCsv.ts` — CSV export utility
-  - T7: Dashboard bulk scans widget (last 5 jobs), NavBar "Bulk Scan" link (pink)
+- Completed Phase 7 (Score History & Trend Charts) — all 6 tasks:
+  - T1: `scoreHistory` table added to `convex/schema.ts` with `by_user_url` + `by_user_url_ts` indexes
+  - T2: `convex/scoreHistory.ts` — `recordSnapshot` (internalMutation), `getHistory`, `getHistoryForUser`, `getRecentHistory`
+  - T3: Wired `recordSnapshot` into `convex/scanAction.ts` — calls after every successful scan; added `getScanInternal` internalQuery to `scans.ts` to fetch `userId`
+  - T4: `app/components/TrendChart.vue` — pure SVG sparkline: area fill, polyline, regression dots (red on ≥10pt drops), hover tooltip
+  - T5: `app/pages/history/index.vue` — full history page (query param `?url=`): 6-pillar summary cards, full overall trend chart, per-pillar sparkline grid, scan log table linking back to scan results
+  - T6: Dashboard sparklines — loads last 15 scores per unique URL via `getRecentHistory`, renders `TrendChart` + "history" link in each scan row; Convex deployed successfully
 
-**Where we left off**: Phase 6 complete. Next: Phase 7 (Score History & Trend Charts).
+**Where we left off**: Phase 7 complete. Next: Phase 8 (Competitor Scan, Pro).
 
 **Branch**: `main` (all work committed directly, no open branches)
 

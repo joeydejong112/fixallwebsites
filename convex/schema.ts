@@ -75,6 +75,21 @@ export default defineSchema({
     lastAlertSentAt: v.optional(v.number()),
   }).index('by_user', ['userId']).index('by_active', ['isActive']),
 
+  scoreHistory: defineTable({
+    userId:             v.string(),
+    url:                v.string(),
+    scanId:             v.id('scans'),
+    ts:                 v.number(),
+    overallScore:       v.optional(v.number()),
+    securityScore:      v.optional(v.number()),
+    performanceScore:   v.optional(v.number()),
+    seoScore:           v.optional(v.number()),
+    accessibilityScore: v.optional(v.number()),
+    aiScore:            v.optional(v.number()),
+  })
+    .index('by_user_url', ['userId', 'url'])
+    .index('by_user_url_ts', ['userId', 'url', 'ts']),
+
   bulkScans: defineTable({
     userId:        v.string(),
     name:          v.string(),

@@ -13,6 +13,7 @@ const scans       = ref<any[]>([])
 const monitors    = ref<any[]>([])
 const bulkScans   = ref<any[]>([])
 const convexUser  = ref<{ plan: 'free' | 'pro'; scanCount: number } | null>(null)
+const urlSparklines = ref<Map<string, number[]>>(new Map())
 const loading     = ref(true)
 const scanning    = ref(false)
 const filterStatus = ref<'all' | 'pass' | 'warning' | 'critical'>('all')
@@ -33,6 +34,20 @@ async function loadUserData(id: string) {
     convexUser.value = user.status === 'fulfilled' ? user.value : null
     monitors.value   = userMonitors.status === 'fulfilled' ? userMonitors.value : []
     bulkScans.value  = userBulkScans.status === 'fulfilled' ? userBulkScans.value : []
+
+    // Load sparkline data for each unique done URL
+    const uniqueUrls = [...new Set(scans.value.filter(s => s.status === 'done').map(s => s.url))]
+    const sparkResults = await Promise.allSettled(
+      uniqueUrls.map(url => client.query(api.scoreHistory.getRecentHistory, { userId: id, url, limit: 15 }))
+    )
+    const map = new Map<string, number[]>()
+    uniqueUrls.forEach((url, i) => {
+      const r = sparkResults[i]
+      if (r.status === 'fulfilled' && r.value?.length) {
+        map.set(url, [...r.value].reverse().map((h: any) => h.overallScore).filter((v: any) => v != null))
+      }
+    })
+    urlSparklines.value = map
 
     if (wsClient) {
       if (unsubscribeScans) unsubscribeScans()
@@ -513,6 +528,25 @@ function relativeTime(ts: number) {
                   <span class="text-[8px] font-display font-bold tracking-[0.12em] uppercase" :style="{ color }">{{ label }}</span>
                 </div>
               </div>
+
+              <!-- Sparkline (if history available) -->
+              <NuxtLink
+                v-if="urlSparklines.get(scan.url)?.length && scan.status === 'done'"
+                :to="`/history?url=${encodeURIComponent(scan.url)}`"
+                class="hidden md:flex flex-col items-end gap-1"
+                @click.stop
+                title="View score history"
+              >
+                <TrendChart
+                  :data="urlSparklines.get(scan.url)!"
+                  color="#ec3586"
+                  :width="80"
+                  :height="24"
+                  :show-dots="true"
+                  :show-tooltip="false"
+                />
+                <span class="text-[9px] text-muted font-mono">history</span>
+              </NuxtLink>
 
               <!-- Overall score ring -->
               <div class="score-ring" :style="{ '--score-color': scoreBg(scan.overallScore) }">

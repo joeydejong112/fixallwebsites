@@ -100,6 +100,9 @@ async function fetchGreenHosting(domain: string): Promise<boolean | null> {
 export const runScan = action({
   args: { scanId: v.id('scans'), url: v.string() },
   handler: async (ctx, { scanId, url }) => {
+    const scan = await ctx.runQuery(internal.scans.getScanInternal, { scanId })
+    const userId = scan?.userId ?? ''
+
     await ctx.runMutation(internal.scans.updateScan, { scanId, status: 'running' })
 
     try {
@@ -199,6 +202,21 @@ export const runScan = action({
         domainExpiry: domainExpiry ?? undefined,
         certExpiry: tlsInfo?.validTo ?? undefined,
       })
+
+      if (userId) {
+        await ctx.runMutation(internal.scoreHistory.recordSnapshot, {
+          userId,
+          url,
+          scanId,
+          ts: Date.now(),
+          overallScore,
+          securityScore: security.score,
+          performanceScore: performance.score,
+          seoScore: seo.score,
+          accessibilityScore: accessibility.score,
+          aiScore: ai.score,
+        })
+      }
     } catch (err) {
       try {
         await ctx.runMutation(internal.scans.updateScan, {

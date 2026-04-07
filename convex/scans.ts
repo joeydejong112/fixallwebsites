@@ -1,4 +1,4 @@
-import { internalMutation, mutation, query } from './_generated/server'
+import { internalMutation, internalQuery, mutation, query } from './_generated/server'
 import { v } from 'convex/values'
 
 export const createScan = mutation({
@@ -40,6 +40,13 @@ export const getScansByUser = query({
 })
 
 export const getScan = query({
+  args: { scanId: v.id('scans') },
+  handler: async (ctx, { scanId }) => {
+    return await ctx.db.get(scanId)
+  },
+})
+
+export const getScanInternal = internalQuery({
   args: { scanId: v.id('scans') },
   handler: async (ctx, { scanId }) => {
     return await ctx.db.get(scanId)
