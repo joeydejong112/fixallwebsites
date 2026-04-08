@@ -1,7 +1,13 @@
 <script setup lang="ts">
 definePageMeta({ layout: 'tool' })
-useHead({ title: 'Meta Tag Generator — ScanPulse Tools' })
-useSeoMeta({ description: 'Generate title, meta description, canonical, Open Graph, and Twitter Card tags instantly. Live Google snippet preview included — free.' })
+useSeoMeta({
+  title: 'Free Meta Tag Generator — Title, OG & Twitter Card',
+  description: 'Generate HTML meta tags for title, description, canonical URL, Open Graph, and Twitter Card with a live Google SERP preview. Free, no signup required.',
+  ogTitle: 'Free Meta Tag Generator — Live Google Preview',
+  ogDescription: 'Build complete head meta tags with a live Google search preview. Covers title, OG, Twitter Card, and canonical.',
+})
+const _siteUrl = useRequestURL()
+useHead({ link: [{ rel: 'canonical', href: _siteUrl.origin + _siteUrl.pathname }] })
 
 const { isSignedIn } = useAuth()
 

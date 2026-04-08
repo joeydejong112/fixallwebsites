@@ -1,7 +1,13 @@
 <script setup lang="ts">
 definePageMeta({ layout: 'tool' })
-useHead({ title: 'Image Optimizer & Converter — ScanPulse Tools' })
-useSeoMeta({ description: 'Convert PNG, JPEG, BMP, and GIF to WebP instantly in your browser. See file size savings, download the result, and get a lazy-load img snippet — free.' })
+useSeoMeta({
+  title: 'Free Image Optimizer & WebP Converter — ScanPulse Tools',
+  description: 'Convert PNG, JPEG, BMP, and GIF to WebP in your browser. See exact file size savings, adjust quality with a live slider, and download — completely free.',
+  ogTitle: 'Free Image Optimizer & WebP Converter',
+  ogDescription: 'Convert images to WebP client-side. No uploads, no accounts — instant savings.',
+})
+const _siteUrl = useRequestURL()
+useHead({ link: [{ rel: 'canonical', href: _siteUrl.origin + _siteUrl.pathname }] })
 
 // ── State ──────────────────────────────────────────────────────────────────
 const dragging    = ref(false)

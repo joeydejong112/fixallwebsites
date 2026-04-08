@@ -1,7 +1,13 @@
 <script setup lang="ts">
 definePageMeta({ layout: 'tool' })
-useHead({ title: 'SPF / DKIM / DMARC Generator — ScanPulse Tools' })
-useSeoMeta({ description: 'Build SPF and DMARC TXT records visually with provider dropdowns, policy selectors, and copy-ready output. Fix email authentication issues — free.' })
+useSeoMeta({
+  title: 'Free SPF, DKIM & DMARC Record Generator — Email Auth Tool',
+  description: 'Build SPF and DMARC DNS TXT records visually with provider dropdowns, policy selectors, and reporting email. Includes per-provider DKIM setup instructions — free.',
+  ogTitle: 'Free SPF / DKIM / DMARC Generator',
+  ogDescription: 'Create SPF and DMARC records visually. Fix email authentication and stop spoofing — free.',
+})
+const _siteUrl = useRequestURL()
+useHead({ link: [{ rel: 'canonical', href: _siteUrl.origin + _siteUrl.pathname }] })
 
 const SPF_PROVIDERS: Record<string, string> = {
   'Google Workspace':  'include:_spf.google.com',

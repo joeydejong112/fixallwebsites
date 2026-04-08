@@ -1,7 +1,13 @@
 <script setup lang="ts">
 definePageMeta({ layout: 'tool' })
-useHead({ title: 'AI Optimizer & llms.txt Generator — ScanPulse Tools' })
-useSeoMeta({ description: 'Generate a valid llms.txt file for LLM ingestion and build AI-friendly robots.txt rules for GPTBot, ClaudeBot, Perplexity, and Google-Extended — free.' })
+useSeoMeta({
+  title: 'Free llms.txt Generator & AI SEO Optimizer — ScanPulse Tools',
+  description: 'Generate a valid llms.txt file for LLM crawlers and build AI-friendly robots.txt rules for GPTBot, ClaudeBot, Perplexity, and Google-Extended — free.',
+  ogTitle: 'Free llms.txt Generator & AI SEO Optimizer',
+  ogDescription: 'Create llms.txt and AI crawler rules to get discovered and cited by ChatGPT, Perplexity, and Google AI Overviews.',
+})
+const _siteUrl = useRequestURL()
+useHead({ link: [{ rel: 'canonical', href: _siteUrl.origin + _siteUrl.pathname }] })
 
 // ── llms.txt Generator ────────────────────────────────────────────────────────
 const siteName   = ref('')

@@ -1,7 +1,13 @@
 <script setup lang="ts">
 definePageMeta({ layout: 'tool' })
-useHead({ title: 'Security Headers Generator — ScanPulse Tools' })
-useSeoMeta({ description: 'Generate HSTS, CSP, X-Frame-Options, Referrer-Policy, Permissions-Policy, and more in seconds. Copy individual headers or all at once — free.' })
+useSeoMeta({
+  title: 'Security Headers Generator — ScanPulse Tools',
+  description: 'Generate HSTS, CSP, X-Frame-Options, Referrer-Policy, and Permissions-Policy headers in seconds. Copy individual headers or the full block — free.',
+  ogTitle: 'Free Security Headers Generator',
+  ogDescription: 'Generate all recommended HTTP security headers instantly. No login required.',
+})
+const _siteUrl = useRequestURL()
+useHead({ link: [{ rel: 'canonical', href: _siteUrl.origin + _siteUrl.pathname }] })
 
 // ── Header definitions ────────────────────────────────────────────────────
 const headers = reactive([

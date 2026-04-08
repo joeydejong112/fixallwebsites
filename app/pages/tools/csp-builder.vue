@@ -1,7 +1,13 @@
 <script setup lang="ts">
 definePageMeta({ layout: 'tool' })
-useHead({ title: 'CSP Header Builder — ScanPulse Tools' })
-useSeoMeta({ description: 'Build a Content-Security-Policy header visually. Add sources per directive, get unsafe-inline warnings, and copy the full CSP value — free.' })
+useSeoMeta({
+  title: 'CSP Header Builder — Content-Security-Policy Generator',
+  description: 'Build a Content-Security-Policy header visually. Add sources per directive, get unsafe-inline and wildcard warnings, then copy the complete CSP header — free.',
+  ogTitle: 'Free CSP Header Builder — Content-Security-Policy Generator',
+  ogDescription: 'Create a valid Content-Security-Policy header with a visual editor. Get real-time warnings for unsafe directives.',
+})
+const _siteUrl = useRequestURL()
+useHead({ link: [{ rel: 'canonical', href: _siteUrl.origin + _siteUrl.pathname }] })
 
 interface Directive {
   name: string

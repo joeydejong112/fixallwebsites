@@ -1,7 +1,13 @@
 <script setup lang="ts">
 definePageMeta({ layout: 'tool' })
-useHead({ title: 'Favicon Generator — ScanPulse Tools' })
-useSeoMeta({ description: 'Upload any image and generate favicon.ico (16×16, 32×32) and apple-touch-icon.png (180×180) instantly in your browser. Preview on a mock browser tab — free.' })
+useSeoMeta({
+  title: 'Free Favicon Generator — favicon.ico & Apple Touch Icon',
+  description: 'Upload any image to generate a favicon.ico (16×16, 32×32) and apple-touch-icon.png (180×180) entirely in your browser. Live browser tab preview — free.',
+  ogTitle: 'Free Favicon Generator — favicon.ico & Apple Touch Icon',
+  ogDescription: 'Generate favicon.ico and apple-touch-icon from any image. Runs in your browser — no uploads.',
+})
+const _siteUrl = useRequestURL()
+useHead({ link: [{ rel: 'canonical', href: _siteUrl.origin + _siteUrl.pathname }] })
 
 const sourceUrl  = ref<string | null>(null)
 const sourceFile = ref<File | null>(null)

@@ -1,7 +1,63 @@
 <script setup lang="ts">
 useSeoMeta({
-  title: 'ScanPulse — Website Health Scanner',
-  description: 'Instant security, performance, and SEO analysis for any website. Free scans, actionable fixes.',
+  title: 'ScanPulse — Free Website Health Scanner',
+  description: 'Run 94 checks across security, performance, SEO, accessibility, AI readiness, DNS, and trust — free. Get an instant score and actionable fixes for any website.',
+  ogTitle: 'ScanPulse — Free Website Health Scanner',
+  ogDescription: 'Run 94 checks across security, performance, SEO, and more. Get an instant score and actionable fixes — free.',
+  ogType: 'website',
+  twitterCard: 'summary_large_image',
+  twitterTitle: 'ScanPulse — Free Website Health Scanner',
+  twitterDescription: '94 checks across 7 pillars. Instant score + actionable fixes — free.',
+})
+
+const _siteUrl = useRequestURL()
+useHead({
+  link: [{ rel: 'canonical', href: _siteUrl.origin + _siteUrl.pathname }],
+  script: [{
+    type: 'application/ld+json',
+    innerHTML: JSON.stringify({
+      '@context': 'https://schema.org',
+      '@graph': [
+        {
+          '@type': 'WebSite',
+          name: 'ScanPulse',
+          url: _siteUrl.origin,
+          description: 'Free website health scanner — 94 checks across security, performance, SEO, accessibility, AI readiness, DNS & email, and trust.',
+          dateModified: '2026-04-08',
+        },
+        {
+          '@type': 'FAQPage',
+          mainEntity: [
+            {
+              '@type': 'Question',
+              name: 'What is ScanPulse?',
+              acceptedAnswer: { '@type': 'Answer', text: 'ScanPulse is a free website health scanner that runs 94 checks across 7 pillars — security, performance, SEO, accessibility, AI readiness, DNS & email, and trust — returning an instant score with actionable fixes for every issue.' },
+            },
+            {
+              '@type': 'Question',
+              name: 'How long does a website scan take?',
+              acceptedAnswer: { '@type': 'Answer', text: 'Most scans complete in under 30 seconds. Checks run in parallel covering HTTP headers, TLS certificates, DNS records, Core Web Vitals, and full HTML analysis.' },
+            },
+            {
+              '@type': 'Question',
+              name: 'Is ScanPulse free to use?',
+              acceptedAnswer: { '@type': 'Answer', text: 'Yes. The free plan includes one complete scan across all 94 checks with no credit card required. Pro unlocks unlimited scans, automated monitoring, email alerts, bulk scanning of up to 50 URLs, and REST API access.' },
+            },
+            {
+              '@type': 'Question',
+              name: 'What security checks does ScanPulse run?',
+              acceptedAnswer: { '@type': 'Answer', text: 'ScanPulse runs 21 security checks including HTTPS enforcement, HSTS quality, Content Security Policy, cookie flags (Secure/HttpOnly/SameSite), mixed content detection, subresource integrity, TLS 1.3, and sensitive file exposure.' },
+            },
+            {
+              '@type': 'Question',
+              name: 'Does ScanPulse check Core Web Vitals?',
+              acceptedAnswer: { '@type': 'Answer', text: 'Yes. ScanPulse measures LCP (Largest Contentful Paint), INP (Interaction to Next Paint), and CLS (Cumulative Layout Shift) as part of its 18 performance checks, alongside TTFB, compression, image formats, and cache headers.' },
+            },
+          ],
+        },
+      ],
+    }),
+  }],
 })
 
 const { isSignedIn } = useAuth()

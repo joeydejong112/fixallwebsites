@@ -5,7 +5,14 @@ const { api, client } = useConvex()
 const route = useRoute()
 const { toast } = useAppToast()
 
-useSeoMeta({ title: 'Pricing — ScanPulse' })
+const _siteUrl = useRequestURL()
+useSeoMeta({
+  title: 'Pricing — ScanPulse',
+  description: 'ScanPulse is free for one scan. Upgrade to Pro for unlimited scans, automated monitoring, email alerts, bulk scanning, and API access — $15/month.',
+  ogTitle: 'ScanPulse Pricing — Free & Pro Plans',
+  ogDescription: 'Start free. Upgrade to Pro for unlimited scans, monitoring, and API access.',
+})
+useHead({ link: [{ rel: 'canonical', href: _siteUrl.origin + _siteUrl.pathname }] })
 
 const loading = ref(false)
 const convexUserStr = ref<any>(null)

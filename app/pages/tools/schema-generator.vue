@@ -1,7 +1,13 @@
 <script setup lang="ts">
 definePageMeta({ layout: 'tool' })
-useHead({ title: 'Schema Markup Generator (JSON-LD) — ScanPulse Tools' })
-useSeoMeta({ description: 'Generate valid JSON-LD structured data for Article, BlogPosting, and Organization with a guided form. Copy or download the script block — free.' })
+useSeoMeta({
+  title: 'Free Schema Markup Generator — JSON-LD Structured Data',
+  description: 'Generate valid JSON-LD structured data for Article, BlogPosting, and Organization with a guided form. Copy the script block or download as .json — free.',
+  ogTitle: 'Free JSON-LD Schema Markup Generator',
+  ogDescription: 'Create Article, BlogPosting, and Organization structured data with a guided form. Copy or download the JSON-LD.',
+})
+const _siteUrl = useRequestURL()
+useHead({ link: [{ rel: 'canonical', href: _siteUrl.origin + _siteUrl.pathname }] })
 
 type SchemaType = 'Article' | 'BlogPosting' | 'Organization'
 

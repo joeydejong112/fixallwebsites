@@ -1,7 +1,13 @@
 <script setup lang="ts">
 definePageMeta({ layout: 'tool' })
-useHead({ title: 'Color Contrast Checker — ScanPulse Tools' })
-useSeoMeta({ description: 'Check foreground/background contrast ratios against WCAG 2.1 AA and AAA with live preview. Supports Hex, RGB, and HSL input — free.' })
+useSeoMeta({
+  title: 'Free WCAG Color Contrast Checker — AA & AAA Ratio Tool',
+  description: 'Check foreground/background color contrast ratios against WCAG 2.1 AA and AAA standards with live preview. Supports Hex, RGB, and HSL — free.',
+  ogTitle: 'Free WCAG Color Contrast Checker',
+  ogDescription: 'Test AA and AAA contrast ratios instantly with live color preview. Supports Hex, RGB, HSL.',
+})
+const _siteUrl = useRequestURL()
+useHead({ link: [{ rel: 'canonical', href: _siteUrl.origin + _siteUrl.pathname }] })
 
 const fg = ref('#ffffff')
 const bg = ref('#1a1a2e')

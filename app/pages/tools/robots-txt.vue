@@ -1,7 +1,13 @@
 <script setup lang="ts">
 definePageMeta({ layout: 'tool' })
-useHead({ title: 'Robots.txt Generator — ScanPulse Tools' })
-useSeoMeta({ description: 'Build a valid robots.txt visually with user-agent rules, allow/disallow paths, sitemap URL, and crawl-delay. Download the file or copy to clipboard — free.' })
+useSeoMeta({
+  title: 'Free Robots.txt Generator & Editor — ScanPulse Tools',
+  description: 'Create and edit robots.txt visually. Set user-agent rules, allow/disallow paths, add your sitemap URL, and apply presets. Download or copy — free.',
+  ogTitle: 'Free Robots.txt Generator & Editor',
+  ogDescription: 'Build a valid robots.txt file visually with user-agent rules, path directives, and sitemap support.',
+})
+const _siteUrl = useRequestURL()
+useHead({ link: [{ rel: 'canonical', href: _siteUrl.origin + _siteUrl.pathname }] })
 
 interface Rule {
   path: string

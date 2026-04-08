@@ -1,10 +1,13 @@
 <script setup lang="ts">
-useHead({
-  title: 'Fix-It Tools — ScanPulse',
-  meta: [
-    { name: 'description', content: 'Free web tools to fix the exact issues ScanPulse flags. Generate meta tags, build CSP headers, check contrast, validate DNS, and more.' }
-  ]
+useSeoMeta({
+  title: 'Free Web Tools — ScanPulse',
+  description: 'Free tools to fix every issue ScanPulse flags. Generate security headers, build a CSP, check WCAG contrast, create robots.txt, generate schema markup, and more.',
+  ogTitle: 'Free Web Tools — ScanPulse',
+  ogDescription: 'Generate security headers, meta tags, robots.txt, schema markup, favicon, and more — all free.',
+  ogType: 'website',
 })
+const _siteUrl = useRequestURL()
+useHead({ link: [{ rel: 'canonical', href: _siteUrl.origin + _siteUrl.pathname }] })
 
 const TOOLS = [
   { slug: 'security-headers', title: 'Security Headers Generator', subtitle: 'Generator', desc: 'Generate HSTS, X-Content-Type-Options, X-Frame-Options, Referrer-Policy, and Permissions-Policy with a single click. Copy individual headers or the full block.', short: 'HSTS · X-Frame · Referrer · Permissions', pillar: 'Security', color: '#00d4aa', fixes: 5, icon: `<path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 4l6 2.67V11c0 3.88-2.67 7.52-6 8.93-3.33-1.41-6-5.05-6-8.93V7.67L12 5z"/>` },
