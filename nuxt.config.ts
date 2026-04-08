@@ -13,6 +13,11 @@ export default defineNuxtConfig({
         // DNS prefetch for Convex cloud (exact subdomain varies per project)
         { rel: 'dns-prefetch', href: 'https://convex.cloud' },
       ],
+      meta: [
+        // Default Twitter Card type — individual pages set twitter:image via useSeoMeta
+        { name: 'twitter:card', content: 'summary_large_image' },
+        { name: 'twitter:site', content: '@scanpulse' },
+      ],
     },
   },
 

@@ -1,6 +1,15 @@
 <script setup lang="ts">
-const route = useRoute()
-const slug  = computed(() => String(route.params.slug ?? route.path.split('/').pop()))
+const route  = useRoute()
+const { origin } = useRequestURL()
+const slug   = computed(() => String(route.params.slug ?? route.path.split('/').pop()))
+const ogImageUrl = computed(() => `${origin}/og/tool/${slug.value}`)
+
+// Inject OG + Twitter image for this tool page
+useSeoMeta(computed(() => ({
+  ogImage:      ogImageUrl.value,
+  twitterImage: ogImageUrl.value,
+  twitterCard:  'summary_large_image',
+})))
 
 interface ToolSeo {
   intro:   string

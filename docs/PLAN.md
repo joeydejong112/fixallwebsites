@@ -1093,13 +1093,13 @@ _Last updated: 2026-04-08 — Phase 9 (Public API) complete_
 
 ---
 
-### Task 6 — Open Graph & social preview
+### Task 6 — Open Graph & social preview ✅ Complete
 
-- [ ] Dynamic OG image for scan results: generate a card showing URL + scores (edge function using `@vercel/og` or similar)
-- [ ] Static OG images for all tool pages (branded card with tool name + pillar colour)
-- [ ] Twitter Card `summary_large_image` on all pages
+- [x] Dynamic OG image for scan results: SVG server route `/og/scan?url=&score=` renders branded card
+- [x] Static OG images for all tool pages: SVG server route `/og/tool/[slug]` per tool
+- [x] Twitter Card `summary_large_image` on all pages (global default in nuxt.config + per-page overrides)
 - [ ] Test all previews with opengraph.xyz
 
 ---
 
-_Last updated: 2026-04-08 — Phase 10 Tasks 1–3 complete_
+_Last updated: 2026-04-08 — Phase 10 Tasks 1–6 complete_

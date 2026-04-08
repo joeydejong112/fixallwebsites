@@ -1,6 +1,13 @@
 <script setup lang="ts">
 definePageMeta({ middleware: 'auth' })
-useSeoMeta({ title: 'Scan Results — ScanPulse' })
+
+const { origin } = useRequestURL()
+
+// Updated once scan data loads (see watchEffect below)
+useSeoMeta({
+  title: 'Scan Results — ScanPulse',
+  twitterCard: 'summary_large_image',
+})
 
 const route  = useRoute()
 const router = useRouter()
@@ -85,6 +92,23 @@ const TOOL_LINKS: Record<string, string> = {
   'No llms-full.txt found':           '/tools/ai-optimizer',
   'AI crawlers blocked in robots.txt': '/tools/ai-optimizer',
 }
+
+// Update OG meta once scan data arrives
+watchEffect(() => {
+  if (!scan.value || scan.value.status !== 'done') return
+  const scannedUrl = scan.value.url ?? ''
+  const score      = scan.value.score ?? 0
+  const ogImage    = `${origin}/og/scan?url=${encodeURIComponent(scannedUrl)}&score=${score}`
+  useSeoMeta({
+    title:        `${scannedUrl} — ScanPulse Results`,
+    description:  `ScanPulse scanned ${scannedUrl} and gave it a health score of ${score}/100.`,
+    ogTitle:      `${scannedUrl} scored ${score}/100 on ScanPulse`,
+    ogDescription: `94-point website health scan: Security, Performance, SEO, Accessibility, AI Readiness, DNS & Trust.`,
+    ogImage,
+    twitterImage: ogImage,
+    twitterCard:  'summary_large_image',
+  })
+})
 
 onMounted(async () => {
   const url    = route.query.url    as string
