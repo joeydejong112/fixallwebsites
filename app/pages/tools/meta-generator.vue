@@ -296,6 +296,7 @@ const highlightedHtml = computed(() => {
 
         </div>
       </div>
+      <ToolSeoSection />
     </div>
   </div>
 </template>

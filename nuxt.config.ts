@@ -7,6 +7,7 @@ export default defineNuxtConfig({
     '@primevue/nuxt-module',
     '@nuxtjs/tailwindcss',
     '@clerk/nuxt',
+    '@nuxt/content',
   ],
 
   primevue: {

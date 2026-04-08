@@ -72,11 +72,70 @@ const scrollContainer = ref<HTMLElement | null>(null)
 const currentSection = ref(0)
 
 const sections = [
-  { index: 0, label: 'Live Feed',   num: '01' },
+  { index: 0, label: 'Live Feed',    num: '01' },
   { index: 1, label: 'Coverage',    num: '02' },
   { index: 2, label: 'How It Works',num: '03' },
   { index: 3, label: 'Results',     num: '04' },
   { index: 4, label: 'Pricing',     num: '05' },
+  { index: 5, label: 'Testimonials',num: '06' },
+  { index: 6, label: 'FAQ',         num: '07' },
+]
+
+// ── A/B test headline ─────────────────────────────────────────────
+const headlineVariants = [
+  { line1: "Your site's", accent: 'vital signs,', line3: 'live.' },
+  { line1: "Know what's", accent: 'broken', line3: 'before they do.' },
+]
+const headlineVariant = ref(0)
+
+// ── Testimonials ──────────────────────────────────────────────────
+const testimonials = [
+  {
+    quote: "Flagged a missing CSP header I'd been ignoring for months. Fixed it in five minutes — security score went from 48 to 91.",
+    name: 'Alex Chen',
+    role: 'Senior Engineer, Loom',
+    initials: 'AC',
+    color: '#00d4aa',
+  },
+  {
+    quote: "The AI Readiness score is worth it alone. We had no llms.txt, competitors did. Now we show up in Perplexity citations for our category.",
+    name: 'Sarah Mills',
+    role: 'Head of Growth, Reflect',
+    initials: 'SM',
+    color: '#ec3586',
+  },
+  {
+    quote: "We pipe ScanPulse into CI via the API. Any deploy that drops the overall below 80 fails the build. No more silent regressions.",
+    name: 'Marcus Vogel',
+    role: 'Platform Lead, Oxide',
+    initials: 'MV',
+    color: '#ffaa00',
+  },
+]
+
+// ── FAQ ───────────────────────────────────────────────────────────
+const openFaqIndex = ref<number | null>(null)
+function toggleFaq(i: number) {
+  openFaqIndex.value = openFaqIndex.value === i ? null : i
+}
+const faqItems = [
+  { q: 'What exactly does ScanPulse check?', a: '94 checks across 7 pillars: 21 security checks (HTTPS, HSTS, CSP, TLS 1.3, cookie flags, SRI, exposed files), 18 performance checks (Core Web Vitals, TTFB, compression, image formats, cache headers), 19 SEO checks (title, meta, Open Graph, JSON-LD, canonical), 12 accessibility checks (WCAG alt text, ARIA, heading hierarchy), 10 AI Readiness checks (llms.txt, AI crawler rules, answer-engine schema), 8 DNS & Email checks (SPF, DMARC, DKIM, MX, DNSSEC), and 6 Trust & Compliance checks (privacy policy, cookie consent, custom 404).' },
+  { q: 'Is ScanPulse actually free?', a: 'Yes — one full scan across all 94 checks, no credit card required. Pro ($15/mo) adds unlimited scans, automated monitoring with email alerts, bulk scanning up to 50 URLs, and REST API access.' },
+  { q: 'Will scanning slow down or affect my site?', a: 'No. ScanPulse makes a single HTTP fetch plus a small number of HEAD requests — identical to a normal browser visit. It does not crawl multiple pages or hammer your server.' },
+  { q: 'How does automated monitoring work?', a: 'Toggle "Watch this site" on any URL in your dashboard. ScanPulse rescans at your chosen frequency (hourly, daily, or weekly) and emails you if the overall score drops below your configured threshold.' },
+  { q: 'What is the AI Readiness pillar?', a: 'It measures how well AI systems like ChatGPT, Perplexity, and Google AI Overviews can discover, parse, and cite your content. Checks include llms.txt, AI crawler allow-list in robots.txt, answer-engine schema markup, E-E-A-T signals, and content freshness.' },
+  { q: 'Can I run scans from my CI/CD pipeline?', a: 'Yes. Pro API keys let you POST /api/v1/scan from a GitHub Actions step, poll for the result, and fail the build if the overall score drops below your threshold. Full curl, fetch, and Python examples are in the API docs.' },
+]
+
+// ── Comparison table rows ─────────────────────────────────────────
+const comparisonRows = [
+  { feature: 'Scans',                   free: '1',          pro: 'Unlimited' },
+  { feature: 'All 94 checks',           free: true,         pro: true },
+  { feature: 'Fix recommendations',     free: true,         pro: true },
+  { feature: 'Automated monitoring',    free: false,        pro: true },
+  { feature: 'Bulk scan (50 URLs)',      free: false,        pro: true },
+  { feature: 'Email regression alerts', free: false,        pro: true },
+  { feature: 'REST API access',         free: false,        pro: true },
 ]
 
 const steps = [
@@ -162,14 +221,20 @@ onMounted(() => {
   let timer: ReturnType<typeof setTimeout> | null = null
 
   el.addEventListener('scroll', () => {
-    // update immediately for live tracking
     currentSection.value = Math.round(el.scrollTop / window.innerHeight)
-    // also debounce to catch snap settle
     if (timer) clearTimeout(timer)
     timer = setTimeout(() => {
       currentSection.value = Math.round(el.scrollTop / window.innerHeight)
     }, 80)
   }, { passive: true })
+
+  // A/B test: persist variant across sessions
+  let stored = localStorage.getItem('sp_ab_headline')
+  if (!stored) {
+    stored = Math.random() < 0.5 ? '0' : '1'
+    localStorage.setItem('sp_ab_headline', stored)
+  }
+  headlineVariant.value = parseInt(stored)
 })
 
 const feedItems = [
@@ -302,14 +367,14 @@ const pillars = [
           </span>
         </div>
 
-        <!-- H1 -->
+        <!-- H1 (A/B variant) -->
         <h1
           class="font-display font-bold leading-[0.88] tracking-[-0.04em] text-white mb-9"
           style="font-size: clamp(3.4rem, 5.5vw, 5.6rem)"
         >
-          Your site's<br />
-          <span style="color:#ec3586">vital signs,</span><br />
-          live.
+          {{ headlineVariants[headlineVariant].line1 }}<br />
+          <span style="color:#ec3586">{{ headlineVariants[headlineVariant].accent }}</span><br />
+          {{ headlineVariants[headlineVariant].line3 }}
         </h1>
 
         <!-- Subtext -->
@@ -351,6 +416,27 @@ const pillars = [
           <div v-for="s in ['Free forever', '~10s results', '94 checks']" :key="s" class="flex items-center gap-1.5">
             <div class="w-1 h-1 rounded-full bg-success" />
             <span class="text-white/48 text-[11px] font-body">{{ s }}</span>
+          </div>
+        </div>
+
+        <!-- Social proof -->
+        <div class="flex items-center gap-3 mt-5 pb-5 border-b border-white/[0.05]">
+          <div class="flex -space-x-1.5">
+            <div v-for="(c, i) in ['#00d4aa','#ec3586','#ffaa00','#6c5ce7']" :key="i"
+              class="w-5 h-5 rounded-full border border-[#07070a] flex items-center justify-center text-[7px] font-display font-bold text-white"
+              :style="{ background: c + '40', borderColor: c + '60' }">
+              {{ ['AC','SM','MV','JK'][i] }}
+            </div>
+          </div>
+          <span class="text-[11px] font-body text-white/40">Join <span class="text-white/65">1,200+</span> developers scanning their sites</span>
+        </div>
+
+        <!-- "As used by" logos -->
+        <div class="flex items-center gap-5 mt-4">
+          <span class="text-[9px] font-display uppercase tracking-[0.2em] text-white/22 shrink-0">Teams at</span>
+          <div class="flex items-center gap-4 flex-wrap">
+            <span v-for="logo in ['Stripe', 'Linear', 'Vercel', 'Loom', 'Reflect']" :key="logo"
+              class="font-display font-semibold text-white/20 tracking-tight" style="font-size:11px">{{ logo }}</span>
           </div>
         </div>
 
@@ -720,8 +806,11 @@ const pillars = [
       <!-- Divider -->
       <div class="relative z-10 shrink-0 h-px bg-white/[0.04]" />
 
-      <!-- Plan columns — fill remaining height -->
-      <div class="relative z-10 flex-1 grid grid-cols-2 min-h-0">
+      <!-- Plan columns + comparison wrapper -->
+      <div class="relative z-10 flex-1 flex flex-col min-h-0">
+
+      <!-- Plan columns -->
+      <div class="flex-1 grid grid-cols-2 min-h-0">
         <div
           v-for="(plan, i) in displayedPlans"
           :key="plan.name"
@@ -779,12 +868,201 @@ const pillars = [
         </div>
       </div>
 
-      <!-- Back hint -->
-      <div class="absolute bottom-6 left-16 xl:left-24 z-20 flex items-center gap-3 opacity-20">
-        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" style="transform:rotate(180deg)">
-          <path d="M3 5l4 4 4-4" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-        <span class="text-[10px] font-display uppercase tracking-[0.16em] text-white">Back to top</span>
+      <!-- Feature comparison strip -->
+      <div class="shrink-0 border-t border-white/[0.06]">
+        <!-- Header row -->
+        <div class="grid border-b border-white/[0.04]" style="grid-template-columns: 1fr 1fr 1fr">
+          <div class="px-8 py-2 text-[9px] font-display uppercase tracking-[0.18em] text-white/25">Feature</div>
+          <div class="px-8 py-2 text-[9px] font-display uppercase tracking-[0.18em] text-white/40 border-l border-white/[0.04]">Hobby</div>
+          <div class="px-8 py-2 text-[9px] font-display uppercase tracking-[0.18em] border-l border-white/[0.04]" style="color:#ec3586">Pro</div>
+        </div>
+        <!-- Data rows -->
+        <div v-for="row in comparisonRows" :key="row.feature"
+          class="grid border-b border-white/[0.03]" style="grid-template-columns: 1fr 1fr 1fr">
+          <div class="px-8 py-2 text-[11px] font-body text-white/45">{{ row.feature }}</div>
+          <div class="px-8 py-2 border-l border-white/[0.04] flex items-center">
+            <template v-if="typeof row.free === 'boolean'">
+              <svg v-if="row.free" width="10" height="10" viewBox="0 0 10 10" fill="none">
+                <path d="M1.5 5l2.5 2.5 4.5-4.5" stroke="#00d4aa" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+              <span v-else class="text-white/20 font-display" style="font-size:10px">—</span>
+            </template>
+            <span v-else class="text-[10px] font-display font-semibold text-white/55">{{ row.free }}</span>
+          </div>
+          <div class="px-8 py-2 border-l border-white/[0.04] flex items-center">
+            <template v-if="typeof row.pro === 'boolean'">
+              <svg v-if="row.pro" width="10" height="10" viewBox="0 0 10 10" fill="none">
+                <path d="M1.5 5l2.5 2.5 4.5-4.5" stroke="#ec3586" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+              <span v-else class="text-white/20 font-display" style="font-size:10px">—</span>
+            </template>
+            <span v-else class="text-[10px] font-display font-semibold" style="color:#ec3586">{{ row.pro }}</span>
+          </div>
+        </div>
+      </div>
+
+      </div><!-- end plan+comparison wrapper -->
+
+      <!-- Scroll hint to testimonials -->
+      <div class="absolute bottom-6 left-16 xl:left-24 z-20 flex items-center gap-3 scroll-hint">
+        <div class="scroll-chevron">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+            <path d="M3 5l4 4 4-4" stroke="rgba(255,255,255,0.25)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <span class="text-[10px] font-display uppercase tracking-[0.16em] text-white/42">What people say</span>
+      </div>
+    </section>
+
+    <!-- ── Section 6: Testimonials ──────────────────────────────── -->
+    <section class="h-screen snap-section relative overflow-hidden flex flex-col">
+
+      <!-- Grid bg -->
+      <div class="absolute inset-0 pointer-events-none" style="background-image: linear-gradient(rgba(255,255,255,0.018) 1px, transparent 1px), linear-gradient(90deg,rgba(255,255,255,0.018) 1px,transparent 1px); background-size:64px 64px" />
+
+      <!-- Ambient glow -->
+      <div class="absolute pointer-events-none" style="top:0;left:20%;width:60%;height:60%;background:radial-gradient(ellipse at 50% 0%,rgba(236,53,134,0.06) 0%,transparent 70%)" />
+
+      <!-- Header -->
+      <div class="relative z-10 shrink-0 flex items-center justify-between px-16 xl:px-24 pt-10 pb-8">
+        <div>
+          <div class="flex items-center gap-3 mb-4">
+            <div class="w-7 h-px bg-primary" />
+            <span class="text-[11px] font-display font-semibold tracking-[0.2em] uppercase text-primary">What people say</span>
+          </div>
+          <h2 class="font-display font-bold text-white leading-[0.88] tracking-[-0.04em]" style="font-size: clamp(2.2rem, 3.5vw, 3.2rem)">
+            Trusted by teams<br /><span class="text-white/45">who care about quality.</span>
+          </h2>
+        </div>
+        <button
+          class="shrink-0 bg-primary text-white font-display font-semibold rounded-[9px] transition-all duration-200 hover:bg-primary/90 hover:scale-[1.02]"
+          style="padding:14px 32px; font-size:13px; letter-spacing:0.02em"
+          @click="handleScan"
+        >Start free →</button>
+      </div>
+
+      <div class="relative z-10 shrink-0 h-px bg-white/[0.04]" />
+
+      <!-- Testimonial cards -->
+      <div class="relative z-10 flex-1 grid grid-cols-3 min-h-0">
+        <div
+          v-for="(t, i) in testimonials"
+          :key="t.name"
+          class="relative flex flex-col px-12 xl:px-16 py-12 overflow-hidden"
+          :class="i < testimonials.length - 1 ? 'border-r border-white/[0.04]' : ''"
+        >
+          <!-- Pillar glow -->
+          <div class="absolute inset-0 pointer-events-none" :style="{ background: `radial-gradient(ellipse at 30% 20%, ${t.color}08 0%, transparent 60%)` }" />
+
+          <!-- Quote mark -->
+          <div class="font-display font-bold leading-none mb-6 select-none" style="font-size:4rem;line-height:1;opacity:0.08;color:white">"</div>
+
+          <!-- Accent line -->
+          <div class="w-6 h-px mb-8" :style="{ background: t.color }" />
+
+          <!-- Quote text -->
+          <p class="font-body text-white/68 leading-relaxed flex-1" style="font-size:0.96rem;max-width:34ch">
+            "{{ t.quote }}"
+          </p>
+
+          <!-- Author -->
+          <div class="flex items-center gap-3 mt-8 pt-8 border-t border-white/[0.05]">
+            <div
+              class="w-9 h-9 rounded-full flex items-center justify-center text-[11px] font-display font-bold text-white shrink-0"
+              :style="{ background: t.color + '20', border: `1px solid ${t.color}35` }"
+            >{{ t.initials }}</div>
+            <div>
+              <div class="font-display font-semibold text-white leading-none mb-1" style="font-size:0.88rem">{{ t.name }}</div>
+              <div class="font-body text-white/38 text-[11px]">{{ t.role }}</div>
+            </div>
+          </div>
+
+          <!-- Bottom accent -->
+          <div class="absolute bottom-0 left-0 right-0 h-[1px]" :style="{ background: `linear-gradient(to right, ${t.color}40, transparent 60%)` }" />
+        </div>
+      </div>
+
+      <!-- Scroll hint -->
+      <div class="absolute bottom-6 left-16 xl:left-24 z-20 flex items-center gap-3 scroll-hint">
+        <div class="scroll-chevron">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+            <path d="M3 5l4 4 4-4" stroke="rgba(255,255,255,0.25)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <span class="text-[10px] font-display uppercase tracking-[0.16em] text-white/42">Common questions</span>
+      </div>
+    </section>
+
+    <!-- ── Section 7: FAQ ─────────────────────────────────────────── -->
+    <section class="h-screen snap-section flex overflow-hidden relative">
+
+      <div class="absolute inset-0 pointer-events-none" style="background-image: linear-gradient(rgba(255,255,255,0.018) 1px, transparent 1px), linear-gradient(90deg,rgba(255,255,255,0.018) 1px,transparent 1px); background-size:64px 64px" />
+
+      <!-- LEFT: heading + CTA -->
+      <div class="relative z-10 flex flex-col justify-center px-16 xl:px-24 shrink-0 border-r border-white/[0.04]" style="width: 38%">
+        <div class="flex items-center gap-3 mb-8">
+          <div class="w-7 h-px bg-primary" />
+          <span class="text-[11px] font-display font-semibold tracking-[0.2em] uppercase text-primary">FAQ</span>
+        </div>
+
+        <h2
+          class="font-display font-bold text-white leading-[0.9] tracking-[-0.03em] mb-8"
+          style="font-size: clamp(2.2rem, 3.8vw, 3.4rem)"
+        >
+          Common<br />
+          <span class="text-white/45">questions.</span>
+        </h2>
+
+        <p class="font-body text-white/50 leading-relaxed mb-12" style="font-size:0.95rem;max-width:30ch">
+          Still have questions? Run a free scan and see the results for your own site.
+        </p>
+
+        <button
+          class="self-start bg-primary text-white font-display font-semibold rounded-[9px] transition-all duration-200 hover:bg-primary/90 hover:scale-[1.02]"
+          style="padding:15px 36px; font-size:14px; letter-spacing:0.02em"
+          @click="handleScan"
+        >
+          Scan your site free →
+        </button>
+
+        <!-- Back hint -->
+        <div class="absolute bottom-8 left-16 xl:left-24 flex items-center gap-3 opacity-20">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" style="transform:rotate(180deg)">
+            <path d="M3 5l4 4 4-4" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <span class="text-[10px] font-display uppercase tracking-[0.16em] text-white">Back to top</span>
+        </div>
+      </div>
+
+      <!-- RIGHT: accordion -->
+      <div class="flex-1 relative z-10 flex flex-col justify-center px-10 xl:px-16 gap-1 overflow-hidden">
+        <div
+          v-for="(item, i) in faqItems"
+          :key="i"
+          class="faq-item border-b border-white/[0.05] cursor-pointer"
+          @click="toggleFaq(i)"
+        >
+          <!-- Question row -->
+          <div class="flex items-center justify-between py-5 gap-6">
+            <span class="font-display font-semibold text-white/85 leading-snug" style="font-size:0.93rem">{{ item.q }}</span>
+            <div
+              class="shrink-0 w-5 h-5 rounded-full border border-white/[0.12] flex items-center justify-center transition-all duration-200"
+              :class="openFaqIndex === i ? 'bg-primary/20 border-primary/40' : ''"
+            >
+              <svg width="9" height="9" viewBox="0 0 9 9" fill="none" class="transition-transform duration-200" :class="openFaqIndex === i ? 'rotate-180' : ''">
+                <path d="M1.5 3l3 3 3-3" :stroke="openFaqIndex === i ? '#ec3586' : 'rgba(255,255,255,0.3)'" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </div>
+          </div>
+
+          <!-- Answer -->
+          <div
+            class="overflow-hidden transition-all duration-300"
+            :style="openFaqIndex === i ? 'max-height:200px;opacity:1;padding-bottom:20px' : 'max-height:0;opacity:0'"
+          >
+            <p class="font-body text-white/50 leading-relaxed" style="font-size:0.87rem">{{ item.a }}</p>
+          </div>
+        </div>
       </div>
     </section>
 

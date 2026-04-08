@@ -236,6 +236,7 @@ const tabTitle = ref('My Website')
         </div>
 
       </div>
+      <ToolSeoSection />
     </div>
   </div>
 </template>

@@ -174,6 +174,7 @@ function ratingColor(): string {
         </div>
 
       </div>
+      <ToolSeoSection />
     </div>
   </div>
 </template>

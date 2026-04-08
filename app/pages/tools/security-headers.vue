@@ -285,6 +285,7 @@ const nginxOutput = computed(() =>
 
         </div>
       </div>
+      <ToolSeoSection />
     </div>
   </div>
 </template>

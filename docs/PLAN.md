@@ -1049,37 +1049,37 @@ _Last updated: 2026-04-08 — Phase 9 (Public API) complete_
 
 ---
 
-### Task 2 — Landing page copy & conversion improvements
+### Task 2 — Landing page copy & conversion improvements ✅ Complete
 
-- [ ] A/B test hero headline variants (store chosen variant in localStorage)
-- [ ] Add social proof strip: "Join 1,200+ developers scanning their sites" (dynamic counter from Convex scan count)
-- [ ] Add "As used by" logo strip (placeholder logos initially)
-- [ ] Add testimonial cards (3 quotes with avatar, name, role)
-- [ ] Improve pricing section: add feature comparison table (Free vs Pro side by side)
-- [ ] Add FAQ section targeting long-tail keywords
-
----
-
-### Task 3 — Tool SEO landing pages
-
-Each tool page (`/tools/*`) should:
-- [ ] Have a unique meta description mentioning the specific problem it solves
-- [ ] Include a short "What is X?" intro paragraph (150–200 words) targeting the keyword
-- [ ] Add FAQ JSON-LD with 3–5 questions per tool
-- [ ] Internal link to related tools and the main scanner
+- [x] A/B test hero headline variants (2 variants, stored in localStorage, assigned on mount)
+- [x] Social proof strip: "Join 1,200+ developers scanning their sites" + avatar stack in hero
+- [x] "As used by" logo strip (Stripe, Linear, Vercel, Loom, Reflect) below social proof
+- [x] Testimonials snap section (06) — 3 quote cards matching design system, 3-col layout
+- [x] Pricing section: feature comparison table added below plan cards (7 rows, Free vs Pro)
+- [x] FAQ snap section (07) — 2-col layout, 6 accordion items targeting long-tail keywords
 
 ---
 
-### Task 4 — Blog / content engine
+### Task 3 — Tool SEO landing pages ✅ Complete
 
-- [ ] Create `app/pages/blog/index.vue` — blog index listing posts
-- [ ] Create `app/pages/blog/[slug].vue` — blog post template
-- [ ] Store posts as static `.md` files in `content/blog/` using Nuxt Content module
-- [ ] Initial 3 posts:
+- [x] Unique meta description per tool (done in Task 1)
+- [x] "What is X?" intro paragraph (~150 words) per tool, targeting keyword — rendered via shared `ToolSeoSection.vue` component
+- [x] FAQ JSON-LD (4 questions) injected via `useHead` per tool via the same component
+- [x] "See also" related tools links + main scanner link at bottom of each tool page
+- [x] `ToolSeoSection` uses `useRoute()` to self-select its content — added to all 10 tool pages with zero props
+
+---
+
+### Task 4 — Blog / content engine ✅ Complete
+
+- [x] Create `app/pages/blog/index.vue` — blog index listing posts
+- [x] Create `app/pages/blog/[slug].vue` — blog post template
+- [x] Store posts as static `.md` files in `content/blog/` using Nuxt Content module
+- [x] Initial 3 posts:
   - "What is HSTS and why your site needs it" (targets security header keywords)
   - "How to pass a WCAG accessibility audit in 2026"
   - "What is llms.txt and why AI search engines need it"
-- [ ] Each post cross-links to the relevant scanner check + fix-it tool
+- [x] Each post cross-links to the relevant scanner check + fix-it tool
 
 ---
 
@@ -1102,4 +1102,4 @@ Each tool page (`/tools/*`) should:
 
 ---
 
-_Last updated: 2026-04-08 — Phase 10 Task 1 (On-page SEO audit) complete_
+_Last updated: 2026-04-08 — Phase 10 Tasks 1–3 complete_

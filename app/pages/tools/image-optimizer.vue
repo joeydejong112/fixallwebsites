@@ -270,6 +270,7 @@ async function copySnippet() {
 
       </div>
 
+      <ToolSeoSection />
     </div>
   </div>
 </template>

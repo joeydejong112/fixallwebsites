@@ -46,6 +46,7 @@ const clerkAppearance = useClerkAppearance()
           <template v-if="isSignedIn">
             <NuxtLink to="/pricing" class="nav-link">Pricing</NuxtLink>
             <NuxtLink to="/tools" class="nav-link">Tools</NuxtLink>
+            <NuxtLink to="/blog" class="nav-link">Blog</NuxtLink>
             <NuxtLink to="/bulk-scan" class="nav-link nav-link--pro">Bulk Scan</NuxtLink>
             <NuxtLink to="/compare" class="nav-link nav-link--pro">Compare</NuxtLink>
             <NuxtLink to="/dashboard" class="nav-link">Dashboard</NuxtLink>
@@ -59,6 +60,7 @@ const clerkAppearance = useClerkAppearance()
           <template v-else>
             <NuxtLink to="/pricing" class="nav-link">Pricing</NuxtLink>
             <NuxtLink to="/tools" class="nav-link">Tools</NuxtLink>
+            <NuxtLink to="/blog" class="nav-link">Blog</NuxtLink>
             <NuxtLink to="/sign-in" class="nav-link">Sign in</NuxtLink>
             <NuxtLink
               to="/sign-up"

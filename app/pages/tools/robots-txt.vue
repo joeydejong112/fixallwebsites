@@ -257,6 +257,7 @@ const outputLines = computed<OutputToken[][]>(() => {
           </div>
         </div>
       </div>
+      <ToolSeoSection />
     </div>
   </div>
 </template>
