@@ -43,6 +43,15 @@ const clerkAppearance = useClerkAppearance()
 
         <!-- ── Right: actions ── -->
         <div class="flex items-center gap-5 shrink-0">
+          <ClientOnly>
+            <template #fallback>
+              <!-- Skeleton prevents layout shift during Clerk hydration -->
+              <div class="flex items-center gap-5">
+                <div class="h-3 w-14 rounded-sm animate-pulse" style="background:rgba(255,255,255,0.08)" />
+                <div class="h-3 w-10 rounded-sm animate-pulse" style="background:rgba(255,255,255,0.08)" />
+                <div class="h-8 w-24 rounded-sm animate-pulse" style="background:rgba(236,53,134,0.18)" />
+              </div>
+            </template>
           <template v-if="isSignedIn">
             <NuxtLink to="/pricing" class="nav-link">Pricing</NuxtLink>
             <NuxtLink to="/tools" class="nav-link">Tools</NuxtLink>
@@ -72,6 +81,7 @@ const clerkAppearance = useClerkAppearance()
               </svg>
             </NuxtLink>
           </template>
+          </ClientOnly>
         </div>
 
       </div>

@@ -259,6 +259,9 @@ async function handleBillingAction() {
                   :src="user.imageUrl"
                   :alt="displayName"
                   class="w-14 h-14 rounded-full object-cover ring-2 ring-white/10"
+                  loading="lazy"
+                  width="56"
+                  height="56"
                 />
                 <div
                   v-else

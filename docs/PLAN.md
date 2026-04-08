@@ -1083,13 +1083,13 @@ _Last updated: 2026-04-08 — Phase 9 (Public API) complete_
 
 ---
 
-### Task 5 — Performance & Core Web Vitals
+### Task 5 — Performance & Core Web Vitals ✅ Complete
 
-- [ ] Audit and fix LCP on landing page (preload hero font, defer non-critical scripts)
-- [ ] Add `loading="lazy"` and explicit `width`/`height` to all images
-- [ ] Ensure no layout shift from Clerk auth hydration (skeleton loader)
-- [ ] Add `<link rel="preconnect">` for Google Fonts, Convex cloud
-- [ ] Run Lighthouse CI in GitHub Actions: fail build if LCP > 2.5s or CLS > 0.1
+- [x] Audit and fix LCP on landing page (preload hero font, defer non-critical scripts)
+- [x] Add `loading="lazy"` and explicit `width`/`height` to all images
+- [x] Ensure no layout shift from Clerk auth hydration (skeleton loader)
+- [x] Add `<link rel="preconnect">` for Google Fonts, Convex cloud
+- [x] Run Lighthouse CI in GitHub Actions: fail build if LCP > 2.5s or CLS > 0.1
 
 ---
 

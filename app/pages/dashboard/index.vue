@@ -426,6 +426,9 @@ function relativeTime(ts: number) {
                 :src="faviconUrl(m.url)!"
                 class="w-5 h-5 rounded shrink-0 opacity-80"
                 :alt="m.url"
+                loading="lazy"
+                width="20"
+                height="20"
                 @error="($event.target as HTMLImageElement).style.display='none'"
               />
               <span class="font-display font-semibold text-white/85 text-[13px] truncate flex-1">{{ m.url }}</span>
