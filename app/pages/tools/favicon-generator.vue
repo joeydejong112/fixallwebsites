@@ -236,7 +236,7 @@ const tabTitle = ref('My Website')
         </div>
 
       </div>
-      <ToolSeoSection />
+      <ToolSeoSection slug="favicon-generator" />
     </div>
   </div>
 </template>
@@ -245,8 +245,7 @@ const tabTitle = ref('My Website')
 .page-bg { min-height: 100vh; background: #07070a; }
 
 .tool-shell {
-  max-width: 860px;
-  margin: 0 auto;
+  max-width: 100%;
   padding: 48px 28px 80px;
 }
 

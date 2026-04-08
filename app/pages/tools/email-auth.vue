@@ -307,14 +307,14 @@ async function copyDmarc() {
         </div>
 
       </div>
-      <ToolSeoSection />
+      <ToolSeoSection slug="email-auth" />
     </div>
   </div>
 </template>
 
 <style scoped>
 .page-bg { min-height: 100vh; background: #07070a; }
-.tool-shell { max-width: 860px; margin: 0 auto; padding: 48px 28px 80px; }
+.tool-shell { max-width: 100%; padding: 48px 28px 80px; }
 
 /* Header */
 .tool-header { margin-bottom: 32px; }

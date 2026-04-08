@@ -296,7 +296,7 @@ const highlightedHtml = computed(() => {
 
         </div>
       </div>
-      <ToolSeoSection />
+      <ToolSeoSection slug="meta-generator" />
     </div>
   </div>
 </template>
@@ -308,8 +308,7 @@ const highlightedHtml = computed(() => {
 }
 
 .tool-shell {
-  max-width: 1080px;
-  margin: 0 auto;
+  max-width: 100%;
   padding: 48px 28px 80px;
 }
 

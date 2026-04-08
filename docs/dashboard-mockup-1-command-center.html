@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>ScanPulse Dashboard — Design 1: Command Center</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --primary: #ec3586;
+    --dark: #07070a;
+    --dark-surface: #0f0f14;
+    --dark-elevated: #16161e;
+    --dark-border: #1e1e28;
+    --security: #00d4aa;
+    --performance: #ffaa00;
+    --seo: #6c5ce7;
+    --accessibility: #a29bfe;
+    --ai: #ff7675;
+    --dns: #74b9ff;
+    --trust: #fd79a8;
+    --success: #00d4aa;
+    --warning: #ffaa00;
+    --danger: #ff4757;
+    --muted: #6b7280;
+    --text: #e8e8f0;
+    --text-sub: #9898b0;
+  }
+  body { font-family: 'DM Sans', sans-serif; background: var(--dark); color: var(--text); display: flex; height: 100vh; overflow: hidden; font-size: 14px; }
+
+  /* Sidebar */
+  .sidebar { width: 220px; background: var(--dark-surface); border-right: 1px solid var(--dark-border); display: flex; flex-direction: column; flex-shrink: 0; }
+  .logo { padding: 20px 18px; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid var(--dark-border); }
+  .logo-icon { width: 28px; height: 28px; background: var(--primary); border-radius: 7px; display: flex; align-items: center; justify-content: center; }
+  .logo-icon svg { width: 16px; height: 16px; fill: white; }
+  .logo-name { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 15px; color: var(--text); }
+  .logo-badge { font-size: 9px; color: var(--primary); background: rgba(236,53,134,0.12); border: 1px solid rgba(236,53,134,0.25); padding: 1px 5px; border-radius: 4px; margin-left: auto; }
+
+  .nav { padding: 14px 0; flex: 1; overflow-y: auto; }
+  .nav-section { padding: 6px 18px 4px; font-size: 10px; font-weight: 600; color: var(--muted); letter-spacing: 0.08em; text-transform: uppercase; }
+  .nav-item { display: flex; align-items: center; gap: 10px; padding: 8px 18px; color: var(--text-sub); cursor: pointer; transition: all 0.15s; font-size: 13px; }
+  .nav-item:hover { color: var(--text); background: rgba(255,255,255,0.04); }
+  .nav-item.active { color: var(--text); background: rgba(236,53,134,0.1); border-right: 2px solid var(--primary); }
+  .nav-item svg { width: 15px; height: 15px; opacity: 0.7; }
+  .nav-item.active svg { opacity: 1; color: var(--primary); }
+  .nav-badge { margin-left: auto; font-size: 10px; background: var(--primary); color: white; border-radius: 10px; padding: 1px 6px; }
+
+  .sidebar-footer { padding: 14px 18px; border-top: 1px solid var(--dark-border); }
+  .user-row { display: flex; align-items: center; gap: 10px; }
+  .avatar { width: 30px; height: 30px; border-radius: 50%; background: linear-gradient(135deg, var(--primary), #8b1a5e); display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; color: white; flex-shrink: 0; }
+  .user-name { font-size: 12px; font-weight: 600; color: var(--text); }
+  .user-plan { font-size: 10px; color: var(--muted); }
+
+  /* Main */
+  .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+  .topbar { height: 56px; background: var(--dark-surface); border-bottom: 1px solid var(--dark-border); display: flex; align-items: center; padding: 0 24px; gap: 16px; flex-shrink: 0; }
+  .topbar-title { font-family: 'Space Grotesk', sans-serif; font-weight: 600; font-size: 16px; }
+  .topbar-sub { font-size: 12px; color: var(--muted); }
+  .spacer { flex: 1; }
+  .scan-btn { background: var(--primary); color: white; border: none; border-radius: 8px; padding: 8px 16px; font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 500; cursor: pointer; display: flex; align-items: center; gap: 6px; }
+  .scan-input { background: var(--dark-elevated); border: 1px solid var(--dark-border); border-radius: 8px; padding: 7px 14px; color: var(--text); font-size: 13px; width: 260px; }
+  .scan-input::placeholder { color: var(--muted); }
+
+  .content { flex: 1; overflow-y: auto; padding: 24px; display: flex; flex-direction: column; gap: 20px; }
+
+  /* Stats row */
+  .stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+  .stat-card { background: var(--dark-surface); border: 1px solid var(--dark-border); border-radius: 12px; padding: 16px; }
+  .stat-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px; }
+  .stat-value { font-family: 'Space Grotesk', sans-serif; font-size: 28px; font-weight: 700; line-height: 1; }
+  .stat-value.green { color: var(--success); }
+  .stat-value.yellow { color: var(--warning); }
+  .stat-value.pink { color: var(--primary); }
+  .stat-delta { font-size: 11px; color: var(--muted); margin-top: 4px; }
+  .stat-delta span { color: var(--success); }
+
+  /* Mid section */
+  .mid-grid { display: grid; grid-template-columns: 1fr 340px; gap: 20px; }
+
+  /* Pillars grid */
+  .pillars-card { background: var(--dark-surface); border: 1px solid var(--dark-border); border-radius: 12px; padding: 18px; }
+  .card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+  .card-title { font-family: 'Space Grotesk', sans-serif; font-weight: 600; font-size: 14px; }
+  .card-action { font-size: 12px; color: var(--primary); cursor: pointer; }
+  .pillars-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+  .pillar-row { display: flex; align-items: center; gap: 12px; }
+  .pillar-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .pillar-name { font-size: 12px; color: var(--text-sub); flex: 1; }
+  .pillar-bar-wrap { width: 80px; height: 5px; background: var(--dark-border); border-radius: 3px; }
+  .pillar-bar { height: 100%; border-radius: 3px; }
+  .pillar-score { font-size: 12px; font-weight: 600; width: 28px; text-align: right; }
+
+  /* Recent scans */
+  .scans-card { background: var(--dark-surface); border: 1px solid var(--dark-border); border-radius: 12px; padding: 18px; }
+  .scan-item { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--dark-border); }
+  .scan-item:last-child { border-bottom: none; padding-bottom: 0; }
+  .scan-favicon { width: 28px; height: 28px; background: var(--dark-elevated); border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 11px; color: var(--muted); flex-shrink: 0; }
+  .scan-domain { font-size: 13px; font-weight: 500; }
+  .scan-time { font-size: 11px; color: var(--muted); }
+  .scan-score { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 18px; margin-left: auto; }
+  .score-good { color: var(--success); }
+  .score-mid { color: var(--warning); }
+  .score-bad { color: var(--danger); }
+
+  /* Bottom grid */
+  .bottom-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+
+  /* Issues feed */
+  .issue-item { display: flex; align-items: flex-start; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--dark-border); }
+  .issue-item:last-child { border-bottom: none; }
+  .issue-badge { font-size: 9px; padding: 2px 7px; border-radius: 4px; font-weight: 600; flex-shrink: 0; margin-top: 1px; }
+  .badge-danger { background: rgba(255,71,87,0.15); color: var(--danger); }
+  .badge-warning { background: rgba(255,170,0,0.15); color: var(--warning); }
+  .badge-info { background: rgba(116,185,255,0.15); color: var(--dns); }
+  .issue-text { font-size: 12px; color: var(--text-sub); line-height: 1.5; flex: 1; }
+  .issue-domain { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+  /* Activity */
+  .activity-item { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--dark-border); }
+  .activity-item:last-child { border-bottom: none; }
+  .activity-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+  .activity-text { font-size: 12px; color: var(--text-sub); flex: 1; }
+  .activity-text strong { color: var(--text); }
+  .activity-time { font-size: 11px; color: var(--muted); }
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="logo">
+    <div class="logo-icon">
+      <svg viewBox="0 0 16 16"><circle cx="8" cy="8" r="3"/><circle cx="8" cy="8" r="6" fill="none" stroke="white" stroke-width="1.5"/></svg>
+    </div>
+    <span class="logo-name">ScanPulse</span>
+    <span class="logo-badge">PRO</span>
+  </div>
+
+  <nav class="nav">
+    <div class="nav-section">Main</div>
+    <div class="nav-item active">
+      <svg viewBox="0 0 16 16" fill="currentColor"><rect x="1" y="1" width="6" height="6" rx="1"/><rect x="9" y="1" width="6" height="6" rx="1"/><rect x="1" y="9" width="6" height="6" rx="1"/><rect x="9" y="9" width="6" height="6" rx="1"/></svg>
+      Overview
+    </div>
+    <div class="nav-item">
+      <svg viewBox="0 0 16 16" fill="currentColor"><path d="M8 1a7 7 0 100 14A7 7 0 008 1zm0 2a5 5 0 110 10A5 5 0 018 3zm0 2a1 1 0 00-1 1v2l-1.5 1.5.7.7L8 8.7V6a1 1 0 00-1-1z"/></svg>
+      Scan History
+      <span class="nav-badge">24</span>
+    </div>
+    <div class="nav-item">
+      <svg viewBox="0 0 16 16" fill="currentColor"><path d="M2 4h12v8H2z" rx="1" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M5 4V2h6v2"/></svg>
+      All Results
+    </div>
+    <div class="nav-section" style="margin-top:10px;">Pillars</div>
+    <div class="nav-item"><span style="width:8px;height:8px;border-radius:50%;background:#00d4aa;flex-shrink:0;"></span> Security</div>
+    <div class="nav-item"><span style="width:8px;height:8px;border-radius:50%;background:#ffaa00;flex-shrink:0;"></span> Performance</div>
+    <div class="nav-item"><span style="width:8px;height:8px;border-radius:50%;background:#6c5ce7;flex-shrink:0;"></span> SEO</div>
+    <div class="nav-item"><span style="width:8px;height:8px;border-radius:50%;background:#a29bfe;flex-shrink:0;"></span> Accessibility</div>
+    <div class="nav-item"><span style="width:8px;height:8px;border-radius:50%;background:#ff7675;flex-shrink:0;"></span> AI Readiness</div>
+    <div class="nav-item"><span style="width:8px;height:8px;border-radius:50%;background:#74b9ff;flex-shrink:0;"></span> DNS & Email</div>
+    <div class="nav-item"><span style="width:8px;height:8px;border-radius:50%;background:#fd79a8;flex-shrink:0;"></span> Trust</div>
+    <div class="nav-section" style="margin-top:10px;">Account</div>
+    <div class="nav-item">
+      <svg viewBox="0 0 16 16" fill="currentColor"><path d="M8 8a3 3 0 100-6 3 3 0 000 6zm0 2c-3.3 0-6 1.8-6 4h12c0-2.2-2.7-4-6-4z"/></svg>
+      Profile
+    </div>
+    <div class="nav-item">
+      <svg viewBox="0 0 16 16" fill="currentColor"><path d="M8 1a1 1 0 00-1 1v.5A5.5 5.5 0 002.5 8 5.5 5.5 0 008 13.5 5.5 5.5 0 0013.5 8 5.5 5.5 0 009 2.5V2a1 1 0 00-1-1zm0 3a3.5 3.5 0 110 7 3.5 3.5 0 010-7z"/></svg>
+      Settings
+    </div>
+  </nav>
+
+  <div class="sidebar-footer">
+    <div class="user-row">
+      <div class="avatar">JD</div>
+      <div>
+        <div class="user-name">Joey de Jong</div>
+        <div class="user-plan">Pro Plan · 47 scans left</div>
+      </div>
+    </div>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<div class="main">
+  <div class="topbar">
+    <div>
+      <div class="topbar-title">Command Center</div>
+      <div class="topbar-sub">Overview of all your scans</div>
+    </div>
+    <div class="spacer"></div>
+    <input class="scan-input" placeholder="https://example.com" />
+    <button class="scan-btn">
+      <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="white" stroke-width="2"><circle cx="7" cy="7" r="5"/><path d="M11 11l3 3"/></svg>
+      New Scan
+    </button>
+  </div>
+
+  <div class="content">
+    <!-- Stats -->
+    <div class="stats-row">
+      <div class="stat-card">
+        <div class="stat-label">Total Scans</div>
+        <div class="stat-value pink">24</div>
+        <div class="stat-delta"><span>+3</span> this week</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Avg. Score</div>
+        <div class="stat-value green">78</div>
+        <div class="stat-delta"><span>+4</span> vs last month</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Critical Issues</div>
+        <div class="stat-value" style="color:var(--danger)">7</div>
+        <div class="stat-delta" style="color:var(--danger)">Needs attention</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Sites Monitored</div>
+        <div class="stat-value yellow">5</div>
+        <div class="stat-delta"><span>2</span> auto-scan enabled</div>
+      </div>
+    </div>
+
+    <!-- Mid -->
+    <div class="mid-grid">
+      <div class="pillars-card">
+        <div class="card-header">
+          <div class="card-title">Pillar Scores — example.com</div>
+          <div class="card-action">View Full Report →</div>
+        </div>
+        <div class="pillars-grid">
+          <div class="pillar-row"><div class="pillar-dot" style="background:#00d4aa"></div><div class="pillar-name">Security</div><div class="pillar-bar-wrap"><div class="pillar-bar" style="width:82%;background:#00d4aa"></div></div><div class="pillar-score" style="color:#00d4aa">82</div></div>
+          <div class="pillar-row"><div class="pillar-dot" style="background:#ffaa00"></div><div class="pillar-name">Performance</div><div class="pillar-bar-wrap"><div class="pillar-bar" style="width:71%;background:#ffaa00"></div></div><div class="pillar-score" style="color:#ffaa00">71</div></div>
+          <div class="pillar-row"><div class="pillar-dot" style="background:#6c5ce7"></div><div class="pillar-name">SEO</div><div class="pillar-bar-wrap"><div class="pillar-bar" style="width:88%;background:#6c5ce7"></div></div><div class="pillar-score" style="color:#6c5ce7">88</div></div>
+          <div class="pillar-row"><div class="pillar-dot" style="background:#a29bfe"></div><div class="pillar-name">Accessibility</div><div class="pillar-bar-wrap"><div class="pillar-bar" style="width:64%;background:#a29bfe"></div></div><div class="pillar-score" style="color:#a29bfe">64</div></div>
+          <div class="pillar-row"><div class="pillar-dot" style="background:#ff7675"></div><div class="pillar-name">AI Readiness</div><div class="pillar-bar-wrap"><div class="pillar-bar" style="width:55%;background:#ff7675"></div></div><div class="pillar-score" style="color:#ff7675">55</div></div>
+          <div class="pillar-row"><div class="pillar-dot" style="background:#74b9ff"></div><div class="pillar-name">DNS & Email</div><div class="pillar-bar-wrap"><div class="pillar-bar" style="width:93%;background:#74b9ff"></div></div><div class="pillar-score" style="color:#74b9ff">93</div></div>
+          <div class="pillar-row"><div class="pillar-dot" style="background:#fd79a8"></div><div class="pillar-name">Trust</div><div class="pillar-bar-wrap"><div class="pillar-bar" style="width:77%;background:#fd79a8"></div></div><div class="pillar-score" style="color:#fd79a8">77</div></div>
+        </div>
+      </div>
+
+      <div class="scans-card">
+        <div class="card-header">
+          <div class="card-title">Recent Scans</div>
+          <div class="card-action">See all →</div>
+        </div>
+        <div class="scan-item"><div class="scan-favicon">E</div><div><div class="scan-domain">example.com</div><div class="scan-time">2 hrs ago</div></div><div class="scan-score score-good">76</div></div>
+        <div class="scan-item"><div class="scan-favicon">M</div><div><div class="scan-domain">myshop.io</div><div class="scan-time">Yesterday</div></div><div class="scan-score score-mid">58</div></div>
+        <div class="scan-item"><div class="scan-favicon">B</div><div><div class="scan-domain">blog.acme.co</div><div class="scan-time">3 days ago</div></div><div class="scan-score score-good">91</div></div>
+        <div class="scan-item"><div class="scan-favicon">S</div><div><div class="scan-domain">startup.xyz</div><div class="scan-time">5 days ago</div></div><div class="scan-score score-bad">42</div></div>
+        <div class="scan-item"><div class="scan-favicon">P</div><div><div class="scan-domain">portfolio.me</div><div class="scan-time">1 week ago</div></div><div class="scan-score score-good">83</div></div>
+      </div>
+    </div>
+
+    <!-- Bottom -->
+    <div class="bottom-grid">
+      <div class="pillars-card">
+        <div class="card-header"><div class="card-title">Critical Issues</div><div class="card-action">Fix all →</div></div>
+        <div class="issue-item"><span class="issue-badge badge-danger">HIGH</span><div><div class="issue-text">Missing Content-Security-Policy header</div><div class="issue-domain">example.com · Security</div></div></div>
+        <div class="issue-item"><span class="issue-badge badge-danger">HIGH</span><div><div class="issue-text">LCP above 4s — slow server response</div><div class="issue-domain">myshop.io · Performance</div></div></div>
+        <div class="issue-item"><span class="issue-badge badge-warning">MED</span><div><div class="issue-text">No robots.txt or sitemap.xml found</div><div class="issue-domain">startup.xyz · SEO</div></div></div>
+        <div class="issue-item"><span class="issue-badge badge-warning">MED</span><div><div class="issue-text">46 images missing alt attributes</div><div class="issue-domain">myshop.io · Accessibility</div></div></div>
+        <div class="issue-item"><span class="issue-badge badge-info">LOW</span><div><div class="issue-text">DMARC policy set to p=none (not enforcing)</div><div class="issue-domain">example.com · DNS & Email</div></div></div>
+      </div>
+      <div class="pillars-card">
+        <div class="card-header"><div class="card-title">Activity Feed</div><div class="card-action">View all →</div></div>
+        <div class="activity-item"><div class="activity-dot" style="background:var(--success)"></div><div class="activity-text"><strong>example.com</strong> scan completed — score 76</div><div class="activity-time">2h ago</div></div>
+        <div class="activity-item"><div class="activity-dot" style="background:var(--primary)"></div><div class="activity-text"><strong>myshop.io</strong> auto-scan triggered</div><div class="activity-time">8h ago</div></div>
+        <div class="activity-item"><div class="activity-dot" style="background:var(--warning)"></div><div class="activity-text"><strong>startup.xyz</strong> score dropped from 58 → 42</div><div class="activity-time">1d ago</div></div>
+        <div class="activity-item"><div class="activity-dot" style="background:var(--success)"></div><div class="activity-text"><strong>blog.acme.co</strong> score improved to 91</div><div class="activity-time">3d ago</div></div>
+        <div class="activity-item"><div class="activity-dot" style="background:var(--dns)"></div><div class="activity-text">PDF report exported for <strong>portfolio.me</strong></div><div class="activity-time">1w ago</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

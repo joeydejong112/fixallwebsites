@@ -270,7 +270,7 @@ async function copySnippet() {
 
       </div>
 
-      <ToolSeoSection />
+      <ToolSeoSection slug="image-optimizer" />
     </div>
   </div>
 </template>
@@ -279,8 +279,7 @@ async function copySnippet() {
 .page-bg { min-height: 100vh; background: #07070a; }
 
 .tool-shell {
-  max-width: 900px;
-  margin: 0 auto;
+  max-width: 100%;
   padding: 48px 28px 80px;
 }
 

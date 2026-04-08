@@ -242,7 +242,7 @@ function downloadJson() {
 
         </div>
       </div>
-      <ToolSeoSection />
+      <ToolSeoSection slug="schema-generator" />
     </div>
   </div>
 </template>
@@ -251,8 +251,7 @@ function downloadJson() {
 .page-bg { min-height: 100vh; background: #07070a; }
 
 .tool-shell {
-  max-width: 1080px;
-  margin: 0 auto;
+  max-width: 100%;
   padding: 48px 28px 80px;
 }
 

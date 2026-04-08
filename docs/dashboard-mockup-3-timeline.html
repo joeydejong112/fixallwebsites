@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>ScanPulse Dashboard — Design 3: Timeline View</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --primary: #ec3586; --dark: #07070a; --dark-surface: #0f0f14;
+    --dark-elevated: #16161e; --dark-border: #1e1e28;
+    --security: #00d4aa; --performance: #ffaa00; --seo: #6c5ce7;
+    --accessibility: #a29bfe; --ai: #ff7675; --dns: #74b9ff; --trust: #fd79a8;
+    --danger: #ff4757; --warning: #ffaa00; --muted: #6b7280; --text: #e8e8f0; --text-sub: #9898b0;
+  }
+  body { font-family: 'DM Sans', sans-serif; background: var(--dark); color: var(--text); height: 100vh; overflow: hidden; display: grid; grid-template-rows: 54px 1fr; font-size: 14px; }
+
+  .topbar { background: var(--dark-surface); border-bottom: 1px solid var(--dark-border); display: flex; align-items: center; padding: 0 24px; gap: 16px; }
+  .logo { display: flex; align-items: center; gap: 9px; }
+  .logo-sq { width: 26px; height: 26px; background: var(--primary); border-radius: 7px; display: grid; place-items: center; }
+  .logo-sq svg { width: 14px; height: 14px; }
+  .logo-name { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 15px; }
+  .spacer { flex: 1; }
+  .topbar-tabs { display: flex; gap: 2px; }
+  .tb-tab { padding: 6px 13px; border-radius: 7px; font-size: 13px; color: var(--text-sub); cursor: pointer; }
+  .tb-tab.active { background: rgba(255,255,255,0.06); color: var(--text); }
+  .input-wrap { display: flex; align-items: center; gap: 8px; background: var(--dark-elevated); border: 1px solid var(--dark-border); border-radius: 8px; padding: 6px 12px; }
+  .input-wrap input { background: none; border: none; color: var(--text); font-size: 13px; width: 220px; outline: none; }
+  .input-wrap input::placeholder { color: var(--muted); }
+  .scan-btn { background: var(--primary); color: white; border: none; border-radius: 8px; padding: 7px 15px; font-size: 13px; cursor: pointer; font-weight: 500; }
+
+  .layout { display: grid; grid-template-columns: 1fr 380px; overflow: hidden; height: 100%; }
+
+  /* Timeline */
+  .timeline-panel { overflow-y: auto; padding: 24px 28px; }
+  .tl-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+  .tl-title { font-family: 'Space Grotesk', sans-serif; font-size: 16px; font-weight: 600; }
+  .filter-row { display: flex; gap: 6px; }
+  .filter-chip { padding: 5px 12px; border-radius: 20px; font-size: 12px; border: 1px solid var(--dark-border); color: var(--text-sub); cursor: pointer; background: transparent; }
+  .filter-chip.active { background: rgba(236,53,134,0.12); border-color: rgba(236,53,134,0.3); color: var(--primary); }
+
+  .date-group { margin-bottom: 24px; }
+  .date-label { font-size: 11px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 12px; padding-left: 28px; }
+  .tl-item { display: flex; gap: 16px; margin-bottom: 14px; position: relative; }
+  .tl-line { display: flex; flex-direction: column; align-items: center; width: 12px; flex-shrink: 0; margin-top: 4px; }
+  .tl-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .tl-connector { width: 1px; flex: 1; background: var(--dark-border); margin-top: 4px; min-height: 30px; }
+  .tl-card { flex: 1; background: var(--dark-surface); border: 1px solid var(--dark-border); border-radius: 12px; padding: 14px 16px; cursor: pointer; transition: border-color 0.15s; }
+  .tl-card:hover { border-color: rgba(236,53,134,0.3); }
+  .tl-card.selected { border-color: var(--primary); background: rgba(236,53,134,0.05); }
+  .tc-top { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+  .tc-favicon { width: 26px; height: 26px; background: var(--dark-elevated); border-radius: 6px; display: grid; place-items: center; font-size: 11px; color: var(--muted); flex-shrink: 0; }
+  .tc-domain { font-size: 13px; font-weight: 500; flex: 1; }
+  .tc-time { font-size: 11px; color: var(--muted); }
+  .tc-score { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 20px; }
+  .score-g { color: #00d4aa; } .score-y { color: #ffaa00; } .score-r { color: #ff4757; }
+  .tc-pillars { display: flex; gap: 6px; flex-wrap: wrap; }
+  .tc-pill { display: flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 500; background: rgba(255,255,255,0.04); border: 1px solid var(--dark-border); }
+  .tc-pill-dot { width: 5px; height: 5px; border-radius: 50%; }
+  .tc-delta { display: flex; align-items: center; gap: 4px; font-size: 11px; padding: 2px 7px; border-radius: 4px; margin-left: auto; }
+  .delta-up { background: rgba(0,212,170,0.1); color: var(--security); }
+  .delta-down { background: rgba(255,71,87,0.1); color: var(--danger); }
+
+  /* Right detail panel */
+  .detail-panel { border-left: 1px solid var(--dark-border); background: var(--dark-surface); overflow-y: auto; display: flex; flex-direction: column; }
+  .dp-header { padding: 20px 22px; border-bottom: 1px solid var(--dark-border); }
+  .dp-domain { font-family: 'Space Grotesk', sans-serif; font-size: 16px; font-weight: 600; margin-bottom: 4px; }
+  .dp-meta { font-size: 12px; color: var(--muted); }
+  .dp-score-row { display: flex; align-items: center; gap: 12px; margin-top: 14px; }
+  .dp-big-score { font-family: 'Space Grotesk', sans-serif; font-size: 44px; font-weight: 700; color: var(--security); line-height: 1; }
+  .dp-score-label { font-size: 12px; color: var(--muted); }
+  .dp-grade { background: rgba(0,212,170,0.12); color: var(--security); border: 1px solid rgba(0,212,170,0.25); border-radius: 8px; padding: 6px 14px; font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 18px; }
+
+  .dp-pillars { padding: 18px 22px; border-bottom: 1px solid var(--dark-border); }
+  .dp-sub-title { font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); margin-bottom: 12px; }
+  .dp-pillar-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+  .dp-pillar-name { font-size: 12px; color: var(--text-sub); width: 90px; flex-shrink: 0; }
+  .dp-bar-bg { flex: 1; height: 5px; background: var(--dark-border); border-radius: 3px; }
+  .dp-bar-fill { height: 100%; border-radius: 3px; }
+  .dp-pillar-num { font-size: 12px; font-weight: 600; width: 28px; text-align: right; }
+
+  .dp-actions { padding: 18px 22px; display: flex; flex-direction: column; gap: 8px; }
+  .dp-btn { width: 100%; padding: 10px; border-radius: 8px; font-size: 13px; font-weight: 500; cursor: pointer; border: none; text-align: center; }
+  .dp-btn-primary { background: var(--primary); color: white; }
+  .dp-btn-ghost { background: transparent; color: var(--text-sub); border: 1px solid var(--dark-border); }
+
+  .dp-compare { padding: 0 22px 18px; }
+  .compare-row { display: flex; justify-content: space-between; font-size: 12px; padding: 6px 0; border-bottom: 1px solid var(--dark-border); color: var(--text-sub); }
+  .compare-row:last-child { border: none; }
+  .compare-row span:first-child { color: var(--muted); }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="logo"><div class="logo-sq"><svg viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="3" fill="white"/><circle cx="7" cy="7" r="5.5" stroke="white" stroke-width="1.2"/></svg></div><span class="logo-name">ScanPulse</span></div>
+  <div class="topbar-tabs">
+    <div class="tb-tab active">Scan History</div>
+    <div class="tb-tab">Sites</div>
+    <div class="tb-tab">Reports</div>
+    <div class="tb-tab">Alerts</div>
+  </div>
+  <div class="spacer"></div>
+  <div class="input-wrap"><svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="#6b7280" stroke-width="2"><circle cx="7" cy="7" r="5"/><path d="M11 11l3 3"/></svg><input placeholder="Search scans or domains…" /></div>
+  <button class="scan-btn">+ Scan Now</button>
+</div>
+
+<div class="layout">
+  <!-- Timeline -->
+  <div class="timeline-panel">
+    <div class="tl-header">
+      <div class="tl-title">All Scans</div>
+      <div class="filter-row">
+        <div class="filter-chip active">All</div>
+        <div class="filter-chip">Critical</div>
+        <div class="filter-chip">Improved</div>
+        <div class="filter-chip">Auto-scan</div>
+      </div>
+    </div>
+
+    <div class="date-group">
+      <div class="date-label">Today — April 8, 2026</div>
+      <div class="tl-item">
+        <div class="tl-line"><div class="tl-dot" style="background:#00d4aa"></div><div class="tl-connector"></div></div>
+        <div class="tl-card selected">
+          <div class="tc-top">
+            <div class="tc-favicon">E</div>
+            <div><div class="tc-domain">example.com</div><div class="tc-time">14:32 · Manual scan</div></div>
+            <div class="tc-delta delta-up">▲ +4</div>
+            <div class="tc-score score-g">76</div>
+          </div>
+          <div class="tc-pillars">
+            <div class="tc-pill"><div class="tc-pill-dot" style="background:#00d4aa"></div>82</div>
+            <div class="tc-pill"><div class="tc-pill-dot" style="background:#ffaa00"></div>71</div>
+            <div class="tc-pill"><div class="tc-pill-dot" style="background:#6c5ce7"></div>88</div>
+            <div class="tc-pill"><div class="tc-pill-dot" style="background:#a29bfe"></div>64</div>
+            <div class="tc-pill"><div class="tc-pill-dot" style="background:#ff7675"></div>55</div>
+            <div class="tc-pill"><div class="tc-pill-dot" style="background:#74b9ff"></div>93</div>
+            <div class="tc-pill"><div class="tc-pill-dot" style="background:#fd79a8"></div>77</div>
+          </div>
+        </div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-line"><div class="tl-dot" style="background:#ffaa00"></div><div class="tl-connector"></div></div>
+        <div class="tl-card">
+          <div class="tc-top">
+            <div class="tc-favicon">M</div>
+            <div><div class="tc-domain">myshop.io</div><div class="tc-time">09:15 · Auto-scan</div></div>
+            <div class="tc-delta delta-down">▼ −3</div>
+            <div class="tc-score score-y">58</div>
+          </div>
+          <div class="tc-pillars">
+            <div class="tc-pill"><div class="tc-pill-dot" style="background:#00d4aa"></div>70</div>
+            <div class="tc-pill"><div class="tc-pill-dot" style="background:#ffaa00"></div>38</div>
+            <div class="tc-pill"><div class="tc-pill-dot" style="background:#6c5ce7"></div>72</div>
+            <div class="tc-pill"><div class="tc-pill-dot" style="background:#a29bfe"></div>51</div>
+            <div class="tc-pill"><div class="tc-pill-dot" style="background:#ff7675"></div>60</div>
+            <div class="tc-pill"><div class="tc-pill-dot" style="background:#74b9ff"></div>88</div>
+            <div class="tc-pill"><div class="tc-pill-dot" style="background:#fd79a8"></div>69</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="date-group">
+      <div class="date-label">Yesterday — April 7</div>
+      <div class="tl-item">
+        <div class="tl-line"><div class="tl-dot" style="background:#00d4aa"></div><div class="tl-connector"></div></div>
+        <div class="tl-card">
+          <div class="tc-top">
+            <div class="tc-favicon">B</div>
+            <div><div class="tc-domain">blog.acme.co</div><div class="tc-time">16:44 · Manual scan</div></div>
+            <div class="tc-delta delta-up">▲ +7</div>
+            <div class="tc-score score-g">91</div>
+          </div>
+          <div class="tc-pillars">
+            <div class="tc-pill"><div class="tc-pill-dot" style="background:#00d4aa"></div>94</div>
+            <div class="tc-pill"><div class="tc-pill-dot" style="background:#ffaa00"></div>88</div>
+            <div class="tc-pill"><div class="tc-pill-dot" style="background:#6c5ce7"></div>95</div>
+            <div class="tc-pill"><div class="tc-pill-dot" style="background:#a29bfe"></div>87</div>
+            <div class="tc-pill"><div class="tc-pill-dot" style="background:#ff7675"></div>82</div>
+            <div class="tc-pill"><div class="tc-pill-dot" style="background:#74b9ff"></div>97</div>
+            <div class="tc-pill"><div class="tc-pill-dot" style="background:#fd79a8"></div>93</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="date-group">
+      <div class="date-label">April 3</div>
+      <div class="tl-item">
+        <div class="tl-line"><div class="tl-dot" style="background:#ff4757"></div><div class="tl-connector"></div></div>
+        <div class="tl-card">
+          <div class="tc-top">
+            <div class="tc-favicon">S</div>
+            <div><div class="tc-domain">startup.xyz</div><div class="tc-time">11:02 · Auto-scan</div></div>
+            <div class="tc-delta delta-down">▼ −16</div>
+            <div class="tc-score score-r">42</div>
+          </div>
+          <div class="tc-pillars">
+            <div class="tc-pill"><div class="tc-pill-dot" style="background:#00d4aa"></div>38</div>
+            <div class="tc-pill"><div class="tc-pill-dot" style="background:#ffaa00"></div>55</div>
+            <div class="tc-pill"><div class="tc-pill-dot" style="background:#6c5ce7"></div>40</div>
+            <div class="tc-pill"><div class="tc-pill-dot" style="background:#a29bfe"></div>33</div>
+            <div class="tc-pill"><div class="tc-pill-dot" style="background:#ff7675"></div>44</div>
+            <div class="tc-pill"><div class="tc-pill-dot" style="background:#74b9ff"></div>61</div>
+            <div class="tc-pill"><div class="tc-pill-dot" style="background:#fd79a8"></div>29</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Detail panel -->
+  <div class="detail-panel">
+    <div class="dp-header">
+      <div class="dp-domain">example.com</div>
+      <div class="dp-meta">Scanned April 8, 2026 at 14:32 · Manual</div>
+      <div class="dp-score-row">
+        <div><div class="dp-big-score">76</div><div class="dp-score-label">Overall Score</div></div>
+        <div class="dp-grade">B+</div>
+        <div style="margin-left:auto;font-size:11px;color:var(--muted);text-align:right;">Previous: 72<br><span style="color:#00d4aa">▲ +4 pts</span></div>
+      </div>
+    </div>
+
+    <div class="dp-pillars">
+      <div class="dp-sub-title">Pillar Breakdown</div>
+      <div class="dp-pillar-row"><div class="dp-pillar-name">Security</div><div class="dp-bar-bg"><div class="dp-bar-fill" style="width:82%;background:#00d4aa"></div></div><div class="dp-pillar-num" style="color:#00d4aa">82</div></div>
+      <div class="dp-pillar-row"><div class="dp-pillar-name">Performance</div><div class="dp-bar-bg"><div class="dp-bar-fill" style="width:71%;background:#ffaa00"></div></div><div class="dp-pillar-num" style="color:#ffaa00">71</div></div>
+      <div class="dp-pillar-row"><div class="dp-pillar-name">SEO</div><div class="dp-bar-bg"><div class="dp-bar-fill" style="width:88%;background:#6c5ce7"></div></div><div class="dp-pillar-num" style="color:#6c5ce7">88</div></div>
+      <div class="dp-pillar-row"><div class="dp-pillar-name">Accessibility</div><div class="dp-bar-bg"><div class="dp-bar-fill" style="width:64%;background:#a29bfe"></div></div><div class="dp-pillar-num" style="color:#a29bfe">64</div></div>
+      <div class="dp-pillar-row"><div class="dp-pillar-name">AI Readiness</div><div class="dp-bar-bg"><div class="dp-bar-fill" style="width:55%;background:#ff7675"></div></div><div class="dp-pillar-num" style="color:#ff7675">55</div></div>
+      <div class="dp-pillar-row"><div class="dp-pillar-name">DNS & Email</div><div class="dp-bar-bg"><div class="dp-bar-fill" style="width:93%;background:#74b9ff"></div></div><div class="dp-pillar-num" style="color:#74b9ff">93</div></div>
+      <div class="dp-pillar-row"><div class="dp-pillar-name">Trust</div><div class="dp-bar-bg"><div class="dp-bar-fill" style="width:77%;background:#fd79a8"></div></div><div class="dp-pillar-num" style="color:#fd79a8">77</div></div>
+    </div>
+
+    <div class="dp-actions">
+      <button class="dp-btn dp-btn-primary">View Full Report</button>
+      <button class="dp-btn dp-btn-ghost">Export PDF</button>
+      <button class="dp-btn dp-btn-ghost">Compare with Previous</button>
+    </div>
+
+    <div class="dp-compare">
+      <div class="dp-sub-title" style="margin-bottom:10px;">Scan Details</div>
+      <div class="compare-row"><span>Scan duration</span><span>4.2s</span></div>
+      <div class="compare-row"><span>Checks run</span><span>94 / 94</span></div>
+      <div class="compare-row"><span>Issues found</span><span style="color:var(--danger)">7 issues</span></div>
+      <div class="compare-row"><span>Server location</span><span>US East (AWS)</span></div>
+      <div class="compare-row"><span>CMS detected</span><span>WordPress 6.4</span></div>
+      <div class="compare-row"><span>CDN detected</span><span>Cloudflare</span></div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

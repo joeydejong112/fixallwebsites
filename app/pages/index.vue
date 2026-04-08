@@ -63,6 +63,11 @@ useHead({
 const { isSignedIn } = useAuth()
 const router = useRouter()
 
+// Redirect logged-in users straight to dashboard
+watchEffect(() => {
+  if (isSignedIn.value) router.push('/dashboard')
+})
+
 function handleScan() {
   router.push(isSignedIn.value ? '/dashboard' : '/sign-up')
 }
@@ -92,24 +97,27 @@ const headlineVariant = ref(0)
 const testimonials = [
   {
     quote: "Flagged a missing CSP header I'd been ignoring for months. Fixed it in five minutes — security score went from 48 to 91.",
-    name: 'Alex Chen',
-    role: 'Senior Engineer, Loom',
+    name: 'Alex C.',
+    role: 'Senior Engineer',
     initials: 'AC',
     color: '#00d4aa',
+    pillar: 'Security',
   },
   {
     quote: "The AI Readiness score is worth it alone. We had no llms.txt, competitors did. Now we show up in Perplexity citations for our category.",
-    name: 'Sarah Mills',
-    role: 'Head of Growth, Reflect',
+    name: 'Sarah M.',
+    role: 'Head of Growth',
     initials: 'SM',
     color: '#ec3586',
+    pillar: 'AI Readiness',
   },
   {
     quote: "We pipe ScanPulse into CI via the API. Any deploy that drops the overall below 80 fails the build. No more silent regressions.",
-    name: 'Marcus Vogel',
-    role: 'Platform Lead, Oxide',
+    name: 'Marcus V.',
+    role: 'Platform Lead',
     initials: 'MV',
     color: '#ffaa00',
+    pillar: 'Performance',
   },
 ]
 
@@ -160,14 +168,19 @@ const steps = [
 ]
 
 const sampleIssues = [
-  { title: 'CSP header missing',         pillar: 'SECURITY',    status: 'CRITICAL', color: '#ff4757', fix: 'Add Content-Security-Policy header to your server config.' },
-  { title: 'HTTPS enforced',             pillar: 'SECURITY',    status: 'PASS',     color: '#00d4aa', fix: null },
-  { title: 'TTFB 420ms',                 pillar: 'PERFORMANCE', status: 'WARNING',  color: '#ffaa00', fix: 'Reduce server response time — target under 200ms.' },
-  { title: 'Gzip compression on',        pillar: 'PERFORMANCE', status: 'PASS',     color: '#00d4aa', fix: null },
-  { title: 'Image dimensions missing',   pillar: 'PERFORMANCE', status: 'CRITICAL', color: '#ff4757', fix: 'Add width/height attributes to all <img> tags.' },
-  { title: 'No canonical URL',           pillar: 'SEO',         status: 'CRITICAL', color: '#ff4757', fix: 'Add <link rel="canonical"> to prevent duplicate content.' },
-  { title: 'Title tag present',          pillar: 'SEO',         status: 'PASS',     color: '#00d4aa', fix: null },
-  { title: 'Multiple H1 tags',           pillar: 'SEO',         status: 'WARNING',  color: '#ffaa00', fix: 'Use a single H1 per page for clear document hierarchy.' },
+  { title: 'CSP header missing',         pillar: 'SECURITY',      status: 'CRITICAL', color: '#ff4757', fix: 'Add Content-Security-Policy header to your server config.' },
+  { title: 'HTTPS enforced',             pillar: 'SECURITY',      status: 'PASS',     color: '#00d4aa', fix: null },
+  { title: 'TTFB 420ms',                 pillar: 'PERFORMANCE',   status: 'WARNING',  color: '#ffaa00', fix: 'Reduce server response time — target under 200ms.' },
+  { title: 'Image dimensions missing',   pillar: 'PERFORMANCE',   status: 'CRITICAL', color: '#ff4757', fix: 'Add width/height attributes to all <img> tags.' },
+  { title: 'No canonical URL',           pillar: 'SEO',           status: 'CRITICAL', color: '#ff4757', fix: 'Add <link rel="canonical"> to prevent duplicate content.' },
+  { title: 'Open Graph tags missing',    pillar: 'SEO',           status: 'WARNING',  color: '#ffaa00', fix: 'Add og:title, og:description, og:image meta tags.' },
+  { title: 'Alt text missing (3 imgs)',  pillar: 'ACCESSIBILITY', status: 'CRITICAL', color: '#ff4757', fix: 'Add descriptive alt attributes to all meaningful images.' },
+  { title: 'Form labels present',        pillar: 'ACCESSIBILITY', status: 'PASS',     color: '#00d4aa', fix: null },
+  { title: 'llms.txt not found',         pillar: 'AI READINESS',  status: 'WARNING',  color: '#ffaa00', fix: 'Create /llms.txt to help AI systems discover your content.' },
+  { title: 'DMARC record missing',       pillar: 'DNS & EMAIL',   status: 'CRITICAL', color: '#ff4757', fix: 'Add a DMARC TXT record to prevent email spoofing.' },
+  { title: 'SPF record present',         pillar: 'DNS & EMAIL',   status: 'PASS',     color: '#00d4aa', fix: null },
+  { title: 'Privacy policy linked',      pillar: 'TRUST',         status: 'PASS',     color: '#00d4aa', fix: null },
+  { title: 'Cookie consent missing',     pillar: 'TRUST',         status: 'WARNING',  color: '#ffaa00', fix: 'Add a GDPR-compliant cookie consent banner.' },
 ]
 
 const plans = [
@@ -324,7 +337,7 @@ const pillars = [
     <NavBar />
 
     <!-- ── Left timeline nav ────────────────────────────────────── -->
-    <nav class="fixed left-6 top-1/2 -translate-y-1/2 z-40 flex flex-col items-center" style="gap:0">
+    <nav class="fixed left-4 top-1/2 -translate-y-1/2 z-40 flex flex-col items-center" style="gap:0">
       <template v-for="(sec, i) in sections" :key="sec.index">
 
         <!-- Section entry -->
@@ -389,12 +402,12 @@ const pillars = [
         <!-- Stats -->
         <div class="flex gap-8 mb-12 flex-wrap">
           <div>
-            <div class="font-display font-bold leading-none mb-1.5" style="font-size:2.6rem; color:#00d4aa">84</div>
+            <div class="font-display font-bold leading-none mb-1.5" style="font-size:2.6rem; color:#00d4aa">94</div>
             <div class="text-[10px] font-display uppercase tracking-[0.12em] text-white/45">Total checks</div>
           </div>
           <div>
-            <div class="font-display font-bold leading-none mb-1.5" style="font-size:2.6rem; color:#ffaa00">6</div>
-            <div class="text-[10px] font-display uppercase tracking-[0.12em] text-white/45">Categories</div>
+            <div class="font-display font-bold leading-none mb-1.5" style="font-size:2.6rem; color:#ffaa00">7</div>
+            <div class="text-[10px] font-display uppercase tracking-[0.12em] text-white/45">Pillars</div>
           </div>
           <div>
             <div class="font-display font-bold leading-none mb-1.5" style="font-size:2.6rem; color:#6c5ce7">~10s</div>
@@ -542,15 +555,15 @@ const pillars = [
         </div>
       </div>
 
-      <!-- RIGHT: Six pillar grid (2 rows × 3 cols) -->
-      <div class="flex-1 grid grid-cols-3 grid-rows-2 overflow-hidden">
+      <!-- RIGHT: Seven pillar grid (2 rows × 4 cols) -->
+      <div class="flex-1 grid grid-cols-4 grid-rows-2 overflow-hidden">
         <div
           v-for="(pillar, i) in pillars"
           :key="pillar.id"
-          class="flex flex-col justify-center px-8 py-10 relative border-white/[0.04]"
+          class="flex flex-col justify-center px-6 py-8 relative border-white/[0.04]"
           :class="{
-            'border-r': i % 3 < 2,
-            'border-b': i < 3,
+            'border-r': i % 4 < 3,
+            'border-b': i < 4,
           }"
         >
           <!-- Pillar number -->
@@ -671,57 +684,25 @@ const pillars = [
 
     <!-- ── Section 4: Sample Result ──────────────────────────────── -->
     <section class="h-screen snap-section flex overflow-hidden relative">
-      <div
-        class="absolute inset-0 pointer-events-none"
-        style="background-image: linear-gradient(rgba(255,255,255,0.018) 1px, transparent 1px), linear-gradient(90deg,rgba(255,255,255,0.018) 1px,transparent 1px); background-size:64px 64px"
-      />
+      <div class="absolute inset-0 pointer-events-none" style="background-image: linear-gradient(rgba(255,255,255,0.018) 1px, transparent 1px), linear-gradient(90deg,rgba(255,255,255,0.018) 1px,transparent 1px); background-size:64px 64px" />
 
       <!-- LEFT: context -->
-      <div class="relative z-10 flex flex-col justify-center px-16 xl:px-24 shrink-0" style="width: 38%">
-        <div class="flex items-center gap-3 mb-8">
+      <div class="relative z-10 flex flex-col justify-center px-16 xl:px-24 shrink-0" style="width: 36%">
+        <div class="flex items-center gap-3 mb-7">
           <div class="w-7 h-px bg-primary" />
           <span class="text-[11px] font-display font-semibold tracking-[0.2em] uppercase text-primary">Sample result</span>
         </div>
-
-        <h2
-          class="font-display font-bold text-white leading-[0.9] tracking-[-0.03em] mb-8"
-          style="font-size: clamp(2.2rem, 3.8vw, 3.4rem)"
-        >
-          Every issue.<br />
-          <span class="text-white/50">Exact fix.</span>
+        <h2 class="font-display font-bold text-white leading-[0.9] tracking-[-0.03em] mb-6" style="font-size: clamp(2.2rem, 3.8vw, 3.4rem)">
+          Every issue.<br /><span class="text-white/50">Exact fix.</span>
         </h2>
-
-        <p class="font-body text-white/55 leading-relaxed mb-12" style="font-size: 0.95rem; max-width: 34ch">
-          Each failed check comes with a plain-English explanation so you know exactly what to do.
+        <p class="font-body text-white/55 leading-relaxed mb-10" style="font-size: 0.95rem; max-width: 34ch">
+          Each failed check comes with a plain-English explanation and a concrete fix — no guesswork.
         </p>
-
-        <!-- Score summary -->
-        <div class="flex gap-8 mb-10">
-          <div>
-            <div class="font-display font-bold leading-none mb-1" style="font-size: 2.8rem; letter-spacing: -0.04em; color: #ec3586">81</div>
-            <div class="text-[10px] font-display uppercase tracking-[0.12em] text-white/45">Overall</div>
-          </div>
-          <div>
-            <div class="font-display font-bold leading-none mb-1" style="font-size: 2.8rem; letter-spacing: -0.04em; color: #00d4aa">94</div>
-            <div class="text-[10px] font-display uppercase tracking-[0.12em] text-white/45">Security</div>
-          </div>
-          <div>
-            <div class="font-display font-bold leading-none mb-1" style="font-size: 2.8rem; letter-spacing: -0.04em; color: #ffaa00">71</div>
-            <div class="text-[10px] font-display uppercase tracking-[0.12em] text-white/45">Perf</div>
-          </div>
-          <div>
-            <div class="font-display font-bold leading-none mb-1" style="font-size: 2.8rem; letter-spacing: -0.04em; color: #6c5ce7">78</div>
-            <div class="text-[10px] font-display uppercase tracking-[0.12em] text-white/45">SEO</div>
-          </div>
-        </div>
-
         <button
           class="self-start bg-primary text-white font-display font-semibold rounded-[9px] transition-all duration-200 hover:bg-primary/90 hover:scale-[1.02]"
           style="padding:15px 36px; font-size:14px; letter-spacing:0.02em"
           @click="handleScan"
-        >
-          Scan your site →
-        </button>
+        >Scan your site →</button>
 
         <!-- Scroll hint -->
         <div class="absolute bottom-8 left-16 xl:left-24 flex items-center gap-3 scroll-hint">
@@ -734,176 +715,204 @@ const pillars = [
         </div>
       </div>
 
-      <!-- RIGHT: issue list -->
-      <div class="flex-1 relative border-l border-white/[0.04] flex flex-col justify-center px-10 gap-2 overflow-hidden">
-        <!-- URL bar -->
-        <div class="flex items-center gap-3 mb-6 px-4 py-3 rounded-lg border border-white/[0.06]" style="background:rgba(255,255,255,0.02)">
-          <div class="w-2 h-2 rounded-full bg-[#00d4aa]" />
-          <span class="font-body text-white/50 text-sm">stripe.com</span>
-          <span class="ml-auto font-display font-semibold text-xs tracking-widest text-white/42">SCAN COMPLETE</span>
+      <!-- RIGHT: fake result page -->
+      <div class="flex-1 relative border-l border-white/[0.04] overflow-hidden flex flex-col" style="background: rgba(255,255,255,0.012)">
+
+        <!-- App chrome: top bar -->
+        <div class="shrink-0 flex items-center gap-3 px-6 py-3.5 border-b border-white/[0.05]" style="background: rgba(255,255,255,0.02)">
+          <div class="flex gap-1.5">
+            <div class="w-2.5 h-2.5 rounded-full bg-white/10" />
+            <div class="w-2.5 h-2.5 rounded-full bg-white/10" />
+            <div class="w-2.5 h-2.5 rounded-full bg-white/10" />
+          </div>
+          <div class="flex-1 flex items-center gap-2 mx-4 px-3 py-1.5 rounded-md" style="background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.06)">
+            <div class="w-1.5 h-1.5 rounded-full bg-[#00d4aa]" />
+            <span class="font-body text-white/45 text-xs">scanpulse.io/results/stripe.com</span>
+          </div>
+          <span class="text-[9px] font-display font-bold tracking-[0.14em] uppercase px-2.5 py-1 rounded-full" style="background:rgba(0,212,170,0.12); color:#00d4aa">Scan complete</span>
         </div>
 
-        <div
-          v-for="issue in sampleIssues"
-          :key="issue.title"
-          class="result-row rounded-lg px-4 py-3.5 border border-transparent"
-          :style="issue.status !== 'PASS' ? `border-left-color: ${issue.color}` : ''"
-          style="background: rgba(255,255,255,0.02); border-left-width: 2px"
-        >
-          <div class="flex items-center gap-3">
-            <div class="w-1.5 h-1.5 rounded-full shrink-0" :style="{ background: issue.color }" />
-            <span class="font-body text-white/70 text-sm flex-1">{{ issue.title }}</span>
-            <span class="text-[9px] font-display font-semibold tracking-[0.12em] uppercase text-white/42 mr-3">{{ issue.pillar }}</span>
-            <span
-              class="text-[9px] font-display font-bold tracking-[0.1em] uppercase px-2 py-0.5 rounded"
-              :style="{ color: issue.color, background: `${issue.color}15` }"
-            >{{ issue.status }}</span>
+        <!-- Result content -->
+        <div class="flex-1 overflow-hidden flex gap-0">
+
+          <!-- Score panel -->
+          <div class="shrink-0 flex flex-col items-center justify-center px-8 py-6 border-r border-white/[0.05]" style="width:200px">
+            <!-- Score ring (SVG) -->
+            <div class="relative mb-5">
+              <svg width="110" height="110" viewBox="0 0 110 110">
+                <circle cx="55" cy="55" r="46" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="8" />
+                <circle cx="55" cy="55" r="46" fill="none" stroke="#ec3586" stroke-width="8"
+                  stroke-linecap="round"
+                  stroke-dasharray="289"
+                  stroke-dashoffset="55"
+                  transform="rotate(-90 55 55)"
+                  style="filter: drop-shadow(0 0 6px rgba(236,53,134,0.5))"
+                />
+              </svg>
+              <div class="absolute inset-0 flex flex-col items-center justify-center">
+                <span class="font-display font-bold text-white leading-none" style="font-size:1.9rem; letter-spacing:-0.04em">81</span>
+                <span class="text-[9px] font-display uppercase tracking-[0.12em] text-white/40 mt-0.5">Overall</span>
+              </div>
+            </div>
+
+            <!-- Pillar scores -->
+            <div class="w-full space-y-2.5">
+              <div v-for="s in [
+                { label:'Security',    score:94, color:'#00d4aa' },
+                { label:'Performance', score:71, color:'#ffaa00' },
+                { label:'SEO',         score:78, color:'#6c5ce7' },
+                { label:'Accessibility',score:85,color:'#a29bfe' },
+                { label:'AI Readiness',score:60, color:'#ff7675' },
+                { label:'DNS & Email', score:67, color:'#74b9ff' },
+                { label:'Trust',       score:83, color:'#fd79a8' },
+              ]" :key="s.label" class="w-full">
+                <div class="flex items-center justify-between mb-1">
+                  <span class="text-[9px] font-display text-white/45 tracking-wide">{{ s.label }}</span>
+                  <span class="text-[9px] font-display font-bold" :style="{ color: s.color }">{{ s.score }}</span>
+                </div>
+                <div class="h-1 rounded-full w-full" style="background:rgba(255,255,255,0.06)">
+                  <div class="h-1 rounded-full" :style="{ width: s.score + '%', background: s.color, opacity: 0.8 }" />
+                </div>
+              </div>
+            </div>
           </div>
-          <div v-if="issue.fix" class="mt-2 ml-[21px] text-[12px] font-body text-white/48 leading-relaxed">
-            {{ issue.fix }}
+
+          <!-- Issues list -->
+          <div class="flex-1 overflow-y-auto px-5 py-4" style="scrollbar-width:none">
+            <div class="text-[9px] font-display uppercase tracking-[0.18em] text-white/30 mb-3 px-1">
+              {{ sampleIssues.filter(i => i.status !== 'PASS').length }} issues found · {{ sampleIssues.filter(i => i.status === 'PASS').length }} passed
+            </div>
+            <div
+              v-for="issue in sampleIssues"
+              :key="issue.title"
+              class="mb-2 rounded-lg px-4 py-3"
+              :style="{ background: 'rgba(255,255,255,0.025)', borderLeft: `2px solid ${issue.color}` }"
+            >
+              <div class="flex items-center gap-2.5 mb-1">
+                <div class="w-1.5 h-1.5 rounded-full shrink-0" :style="{ background: issue.color }" />
+                <span class="font-body text-white/75 text-[12px] flex-1 font-medium">{{ issue.title }}</span>
+                <span class="text-[8px] font-display uppercase tracking-[0.12em] text-white/35">{{ issue.pillar }}</span>
+                <span class="text-[8px] font-display font-bold tracking-[0.1em] uppercase px-2 py-0.5 rounded ml-1" :style="{ color: issue.color, background: `${issue.color}18` }">{{ issue.status }}</span>
+              </div>
+              <div v-if="issue.fix" class="text-[11px] font-body leading-relaxed pl-[22px]" style="color:rgba(255,255,255,0.42)">
+                {{ issue.fix }}
+              </div>
+            </div>
           </div>
         </div>
       </div>
     </section>
 
     <!-- ── Section 5: Pricing ───────────────────────────────────── -->
-    <section class="h-screen snap-section relative overflow-hidden flex flex-col">
+    <section class="h-screen snap-section relative overflow-hidden flex flex-col items-center justify-center">
 
       <!-- Grid bg -->
       <div class="absolute inset-0 pointer-events-none" style="background-image: linear-gradient(rgba(255,255,255,0.018) 1px, transparent 1px), linear-gradient(90deg,rgba(255,255,255,0.018) 1px,transparent 1px); background-size:64px 64px" />
 
-      <!-- Pro glow — ambient light behind the highlight card -->
-      <div class="absolute pointer-events-none" style="top: 10%; left: 33%; width: 34%; height: 80%; background: radial-gradient(ellipse at 50% 30%, rgba(236,53,134,0.07) 0%, transparent 70%)" />
+      <!-- Pro glow -->
+      <div class="absolute pointer-events-none" style="top:20%; left:40%; width:40%; height:60%; background: radial-gradient(ellipse at 50% 40%, rgba(236,53,134,0.08) 0%, transparent 70%)" />
 
-      <!-- Header -->
-      <div class="relative z-10 shrink-0 flex items-center justify-between px-16 xl:px-24 pt-10 pb-8">
-        <div>
-          <div class="flex items-center gap-3 mb-4">
-            <div class="w-7 h-px bg-primary" />
-            <span class="text-[11px] font-display font-semibold tracking-[0.2em] uppercase text-primary">Pricing</span>
-          </div>
-          <h2 class="font-display font-bold text-white leading-[0.88] tracking-[-0.04em]" style="font-size: clamp(2.2rem, 3.5vw, 3.2rem)">
-            Simple pricing.<br /><span class="text-white/45">No surprises.</span>
-          </h2>
-        </div>
-        <!-- Billing toggle -->
-        <button
-          class="flex items-center gap-0 rounded-full border border-white/[0.1] overflow-hidden transition-colors"
-          style="background: rgba(255,255,255,0.03)"
-          @click="billingPeriod = billingPeriod === 'monthly' ? 'annual' : 'monthly'"
-        >
-          <span
-            class="text-[11px] font-display font-semibold tracking-[0.14em] uppercase px-4 py-2 transition-colors"
-            :class="billingPeriod === 'monthly' ? 'text-white bg-white/[0.08]' : 'text-white/40'"
-          >Monthly</span>
-          <span
-            class="text-[11px] font-display font-semibold tracking-[0.14em] uppercase px-4 py-2 transition-colors flex items-center gap-2"
-            :class="billingPeriod === 'annual' ? 'text-white bg-white/[0.08]' : 'text-white/40'"
-          >Annual <span class="text-[9px] font-bold tracking-[0.06em] px-1.5 py-0.5 rounded-full bg-success/15 text-success">−10%</span></span>
-        </button>
-      </div>
+      <!-- Inner container — constrained width, centred -->
+      <div class="relative z-10 w-full max-w-4xl px-8">
 
-      <!-- Divider -->
-      <div class="relative z-10 shrink-0 h-px bg-white/[0.04]" />
-
-      <!-- Plan columns + comparison wrapper -->
-      <div class="relative z-10 flex-1 flex flex-col min-h-0">
-
-      <!-- Plan columns -->
-      <div class="flex-1 grid grid-cols-2 min-h-0">
-        <div
-          v-for="(plan, i) in displayedPlans"
-          :key="plan.name"
-          class="pricing-col relative flex flex-col px-12 xl:px-16 pt-10 pb-12 overflow-hidden"
-          :class="[i < plans.length - 1 ? 'border-r border-white/[0.04]' : '', plan.highlight ? 'pricing-col--highlight' : '']"
-        >
-          <!-- Per-column accent glow -->
-          <div class="absolute inset-0 pointer-events-none" :style="{ background: `radial-gradient(ellipse at 50% 0%, ${plan.accent}10 0%, transparent 60%)` }" />
-
-          <!-- Top accent line -->
-          <div class="absolute top-0 left-0 right-0 h-[2px]" :style="{ background: plan.highlight ? plan.accent : `${plan.accent}30` }" />
-
-          <!-- Plan name + badge -->
-          <div class="flex items-center gap-3 mb-8">
-            <div class="w-1.5 h-1.5 rounded-full" :style="{ background: plan.accent }" />
-            <span class="text-[11px] font-display font-bold tracking-[0.18em] uppercase" :style="{ color: plan.accent }">{{ plan.name }}</span>
-            <span v-if="plan.highlight" class="ml-auto text-[9px] font-display font-bold tracking-[0.14em] uppercase px-2 py-0.5 rounded-full" style="background: rgba(236,53,134,0.15); color: #ec3586">Most popular</span>
-          </div>
-
-          <!-- Price block -->
-          <div class="mb-2">
-            <div class="flex items-end gap-2 leading-none">
-              <span class="font-display font-bold text-white" style="font-size: 3.8rem; letter-spacing: -0.05em; line-height: 1">{{ plan.price }}</span>
-              <span class="font-body text-white/50 text-sm pb-1.5">{{ plan.period }}</span>
-            </div>
-            <p v-if="billingPeriod === 'annual' && plan.highlight" class="font-body text-white/50 text-[11px] mt-1.5">
-              $162 billed annually · <span class="text-success">save $18</span>
-            </p>
-          </div>
-
-          <!-- Scan limit -->
-          <div class="text-[11px] font-display tracking-[0.1em] uppercase mb-8 pb-8 border-b border-white/[0.05]" :style="{ color: plan.accent }">
-            {{ plan.scans }}
-          </div>
-
-          <!-- Features -->
-          <ul class="space-y-4 flex-1">
-            <li v-for="f in plan.features" :key="f" class="flex items-start gap-3">
-              <svg class="shrink-0 mt-0.5" width="13" height="13" viewBox="0 0 13 13" fill="none">
-                <path d="M2.5 6.5L5 9l5.5-5.5" :stroke="plan.accent" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
-              <span class="text-[13px] font-body text-white/65 leading-snug">{{ f }}</span>
-            </li>
-          </ul>
-
-          <!-- CTA -->
-          <button
-            class="w-full rounded-[10px] font-display font-semibold text-[13px] transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] mt-8"
-            :class="plan.highlight ? 'text-white' : 'border text-white/55 hover:text-white/80'"
-            :style="plan.highlight
-              ? 'background: #ec3586; padding: 14px 0; letter-spacing: 0.02em'
-              : `border-color: ${plan.accent}25; padding: 14px 0; letter-spacing: 0.02em`"
-            @click="handleScan"
-          >{{ plan.cta }}</button>
-        </div>
-      </div>
-
-      <!-- Feature comparison strip -->
-      <div class="shrink-0 border-t border-white/[0.06]">
         <!-- Header row -->
-        <div class="grid border-b border-white/[0.04]" style="grid-template-columns: 1fr 1fr 1fr">
-          <div class="px-8 py-2 text-[9px] font-display uppercase tracking-[0.18em] text-white/25">Feature</div>
-          <div class="px-8 py-2 text-[9px] font-display uppercase tracking-[0.18em] text-white/40 border-l border-white/[0.04]">Hobby</div>
-          <div class="px-8 py-2 text-[9px] font-display uppercase tracking-[0.18em] border-l border-white/[0.04]" style="color:#ec3586">Pro</div>
-        </div>
-        <!-- Data rows -->
-        <div v-for="row in comparisonRows" :key="row.feature"
-          class="grid border-b border-white/[0.03]" style="grid-template-columns: 1fr 1fr 1fr">
-          <div class="px-8 py-2 text-[11px] font-body text-white/45">{{ row.feature }}</div>
-          <div class="px-8 py-2 border-l border-white/[0.04] flex items-center">
-            <template v-if="typeof row.free === 'boolean'">
-              <svg v-if="row.free" width="10" height="10" viewBox="0 0 10 10" fill="none">
-                <path d="M1.5 5l2.5 2.5 4.5-4.5" stroke="#00d4aa" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
-              <span v-else class="text-white/20 font-display" style="font-size:10px">—</span>
-            </template>
-            <span v-else class="text-[10px] font-display font-semibold text-white/55">{{ row.free }}</span>
+        <div class="flex items-end justify-between mb-10">
+          <div>
+            <div class="flex items-center gap-3 mb-4">
+              <div class="w-7 h-px bg-primary" />
+              <span class="text-[11px] font-display font-semibold tracking-[0.2em] uppercase text-primary">Pricing</span>
+            </div>
+            <h2 class="font-display font-bold text-white leading-[0.9] tracking-[-0.04em]" style="font-size: clamp(2rem, 3vw, 2.8rem)">
+              Simple pricing.<br /><span class="text-white/40">No surprises.</span>
+            </h2>
           </div>
-          <div class="px-8 py-2 border-l border-white/[0.04] flex items-center">
-            <template v-if="typeof row.pro === 'boolean'">
-              <svg v-if="row.pro" width="10" height="10" viewBox="0 0 10 10" fill="none">
-                <path d="M1.5 5l2.5 2.5 4.5-4.5" stroke="#ec3586" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
-              <span v-else class="text-white/20 font-display" style="font-size:10px">—</span>
-            </template>
-            <span v-else class="text-[10px] font-display font-semibold" style="color:#ec3586">{{ row.pro }}</span>
+
+          <!-- Billing toggle -->
+          <div
+            class="flex items-center rounded-full border border-white/[0.1] overflow-hidden"
+            style="background: rgba(255,255,255,0.03)"
+          >
+            <button
+              class="text-[11px] font-display font-semibold tracking-[0.14em] uppercase px-4 py-2 transition-colors"
+              :class="billingPeriod === 'monthly' ? 'text-white bg-white/[0.08]' : 'text-white/40'"
+              @click="billingPeriod = 'monthly'"
+            >Monthly</button>
+            <button
+              class="text-[11px] font-display font-semibold tracking-[0.14em] uppercase px-4 py-2 transition-colors flex items-center gap-2"
+              :class="billingPeriod === 'annual' ? 'text-white bg-white/[0.08]' : 'text-white/40'"
+              @click="billingPeriod = 'annual'"
+            >Annual <span class="text-[9px] font-bold tracking-[0.06em] px-1.5 py-0.5 rounded-full bg-success/15 text-success">−10%</span></button>
           </div>
         </div>
+
+        <!-- Plan cards -->
+        <div class="grid grid-cols-2 gap-4">
+          <div
+            v-for="(plan, i) in displayedPlans"
+            :key="plan.name"
+            class="relative rounded-2xl flex flex-col p-8 overflow-hidden"
+            :style="plan.highlight
+              ? 'background: rgba(236,53,134,0.06); border: 1px solid rgba(236,53,134,0.25)'
+              : 'background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06)'"
+          >
+            <!-- Top accent line -->
+            <div class="absolute top-0 left-0 right-0 h-[2px] rounded-t-2xl" :style="{ background: plan.highlight ? '#ec3586' : 'rgba(255,255,255,0.08)' }" />
+
+            <!-- Glow -->
+            <div class="absolute inset-0 pointer-events-none rounded-2xl" :style="{ background: `radial-gradient(ellipse at 50% 0%, ${plan.accent}12 0%, transparent 65%)` }" />
+
+            <!-- Plan name + badge -->
+            <div class="relative flex items-center gap-2.5 mb-6">
+              <div class="w-1.5 h-1.5 rounded-full" :style="{ background: plan.accent }" />
+              <span class="text-[11px] font-display font-bold tracking-[0.18em] uppercase" :style="{ color: plan.accent }">{{ plan.name }}</span>
+              <span v-if="plan.highlight" class="ml-auto text-[9px] font-display font-bold tracking-[0.12em] uppercase px-2 py-0.5 rounded-full" style="background: rgba(236,53,134,0.15); color: #ec3586">Most popular</span>
+            </div>
+
+            <!-- Price -->
+            <div class="relative mb-1">
+              <div class="flex items-end gap-2 leading-none">
+                <span class="font-display font-bold text-white" style="font-size: 3.4rem; letter-spacing: -0.05em; line-height: 1">{{ plan.price }}</span>
+                <span class="font-body text-white/45 text-sm pb-1.5">{{ plan.period }}</span>
+              </div>
+              <p v-if="billingPeriod === 'annual' && plan.highlight" class="font-body text-white/45 text-[11px] mt-1.5">
+                $162 billed annually · <span class="text-success">save $18</span>
+              </p>
+            </div>
+
+            <!-- Scan limit -->
+            <div class="relative text-[10px] font-display tracking-[0.1em] uppercase mt-3 mb-5 pb-5 border-b border-white/[0.06]" :style="{ color: plan.accent }">
+              {{ plan.scans }}
+            </div>
+
+            <!-- Features -->
+            <ul class="relative space-y-3 flex-1">
+              <li v-for="f in plan.features" :key="f" class="flex items-start gap-3">
+                <svg class="shrink-0 mt-0.5" width="13" height="13" viewBox="0 0 13 13" fill="none">
+                  <path d="M2.5 6.5L5 9l5.5-5.5" :stroke="plan.accent" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <span class="text-[13px] font-body text-white/60 leading-snug">{{ f }}</span>
+              </li>
+            </ul>
+
+            <!-- CTA -->
+            <button
+              class="relative w-full rounded-xl font-display font-semibold text-[13px] transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] mt-7"
+              :class="plan.highlight ? 'text-white' : 'text-white/55 hover:text-white/80'"
+              :style="plan.highlight
+                ? 'background: #ec3586; padding: 13px 0; letter-spacing: 0.02em'
+                : 'background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); padding: 13px 0; letter-spacing: 0.02em'"
+              @click="handleScan"
+            >{{ plan.cta }}</button>
+          </div>
+        </div>
+
+        <!-- Comparison link -->
+        <p class="text-center mt-6 text-[11px] font-body text-white/30">
+          All plans include all 94 checks across 7 pillars · <span class="text-white/50 cursor-pointer hover:text-white/70 transition-colors" @click="scrollToSection(3)">See full results →</span>
+        </p>
       </div>
 
-      </div><!-- end plan+comparison wrapper -->
-
-      <!-- Scroll hint to testimonials -->
+      <!-- Scroll hint -->
       <div class="absolute bottom-6 left-16 xl:left-24 z-20 flex items-center gap-3 scroll-hint">
         <div class="scroll-chevron">
           <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
@@ -915,70 +924,68 @@ const pillars = [
     </section>
 
     <!-- ── Section 6: Testimonials ──────────────────────────────── -->
-    <section class="h-screen snap-section relative overflow-hidden flex flex-col">
+    <section class="h-screen snap-section relative overflow-hidden flex flex-col items-center justify-center">
 
       <!-- Grid bg -->
       <div class="absolute inset-0 pointer-events-none" style="background-image: linear-gradient(rgba(255,255,255,0.018) 1px, transparent 1px), linear-gradient(90deg,rgba(255,255,255,0.018) 1px,transparent 1px); background-size:64px 64px" />
 
       <!-- Ambient glow -->
-      <div class="absolute pointer-events-none" style="top:0;left:20%;width:60%;height:60%;background:radial-gradient(ellipse at 50% 0%,rgba(236,53,134,0.06) 0%,transparent 70%)" />
+      <div class="absolute pointer-events-none" style="top:0;left:15%;width:70%;height:50%;background:radial-gradient(ellipse at 50% 0%,rgba(236,53,134,0.05) 0%,transparent 70%)" />
 
-      <!-- Header -->
-      <div class="relative z-10 shrink-0 flex items-center justify-between px-16 xl:px-24 pt-10 pb-8">
-        <div>
-          <div class="flex items-center gap-3 mb-4">
-            <div class="w-7 h-px bg-primary" />
-            <span class="text-[11px] font-display font-semibold tracking-[0.2em] uppercase text-primary">What people say</span>
+      <div class="relative z-10 w-full max-w-5xl px-8">
+
+        <!-- Header -->
+        <div class="flex items-end justify-between mb-12">
+          <div>
+            <div class="flex items-center gap-3 mb-4">
+              <div class="w-7 h-px bg-primary" />
+              <span class="text-[11px] font-display font-semibold tracking-[0.2em] uppercase text-primary">What people say</span>
+            </div>
+            <h2 class="font-display font-bold text-white leading-[0.9] tracking-[-0.04em]" style="font-size: clamp(2rem, 3vw, 2.8rem)">
+              Trusted by teams<br /><span class="text-white/40">who care about quality.</span>
+            </h2>
           </div>
-          <h2 class="font-display font-bold text-white leading-[0.88] tracking-[-0.04em]" style="font-size: clamp(2.2rem, 3.5vw, 3.2rem)">
-            Trusted by teams<br /><span class="text-white/45">who care about quality.</span>
-          </h2>
+          <button
+            class="shrink-0 bg-primary text-white font-display font-semibold rounded-[9px] transition-all duration-200 hover:bg-primary/90 hover:scale-[1.02]"
+            style="padding:13px 30px; font-size:13px; letter-spacing:0.02em"
+            @click="handleScan"
+          >Start free →</button>
         </div>
-        <button
-          class="shrink-0 bg-primary text-white font-display font-semibold rounded-[9px] transition-all duration-200 hover:bg-primary/90 hover:scale-[1.02]"
-          style="padding:14px 32px; font-size:13px; letter-spacing:0.02em"
-          @click="handleScan"
-        >Start free →</button>
-      </div>
 
-      <div class="relative z-10 shrink-0 h-px bg-white/[0.04]" />
+        <!-- Cards -->
+        <div class="grid grid-cols-3 gap-4">
+          <div
+            v-for="(t, i) in testimonials"
+            :key="t.name"
+            class="relative rounded-2xl p-7 flex flex-col overflow-hidden"
+            style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06)"
+          >
+            <!-- Top accent -->
+            <div class="absolute top-0 left-0 right-0 h-[2px] rounded-t-2xl" :style="{ background: `linear-gradient(to right, ${t.color}, transparent)` }" />
 
-      <!-- Testimonial cards -->
-      <div class="relative z-10 flex-1 grid grid-cols-3 min-h-0">
-        <div
-          v-for="(t, i) in testimonials"
-          :key="t.name"
-          class="relative flex flex-col px-12 xl:px-16 py-12 overflow-hidden"
-          :class="i < testimonials.length - 1 ? 'border-r border-white/[0.04]' : ''"
-        >
-          <!-- Pillar glow -->
-          <div class="absolute inset-0 pointer-events-none" :style="{ background: `radial-gradient(ellipse at 30% 20%, ${t.color}08 0%, transparent 60%)` }" />
+            <!-- Pillar tag -->
+            <div class="flex items-center gap-2 mb-5">
+              <div class="w-1.5 h-1.5 rounded-full" :style="{ background: t.color }" />
+              <span class="text-[9px] font-display font-bold tracking-[0.16em] uppercase" :style="{ color: t.color }">{{ t.pillar }}</span>
+            </div>
 
-          <!-- Quote mark -->
-          <div class="font-display font-bold leading-none mb-6 select-none" style="font-size:4rem;line-height:1;opacity:0.08;color:white">"</div>
+            <!-- Quote -->
+            <p class="font-body leading-relaxed flex-1 text-white/70" style="font-size:0.93rem">
+              "{{ t.quote }}"
+            </p>
 
-          <!-- Accent line -->
-          <div class="w-6 h-px mb-8" :style="{ background: t.color }" />
-
-          <!-- Quote text -->
-          <p class="font-body text-white/68 leading-relaxed flex-1" style="font-size:0.96rem;max-width:34ch">
-            "{{ t.quote }}"
-          </p>
-
-          <!-- Author -->
-          <div class="flex items-center gap-3 mt-8 pt-8 border-t border-white/[0.05]">
-            <div
-              class="w-9 h-9 rounded-full flex items-center justify-center text-[11px] font-display font-bold text-white shrink-0"
-              :style="{ background: t.color + '20', border: `1px solid ${t.color}35` }"
-            >{{ t.initials }}</div>
-            <div>
-              <div class="font-display font-semibold text-white leading-none mb-1" style="font-size:0.88rem">{{ t.name }}</div>
-              <div class="font-body text-white/38 text-[11px]">{{ t.role }}</div>
+            <!-- Author -->
+            <div class="flex items-center gap-3 mt-6 pt-5 border-t border-white/[0.06]">
+              <div
+                class="w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-display font-bold text-white shrink-0"
+                :style="{ background: t.color + '18', border: `1px solid ${t.color}30` }"
+              >{{ t.initials }}</div>
+              <div>
+                <div class="font-display font-semibold text-white/80 leading-none mb-0.5" style="font-size:0.85rem">{{ t.name }}</div>
+                <div class="font-body text-white/35 text-[11px]">{{ t.role }}</div>
+              </div>
             </div>
           </div>
-
-          <!-- Bottom accent -->
-          <div class="absolute bottom-0 left-0 right-0 h-[1px]" :style="{ background: `linear-gradient(to right, ${t.color}40, transparent 60%)` }" />
         </div>
       </div>
 
@@ -1108,43 +1115,43 @@ const pillars = [
   background: none;
   border: none;
   cursor: pointer;
-  padding: 4px 0;
+  padding: 3px 0;
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
 }
 
 .timeline-dot {
-  width: 6px;
-  height: 6px;
+  width: 5px;
+  height: 5px;
   border-radius: 50%;
   background: rgba(255, 255, 255, 0.18);
   flex-shrink: 0;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 .timeline-dot.is-active {
-  width: 10px;
-  height: 10px;
+  width: 8px;
+  height: 8px;
   background: #ec3586;
-  box-shadow: 0 0 12px rgba(236, 53, 134, 0.6);
+  box-shadow: 0 0 10px rgba(236, 53, 134, 0.6);
 }
 .timeline-entry:hover .timeline-dot:not(.is-active) {
   background: rgba(255, 255, 255, 0.45);
-  width: 7px;
-  height: 7px;
+  width: 6px;
+  height: 6px;
 }
 
 
 /* Connector line */
 .timeline-line {
   width: 1px;
-  height: 120px;
+  height: 80px;
   background: rgba(255, 255, 255, 0.07);
   position: relative;
   overflow: hidden;
-  margin: 6px 0;
+  margin: 4px 0;
   align-self: flex-start;
-  transform: translateX(4px);
+  transform: translateX(3px);
 }
 .timeline-line-fill {
   position: absolute;

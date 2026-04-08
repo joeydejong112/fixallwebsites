@@ -256,13 +256,13 @@ function copyText(text: string, flag: Ref<boolean>) {
         </div>
       </div>
 
-      <ToolSeoSection />
+      <ToolSeoSection slug="ai-optimizer" />
     </div>
   </div>
 </template>
 
 <style scoped>
-.tool-page  { max-width: 900px; margin: 0 auto; padding: 7rem 2rem 4rem; }
+.tool-page { max-width: 100%; padding: 7rem 2rem 4rem; }
 .tool-header { margin-bottom: 2.5rem; }
 .tool-title  { font-family: 'Space Grotesk', sans-serif; font-size: clamp(1.8rem, 3vw, 2.4rem); font-weight: 700; color: white; letter-spacing: -0.03em; line-height: 1.1; margin-bottom: 0.75rem; }
 .tool-subtitle { font-family: 'DM Sans', sans-serif; font-size: 0.95rem; color: rgba(255,255,255,0.5); max-width: 50ch; }

@@ -285,7 +285,7 @@ const nginxOutput = computed(() =>
 
         </div>
       </div>
-      <ToolSeoSection />
+      <ToolSeoSection slug="security-headers" />
     </div>
   </div>
 </template>
@@ -293,7 +293,7 @@ const nginxOutput = computed(() =>
 <style scoped>
 /* ── Base ────────────────────────────────────────────────── */
 .page-bg { min-height: 100vh; background: #07070a; }
-.tool-shell { max-width: 1100px; margin: 0 auto; padding: 48px 28px 80px; }
+.tool-shell { max-width: 100%; padding: 48px 28px 80px; }
 
 /* ── Page header ─────────────────────────────────────────── */
 .tool-header { margin-bottom: 28px; }
