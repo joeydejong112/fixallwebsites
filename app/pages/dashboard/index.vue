@@ -1,200 +1,48 @@
 <script setup lang="ts">
-import type { Id } from '~~/convex/_generated/dataModel'
-import { useAppToast } from '~/composables/useAppToast'
-import { FIX_SNIPPETS } from '~/utils/fixSnippets'
+import { useDashboardData } from '~/composables/dashboard/useDashboardData'
+import { useScanActions } from '~/composables/dashboard/useScanActions'
+import { useDashboardView } from '~/composables/dashboard/useDashboardView'
+import { useScoreFormat, useScoreTrend } from '~/composables/dashboard/useScoreFormat'
+import { useChartGeometry } from '~/composables/dashboard/useChartGeometry'
+import { allTools, toolPillars, TOOL_LINKS, PILLAR_COLORS } from '~/lib/dashboard/tools'
+import { toolComponentMap } from '~/lib/dashboard/toolComponentMap'
 
-const TOOL_LINKS: Record<string, string> = {
-  'Missing HSTS header': '/tools/security-headers', 'Weak HSTS configuration': '/tools/security-headers',
-  'Missing clickjacking protection': '/tools/security-headers', 'Missing X-Content-Type-Options': '/tools/security-headers',
-  'Missing Referrer-Policy': '/tools/security-headers', 'Weak Referrer-Policy': '/tools/security-headers',
-  'Missing Permissions-Policy': '/tools/security-headers', 'No COEP header': '/tools/security-headers',
-  'No COOP header': '/tools/security-headers',
-  'Missing Content-Security-Policy': '/tools/csp-builder', 'Weak CSP configuration': '/tools/csp-builder',
-  'Unoptimized image formats': '/tools/image-optimizer', 'Images missing lazy loading': '/tools/image-optimizer',
-  'Images without dimensions': '/tools/image-optimizer',
-  'Missing <title> tag': '/tools/meta-generator', 'Title length suboptimal': '/tools/meta-generator',
-  'Missing meta description': '/tools/meta-generator', 'Meta description length suboptimal': '/tools/meta-generator',
-  'Missing canonical URL': '/tools/meta-generator', 'Missing viewport meta tag': '/tools/meta-generator',
-  'Incomplete Open Graph tags': '/tools/meta-generator', 'Incomplete Twitter Card tags': '/tools/meta-generator',
-  'robots.txt not reachable': '/tools/robots-txt',
-  'No favicon detected': '/tools/favicon-generator',
-  'No structured data': '/tools/schema-generator', 'No author attribution': '/tools/schema-generator',
-  'No publication dates': '/tools/schema-generator',
-  'No SPF record found': '/tools/email-auth', 'SPF record too permissive': '/tools/email-auth',
-  'No DMARC record found': '/tools/email-auth', 'DMARC policy not enforcing': '/tools/email-auth',
-  'No DKIM record detected': '/tools/email-auth',
-  'No llms.txt found': '/tools/ai-optimizer', 'No llms-full.txt found': '/tools/ai-optimizer',
-  'AI crawlers blocked in robots.txt': '/tools/ai-optimizer',
-}
 definePageMeta({ middleware: 'auth' })
 useSeoMeta({ title: 'Dashboard — ScanPulse' })
 
 const { userId } = useAuth()
-const { client, api } = useConvex()
-const { client: wsClient } = useConvexWs()
-const { toast, confirm } = useAppToast()
+const data = useDashboardData()
+const view = useDashboardView({ scans: data.scans, doneScans: computed(() => data.scans.value.filter(s => s.status === 'done')) })
+const actions = useScanActions(
+  { scans: data.scans, monitors: data.monitors },
+  {
+    onScanCreated: (scanId) => {
+      const scan = data.scans.value.find(s => s._id === scanId)
+      if (scan) { view.selectedScan.value = scan; view.setView('result') }
+    },
+  },
+)
+const fmt = useScoreFormat()
+const { scoreTrend } = useScoreTrend(data.scans)
+const geom = useChartGeometry()
 
-const scans       = ref<any[]>([])
-const monitors    = ref<any[]>([])
-const bulkScans   = ref<any[]>([])
-const convexUser  = ref<{ plan: 'free' | 'pro'; scanCount: number } | null>(null)
-const urlSparklines = ref<Map<string, number[]>>(new Map())
-const recentComparisons = ref<{ urlA: string; urlB: string; scanIdA: string; scanIdB: string }[]>([])
-const loading     = ref(true)
-
-onMounted(() => {
-  try {
-    const raw = localStorage.getItem('sp_recent_comparisons')
-    if (raw) recentComparisons.value = JSON.parse(raw)
-  } catch {}
-})
-const scanning    = ref(false)
+// ── View-local state (moves to view components in Phase 3) ──
 const filterStatus = ref<'all' | 'pass' | 'warning' | 'critical'>('all')
-const router      = useRouter()
-let unsubscribeScans: (() => void) | null = null
-let unsubscribeMonitors: (() => void) | null = null
-
-async function loadUserData(id: string) {
-  loading.value = true
-  try {
-    const [userScans, user, userMonitors, userBulkScans] = await Promise.allSettled([
-      client.query(api.scans.getScansByUser, { userId: id }),
-      client.query(api.users.getUserByClerkId, { clerkId: id }),
-      client.query(api.monitors.getMonitors, { userId: id }),
-      client.query(api.bulkScans.getBulkScansByUser, { userId: id }),
-    ])
-    scans.value      = userScans.status === 'fulfilled' ? userScans.value : []
-    convexUser.value = user.status === 'fulfilled' ? user.value : null
-    monitors.value   = userMonitors.status === 'fulfilled' ? userMonitors.value : []
-    bulkScans.value  = userBulkScans.status === 'fulfilled' ? userBulkScans.value : []
-
-    const uniqueUrls = [...new Set(scans.value.filter(s => s.status === 'done').map(s => s.url))]
-    const sparkResults = await Promise.allSettled(
-      uniqueUrls.map(url => client.query(api.scoreHistory.getRecentHistory, { userId: id, url, limit: 15 }))
-    )
-    const map = new Map<string, number[]>()
-    uniqueUrls.forEach((url, i) => {
-      const r = sparkResults[i]
-      if (r.status === 'fulfilled' && r.value?.length) {
-        map.set(url, [...r.value].reverse().map((h: any) => h.overallScore).filter((v: any) => v != null))
-      }
-    })
-    urlSparklines.value = map
-
-    if (wsClient) {
-      if (unsubscribeScans) unsubscribeScans()
-      if (unsubscribeMonitors) unsubscribeMonitors()
-      unsubscribeScans = wsClient.onUpdate(api.scans.getScansByUser, { userId: id }, (u) => { scans.value = u })
-      unsubscribeMonitors = wsClient.onUpdate(api.monitors.getMonitors, { userId: id }, (u) => { monitors.value = u })
-    }
-  } finally {
-    loading.value = false
-  }
+const router = useRouter()
+const newScanUrl = ref('')
+function submitNewScan() { const url = newScanUrl.value.trim(); if (url) { actions.handleScan(url); newScanUrl.value = '' } }
+function handleBack() {
+  if (view.currentView.value === 'tool-detail') view.setView('tools')
+  else if (view.currentView.value === 'chart-detail') view.setView('charts')
+  else view.setView('history')
 }
 
-onUnmounted(() => {
-  if (unsubscribeScans) unsubscribeScans()
-  if (unsubscribeMonitors) unsubscribeMonitors()
-  if (resultPollInterval) clearInterval(resultPollInterval)
-})
-
-watch(userId, id => { if (id) loadUserData(id) }, { immediate: true })
-
-let resultPollInterval: ReturnType<typeof setInterval> | null = null
-
-async function handleScan(url: string) {
-  if (!userId.value) return
-  scanning.value = true
-  try {
-    const newScanId = await client.mutation(api.scans.createScan, { userId: userId.value, url })
-    client.action(api.scanAction.runScan, { scanId: newScanId, url }).catch(() => {})
-    selectedScan.value = { _id: newScanId, url, status: 'pending', _creationTime: Date.now() }
-    currentView.value = 'result'
-    scanning.value = false
-
-    if (resultPollInterval) clearInterval(resultPollInterval)
-    resultPollInterval = setInterval(async () => {
-      const updated = await client.query(api.scans.getScan, { scanId: newScanId })
-      if (updated) {
-        selectedScan.value = updated
-        const idx = scans.value.findIndex((s: any) => s._id === newScanId)
-        if (idx >= 0) scans.value[idx] = updated
-        else scans.value = [updated, ...scans.value]
-      }
-      if (updated?.status === 'done' || updated?.status === 'error') {
-        clearInterval(resultPollInterval!); resultPollInterval = null
-      }
-    }, 2000)
-  } catch (e) {
-    scanning.value = false
-    toast.error(e instanceof Error ? e.message : 'Scan failed')
-  }
-}
-
-async function deleteScan(scanId: Id<'scans'>, e?: Event) {
-  e?.preventDefault()
-  const ok = await confirm({ message: 'This scan will be permanently removed from your history.', confirmLabel: 'Delete', cancelLabel: 'Keep' })
-  if (!ok) return
-  await client.mutation(api.scans.deleteScan, { scanId, userId: userId.value! })
-  if (!wsClient) scans.value = scans.value.filter(s => s._id !== scanId)
-  if (selectedScan.value?._id === scanId) setView('history')
-}
-
-async function reScan(url: string, e?: Event) {
-  e?.preventDefault()
-  await handleScan(url)
-}
-
-async function toggleMonitor(url: string, e?: Event) {
-  e?.preventDefault()
-  if (convexUser.value?.plan !== 'pro') {
-    toast.warning('Monitoring is a Pro feature. Upgrade to watch your sites automatically.')
-    return
-  }
-  const existing = monitors.value.find(m => m.url === url)
-  if (existing) {
-    const ok = await confirm({ message: `Stop monitoring ${url}?`, confirmLabel: 'Stop', cancelLabel: 'Keep' })
-    if (ok) {
-      await client.mutation(api.monitors.removeMonitor, { monitorId: existing._id, userId: userId.value! })
-      toast.info(`Stopped monitoring ${url}`)
-    }
-  } else {
-    await client.mutation(api.monitors.addMonitor, { userId: userId.value!, url, frequency: 'daily' })
-    toast.success(`Started monitoring ${url} daily!`)
-  }
-}
-
-function isMonitored(url: string) {
-  return monitors.value.some(m => m.url === url && m.isActive)
-}
-
-function scoreTrend(url: string): '↑' | '↓' | '→' | null {
-  const urlScans = scans.value
-    .filter(s => s.url === url && s.status === 'done' && s.overallScore != null)
-    .sort((a, b) => b._creationTime - a._creationTime)
-  if (urlScans.length < 2) return null
-  const diff = urlScans[0].overallScore - urlScans[1].overallScore
-  if (diff > 2) return '↑'; if (diff < -2) return '↓'; return '→'
-}
-function trendColor(trend: string | null) {
-  if (trend === '↑') return '#00d4aa'; if (trend === '↓') return '#ff4757'; return 'rgba(255,255,255,0.3)'
-}
-function faviconUrl(url: string) {
-  try { return `https://www.google.com/s2/favicons?domain=${new URL(url).hostname}&sz=32` } catch { return null }
-}
-function hostname(url: string) {
-  try { return new URL(url).hostname } catch { return url }
-}
-
-const doneScans = computed(() => scans.value.filter(s => s.status === 'done'))
-const avgScore  = computed(() => {
-  if (!doneScans.value.length) return null
-  return Math.round(doneScans.value.reduce((s, x) => s + (x.overallScore ?? 0), 0) / doneScans.value.length)
-})
+const doneScans = computed(() => data.scans.value.filter(s => s.status === 'done'))
+const avgScore  = computed(() => { if (!doneScans.value.length) return null; return Math.round(doneScans.value.reduce((s, x) => s + (x.overallScore ?? 0), 0) / doneScans.value.length) })
 const bestScore = computed(() => doneScans.value.length ? Math.max(...doneScans.value.map(s => s.overallScore ?? 0)) : null)
 const filteredScans = computed(() => {
-  if (filterStatus.value === 'all') return scans.value
-  return scans.value.filter(s => {
+  if (filterStatus.value === 'all') return data.scans.value
+  return data.scans.value.filter(s => {
     const score = s.overallScore ?? 0
     if (filterStatus.value === 'pass')     return s.status === 'done' && score >= 80
     if (filterStatus.value === 'warning')  return s.status === 'done' && score >= 60 && score < 80
@@ -203,185 +51,51 @@ const filteredScans = computed(() => {
   })
 })
 
-function scoreColor(score?: number) {
-  if (score == null) return 'rgba(255,255,255,0.2)'
-  if (score >= 80) return '#00d4aa'; if (score >= 60) return '#ffaa00'; return '#ff4757'
-}
-function scoreBg(score?: number) {
-  if (score == null) return '#ffffff15'
-  if (score >= 80) return '#00d4aa'; if (score >= 60) return '#ffaa00'; return '#ff4757'
-}
-function statusLabel(status: string) {
-  return { pending: 'Queued', running: 'Scanning…', done: 'Complete', error: 'Failed' }[status] ?? status
-}
-function relativeTime(ts: number) {
-  const diff = Date.now() - ts; const mins = Math.floor(diff / 60000)
-  if (mins < 1) return 'just now'; if (mins < 60) return `${mins}m ago`
-  const hrs = Math.floor(mins / 60)
-  if (hrs < 24) return `${hrs}h ago`; return `${Math.floor(hrs / 24)}d ago`
-}
-
-// ── View management ────────────────────────────────────
-type View = 'overview' | 'history' | 'compare' | 'bulk' | 'result' | 'scan' | 'charts' | 'tools' | 'tool-detail' | 'chart-detail'
-const currentView  = ref<View>('overview')
-const selectedScan = ref<any>(null)
-const historySearch = ref('')
-const toolsExpanded = ref(false)
-const selectedTool  = ref<string | null>(null)
-const selectedChartUrl = ref<string | null>(null)
-
-function setView(v: View) {
-  currentView.value = v
-  if (v !== 'result') {
-    selectedScan.value = null
-    if (resultPollInterval) { clearInterval(resultPollInterval); resultPollInterval = null }
-  }
-}
-function openScan(scan: any) {
-  selectedScan.value = scan; currentView.value = 'result'
-  resultExpandedIssues.value  = new Set()
-  resultCollapsedGroups.value = new Set(['pass'])
-  resultActiveTab.value       = 'all'
-}
-function openScanByUrl(url: string) {
-  const s = scans.value.filter(x => x.url === url && x.status === 'done').sort((a, b) => b._creationTime - a._creationTime)[0]
-  if (s) openScan(s)
-}
-function openChartDetail(url: string) { selectedChartUrl.value = url; currentView.value = 'chart-detail' }
-function openTool(slug: string) {
-  selectedTool.value = slug
-  toolsExpanded.value = true
-  currentView.value = 'tool-detail'
-}
-
-provide('openTool', openTool)
-function dashboardNavigate(href: string) {
-  if (href === '/' || href === '/scan') { setView('scan'); return }
-  const slug = href.split('/').pop()
-  if (slug) openTool(slug)
-}
-provide('dashboardNavigate', dashboardNavigate)
-
-// ── Async tool components ───────────────────────────────
-const toolComponentMap: Record<string, ReturnType<typeof defineAsyncComponent>> = {
-  'security-headers': defineAsyncComponent(() => import('~/pages/tools/security-headers.vue')),
-  'csp-builder':      defineAsyncComponent(() => import('~/pages/tools/csp-builder.vue')),
-  'image-optimizer':  defineAsyncComponent(() => import('~/pages/tools/image-optimizer.vue')),
-  'meta-generator':   defineAsyncComponent(() => import('~/pages/tools/meta-generator.vue')),
-  'robots-txt':       defineAsyncComponent(() => import('~/pages/tools/robots-txt.vue')),
-  'favicon-generator':defineAsyncComponent(() => import('~/pages/tools/favicon-generator.vue')),
-  'schema-generator': defineAsyncComponent(() => import('~/pages/tools/schema-generator.vue')),
-  'contrast-checker': defineAsyncComponent(() => import('~/pages/tools/contrast-checker.vue')),
-  'email-auth':       defineAsyncComponent(() => import('~/pages/tools/email-auth.vue')),
-  'ai-optimizer':     defineAsyncComponent(() => import('~/pages/tools/ai-optimizer.vue')),
-}
-const currentToolComponent = computed(() => selectedTool.value ? toolComponentMap[selectedTool.value] : null)
-const currentToolMeta = computed(() => allTools.find(t => t.slug === selectedTool.value) ?? null)
-
-const topbarInfo = computed(() => ({
-  overview:     { title: 'Command Center',  sub: 'Overview of all your scans' },
-  history:      { title: 'Scan History',    sub: `${scans.value.length} scans` },
-  compare:      { title: 'Compare',         sub: 'Side-by-side competitor analysis' },
-  bulk:         { title: 'Bulk Scan',       sub: 'Scan multiple URLs at once' },
-  scan:         { title: 'New Scan',        sub: 'Analyze a website across 7 pillars' },
-  charts:       { title: 'Charts',          sub: `Analytics for ${doneScans.value.length} completed scans` },
-  tools:        { title: 'Tools',           sub: '10 free web audit tools' },
-  'tool-detail':  { title: currentToolMeta.value?.title ?? 'Tool', sub: currentToolMeta.value?.pillar ?? '' },
-  'chart-detail': { title: selectedChartUrl.value ? hostname(selectedChartUrl.value) : 'Site Charts', sub: 'Score history & pillar breakdown' },
-  result:         { title: selectedScan.value ? hostname(selectedScan.value.url) : 'Result', sub: selectedScan.value?.status === 'pending' || selectedScan.value?.status === 'running' ? 'Scanning…' : selectedScan.value ? `Scanned ${relativeTime(selectedScan.value._creationTime)}` : '' },
-})[currentView.value])
-
-// ── Result view state ──────────────────────────────────
 type IssueTab = 'all' | 'security' | 'performance' | 'seo' | 'accessibility' | 'ai' | 'dns' | 'trust'
 const resultActiveTab = ref<IssueTab>('all')
 const resultExpandedFix = ref<string | null>(null)
 const resultCopied = ref(false)
 const resultIssueTabs: IssueTab[] = ['all', 'security', 'performance', 'seo', 'accessibility', 'ai', 'dns', 'trust']
-
-// ── Result: A+C redesign state ─────────────────────────
 const resultExpandedIssues  = ref<Set<string>>(new Set())
 const resultCollapsedGroups = ref<Set<string>>(new Set(['pass']))
 
-function toggleResultIssue(title: string) {
-  const s = new Set(resultExpandedIssues.value)
-  if (s.has(title)) s.delete(title); else s.add(title)
-  resultExpandedIssues.value = s
-}
-function toggleResultGroup(key: string) {
-  const s = new Set(resultCollapsedGroups.value)
-  if (s.has(key)) s.delete(key); else s.add(key)
-  resultCollapsedGroups.value = s
-}
-
+function toggleResultIssue(title: string) { const s = new Set(resultExpandedIssues.value); if (s.has(title)) s.delete(title); else s.add(title); resultExpandedIssues.value = s }
+function toggleResultGroup(key: string) { const s = new Set(resultCollapsedGroups.value); if (s.has(key)) s.delete(key); else s.add(key); resultCollapsedGroups.value = s }
 const resultSeverityGroups = computed(() => {
-  const issues = (selectedScan.value?.issues ?? [])
-    .filter((i: any) => resultActiveTab.value === 'all' || i.pillar === resultActiveTab.value)
-  return {
-    critical: issues.filter((i: any) => i.severity === 'critical'),
-    warning:  issues.filter((i: any) => i.severity === 'warning'),
-    pass:     issues.filter((i: any) => i.severity === 'pass'),
-  }
+  const issues = (view.selectedScan.value?.issues ?? []).filter((i: any) => resultActiveTab.value === 'all' || i.pillar === resultActiveTab.value)
+  return { critical: issues.filter((i: any) => i.severity === 'critical'), warning: issues.filter((i: any) => i.severity === 'warning'), pass: issues.filter((i: any) => i.severity === 'pass') }
 })
-
 const resultToolCards = computed(() => {
-  if (!selectedScan.value?.issues) return []
+  if (!view.selectedScan.value?.issues) return []
   const map = new Map<string, { count: number; hasCritical: boolean }>()
-  for (const issue of selectedScan.value.issues) {
+  for (const issue of view.selectedScan.value.issues) {
     if (issue.severity === 'pass') continue
     const toolPath = TOOL_LINKS[issue.title as string]
     if (!toolPath) continue
     const tool = allTools.find(t => toolPath.endsWith(t.slug))
     if (!tool) continue
     const entry = map.get(tool.slug) ?? { count: 0, hasCritical: false }
-    entry.count++
-    if (issue.severity === 'critical') entry.hasCritical = true
+    entry.count++; if (issue.severity === 'critical') entry.hasCritical = true
     map.set(tool.slug, entry)
   }
-  return [...map.entries()]
-    .map(([slug, data]) => ({ tool: allTools.find(t => t.slug === slug)!, ...data }))
-    .sort((a, b) => (b.hasCritical ? 1 : 0) - (a.hasCritical ? 1 : 0) || b.count - a.count)
+  return [...map.entries()].map(([slug, data]) => ({ tool: allTools.find(t => t.slug === slug)!, ...data })).sort((a, b) => (b.hasCritical ? 1 : 0) - (a.hasCritical ? 1 : 0) || b.count - a.count)
 })
-
 watch(resultActiveTab, () => { resultExpandedIssues.value = new Set() })
 const resultIssues = computed(() => {
-  if (!selectedScan.value?.issues) return []
-  if (resultActiveTab.value === 'all') return selectedScan.value.issues
-  return selectedScan.value.issues.filter((i: any) => i.pillar === resultActiveTab.value)
+  if (!view.selectedScan.value?.issues) return []
+  if (resultActiveTab.value === 'all') return view.selectedScan.value.issues
+  return view.selectedScan.value.issues.filter((i: any) => i.pillar === resultActiveTab.value)
 })
-function issueTabCount(tab: string) {
-  if (!selectedScan.value?.issues) return 0
-  if (tab === 'all') return selectedScan.value.issues.length
-  return selectedScan.value.issues.filter((i: any) => i.pillar === tab).length
-}
-const PILLAR_COLORS: Record<string, string> = {
-  security: '#00d4aa', performance: '#ffaa00', seo: '#6c5ce7',
-  accessibility: '#a29bfe', ai: '#ff7675', dns: '#74b9ff', trust: '#fd79a8',
-}
-function pillarColor(pillar: string) { return { color: PILLAR_COLORS[pillar] ?? 'rgba(255,255,255,0.4)' } }
-function shareResult() {
-  if (!selectedScan.value?._id) return
-  navigator.clipboard.writeText(`${window.location.origin}/share/${selectedScan.value._id}`)
-  resultCopied.value = true; setTimeout(() => resultCopied.value = false, 2000)
-  toast.success('Share link copied!')
-}
+function shareResult() { if (!view.selectedScan.value?._id) return; navigator.clipboard.writeText(`${window.location.origin}/share/${view.selectedScan.value._id}`); resultCopied.value = true; setTimeout(() => { resultCopied.value = false }, 2000) }
 
 const filteredHistoryScans = computed(() => {
   let list = filteredScans.value
-  if (historySearch.value.trim()) {
-    const q = historySearch.value.toLowerCase()
-    list = list.filter(s => s.url.toLowerCase().includes(q))
-  }
+  const q = historySearch.value.toLowerCase()
+  if (q) list = list.filter(s => s.url.toLowerCase().includes(q))
   return list
 })
+const historySearch = ref('')
 
-// ── Topbar scan input ──────────────────────────────────
-const newScanUrl = ref('')
-function submitNewScan() {
-  const url = newScanUrl.value.trim()
-  if (url) { handleScan(url); newScanUrl.value = '' }
-}
-
-// ── Chart data ─────────────────────────────────────────
 const scansPerDay = computed(() => {
   const days: { label: string; count: number }[] = []
   for (let i = 13; i >= 0; i--) {
@@ -389,16 +103,13 @@ const scansPerDay = computed(() => {
     const label = d.toLocaleDateString('en', { month: 'short', day: 'numeric' })
     const start = new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime()
     const end = start + 86400000
-    const count = scans.value.filter(s => s._creationTime >= start && s._creationTime < end).length
+    const count = data.scans.value.filter(s => s._creationTime >= start && s._creationTime < end).length
     days.push({ label, count })
   }
   return days
 })
 const avgPillarScores = computed(() => {
-  const avg = (key: string) => {
-    const vals = doneScans.value.map((s: any) => s[key]).filter((v: any) => v != null)
-    return vals.length ? Math.round(vals.reduce((a: number, b: number) => a + b, 0) / vals.length) : 0
-  }
+  const avg = (key: string) => { const vals = doneScans.value.map((s: any) => s[key]).filter((v: any) => v != null); return vals.length ? Math.round(vals.reduce((a: number, b: number) => a + b, 0) / vals.length) : 0 }
   return [
     { name: 'Security',      score: avg('securityScore'),      color: '#00d4aa' },
     { name: 'Performance',   score: avg('performanceScore'),   color: '#ffaa00' },
@@ -422,132 +133,32 @@ const scoreDistribution = computed(() => {
 })
 const topSites = computed(() => {
   const map = new Map<string, { url: string; count: number; latestScore: number | null }>()
-  for (const s of doneScans.value) {
-    const e = map.get(s.url)
-    if (e) e.count++
-    else map.set(s.url, { url: s.url, count: 1, latestScore: s.overallScore ?? null })
-  }
+  for (const s of doneScans.value) { const e = map.get(s.url); if (e) e.count++; else map.set(s.url, { url: s.url, count: 1, latestScore: s.overallScore ?? null }) }
   return [...map.values()].sort((a, b) => b.count - a.count).slice(0, 8)
 })
-
-interface ChartPoint {
-  score: number; time: number
-  securityScore?: number; performanceScore?: number; seoScore?: number; accessibilityScore?: number
-}
+interface ChartPoint { score: number; time: number; securityScore?: number; performanceScore?: number; seoScore?: number; accessibilityScore?: number }
 const urlCharts = computed(() => {
   const map = new Map<string, ChartPoint[]>()
   for (const s of doneScans.value) {
     if (s.overallScore == null) continue
     if (!map.has(s.url)) map.set(s.url, [])
-    map.get(s.url)!.push({
-      score: s.overallScore, time: s._creationTime,
-      securityScore: s.securityScore, performanceScore: s.performanceScore,
-      seoScore: s.seoScore, accessibilityScore: s.accessibilityScore,
-    })
+    map.get(s.url)!.push({ score: s.overallScore, time: s._creationTime, securityScore: s.securityScore, performanceScore: s.performanceScore, seoScore: s.seoScore, accessibilityScore: s.accessibilityScore })
   }
-  return [...map.entries()]
-    .map(([url, pts]) => {
-      const sorted = [...pts].sort((a, b) => a.time - b.time)
-      return { url, points: sorted, latest: sorted[sorted.length - 1] }
-    })
-    .sort((a, b) => b.points.length - a.points.length)
+  return [...map.entries()].map(([url, pts]) => { const sorted = [...pts].sort((a, b) => a.time - b.time); return { url, points: sorted, latest: sorted[sorted.length - 1] } }).sort((a, b) => b.points.length - a.points.length)
 })
 
-function chartSvgPoints(scores: number[]): string {
-  if (scores.length === 1) return `150,${62 - scores[0] / 100 * 52}`
-  return scores.map((s, i) => `${12 + i / (scores.length - 1) * 276},${62 - s / 100 * 52}`).join(' ')
-}
-function chartAreaPath(scores: number[]): string {
-  if (scores.length < 2) return ''
-  const pts = scores.map((s, i) => `${12 + i / (scores.length - 1) * 276},${62 - s / 100 * 52}`)
-  const lastX = 12 + 276
-  return `M ${pts.join(' L ')} L ${lastX},70 L 12,70 Z`
-}
-function chartDotX(i: number, total: number): number {
-  return total === 1 ? 150 : 12 + i / (total - 1) * 276
-}
-function chartDotY(score: number): number {
-  return 62 - score / 100 * 52
-}
-function shortDate(ts: number): string {
-  return new Date(ts).toLocaleDateString('en', { month: 'short', day: 'numeric' })
-}
-
-// ── Chart detail ────────────────────────────────────────
-const chartDetailScans = computed(() => {
-  if (!selectedChartUrl.value) return []
-  return scans.value
-    .filter(s => s.url === selectedChartUrl.value && s.status === 'done' && s.overallScore != null)
-    .sort((a, b) => a._creationTime - b._creationTime)
-})
-const chartDetailLatest = computed(() => chartDetailScans.value[chartDetailScans.value.length - 1] ?? null)
-const chartDetailPillars = computed(() => [
-  { key: 'securityScore',     label: 'Security',     color: '#00d4aa' },
-  { key: 'performanceScore',  label: 'Performance',  color: '#ffaa00' },
-  { key: 'seoScore',          label: 'SEO',          color: '#6c5ce7' },
-  { key: 'accessibilityScore',label: 'Accessibility',color: '#a29bfe' },
-  { key: 'aiScore',           label: 'AI Readiness', color: '#ff7675' },
-  { key: 'dnsScore',          label: 'DNS & Email',  color: '#74b9ff' },
-].map(p => ({
-  ...p,
-  scores: chartDetailScans.value.map((s: any) => s[p.key]).filter((v: any) => v != null) as number[],
-  latest: chartDetailLatest.value ? (chartDetailLatest.value as any)[p.key] ?? null : null,
-})).filter(p => p.scores.length > 0))
-
-// SVG helpers for chart-detail (viewBox 560×150)
-const CD_W = 560; const CD_H = 150
-const CD_PL = 34; const CD_PR = 14; const CD_PT = 14; const CD_PB = 30
-const CD_CW = CD_W - CD_PL - CD_PR   // 512
-const CD_CH = CD_H - CD_PT - CD_PB   // 106
-function cdX(i: number, n: number): number {
-  return n <= 1 ? CD_PL + CD_CW / 2 : CD_PL + (i / (n - 1)) * CD_CW
-}
-function cdY(score: number): number { return CD_PT + (1 - score / 100) * CD_CH }
-function cdPolyline(scores: number[]): string {
-  return scores.map((s, i) => `${cdX(i, scores.length)},${cdY(s)}`).join(' ')
-}
-function cdAreaPath(scores: number[]): string {
-  if (scores.length < 2) return ''
-  const pts = scores.map((s, i) => `${cdX(i, scores.length)},${cdY(s)}`).join(' L ')
-  return `M ${pts} L ${cdX(scores.length - 1, scores.length)},${CD_PT + CD_CH} L ${CD_PL},${CD_PT + CD_CH} Z`
-}
-const CD_GRID = [0, 25, 50, 75, 100]
-
-// ── Tools ──────────────────────────────────────────────
-const allTools = [
-  { slug: 'security-headers', title: 'Security Headers Generator', subtitle: 'Generator', desc: 'Generate HSTS, X-Content-Type-Options, X-Frame-Options, Referrer-Policy, and Permissions-Policy with a single click. Copy individual headers or the full block.', short: 'HSTS · X-Frame · Referrer · Permissions', pillar: 'Security', color: '#00d4aa', fixes: 5, icon: `<path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 4l6 2.67V11c0 3.88-2.67 7.52-6 8.93-3.33-1.41-6-5.05-6-8.93V7.67L12 5z"/>` },
-  { slug: 'csp-builder', title: 'CSP Header Builder', subtitle: 'Builder', desc: 'Visual Content-Security-Policy editor. Add sources per directive, get real-time warnings for unsafe-inline, unsafe-eval, and wildcard values, then copy the final header.', short: 'Directives · unsafe warnings · live output', pillar: 'Security', color: '#00d4aa', fixes: 2, icon: `<path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm-5 14H4v-4h11v4zm0-5H4V9h11v4zm5 5h-4V9h4v9z"/>` },
-  { slug: 'image-optimizer', title: 'Image Optimizer & Converter', subtitle: 'Optimizer', desc: 'Drag and drop PNG or JPEG files and convert them to WebP entirely in your browser. Adjust quality with a live slider and see exact file size savings before downloading.', short: 'PNG/JPEG → WebP · quality slider · savings', pillar: 'Performance', color: '#ffaa00', fixes: 2, icon: `<path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/>` },
-  { slug: 'meta-generator', title: 'Meta Tag Generator', subtitle: 'Generator', desc: 'Build a complete head block with title, description, canonical URL, viewport, Open Graph, and Twitter Card tags. Live Google SERP preview updates in real time.', short: 'title · OG · Twitter · canonical · preview', pillar: 'SEO', color: '#6c5ce7', fixes: 7, icon: `<path d="M9.4 16.6L4.8 12l4.6-4.6L8 6l-6 6 6 6 1.4-1.4zm5.2 0l4.6-4.6-4.6-4.6L16 6l6 6-6 6-1.4-1.4z"/>` },
-  { slug: 'robots-txt', title: 'Robots.txt Generator', subtitle: 'Generator', desc: 'Visual editor for robots.txt. Add user-agent blocks, set allow and disallow rules, add a sitemap URL, and apply presets — download or copy the file.', short: 'user-agents · rules · presets · download', pillar: 'SEO', color: '#6c5ce7', fixes: 1, icon: `<path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z"/>` },
-  { slug: 'favicon-generator', title: 'Favicon Generator', subtitle: 'Generator', desc: 'Upload any source image and generate a favicon.ico and apple-touch-icon.png entirely client-side. Preview on a mock browser tab before downloading.', short: 'upload → ico · apple-touch · browser preview', pillar: 'SEO', color: '#6c5ce7', fixes: 1, icon: `<path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>` },
-  { slug: 'schema-generator', title: 'Schema Markup Generator', subtitle: 'JSON-LD', desc: 'Guided form for Article, BlogPosting, and Organization JSON-LD structured data. Live script block preview, copy to clipboard or download as .json.', short: 'Article · Organization · JSON-LD · copy/download', pillar: 'SEO', color: '#6c5ce7', fixes: 3, icon: `<path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm4 18H6V4h7v5h5v11z"/>` },
-  { slug: 'contrast-checker', title: 'Color Contrast Checker', subtitle: 'Checker', desc: 'Pick foreground and background colors to get WCAG 2.1 contrast ratio with pass/fail badges for AA Normal, AA Large, AAA Normal, and AAA Large.', short: 'WCAG AA · AAA · ratio · live preview', pillar: 'Accessibility', color: '#a29bfe', fixes: 0, icon: `<path d="M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9c.83 0 1.5-.67 1.5-1.5 0-.39-.15-.74-.39-1.01-.23-.26-.38-.61-.38-.99 0-.83.67-1.5 1.5-1.5H16c2.76 0 5-2.24 5-5 0-4.42-4.03-8-9-8z"/>` },
-  { slug: 'email-auth', title: 'SPF / DKIM / DMARC Generator', subtitle: 'Generator', desc: 'Build SPF and DMARC TXT records with provider dropdowns, policy selectors, and reporting email. Get per-provider DKIM setup instructions.', short: 'providers · policy · TXT records · DKIM guide', pillar: 'DNS & Email', color: '#fd79a8', fixes: 3, icon: `<path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/>` },
-  { slug: 'ai-optimizer', title: 'AI Optimizer & llms.txt Generator', subtitle: 'Generator', desc: 'Generate a valid llms.txt file for LLM ingestion, build AI-friendly robots.txt rules, and test how well your content is structured for answer engines like ChatGPT and Perplexity.', short: 'llms.txt · AI crawlers · robots.txt snippets', pillar: 'AI Readiness', color: '#ff7675', fixes: 3, icon: `<path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z"/>` },
-]
-const toolPillars = [
-  { key: 'all', label: 'All tools', color: '#ec3586' },
-  { key: 'Security', label: 'Security', color: '#00d4aa' },
-  { key: 'Performance', label: 'Performance', color: '#ffaa00' },
-  { key: 'SEO', label: 'SEO', color: '#6c5ce7' },
-  { key: 'Accessibility', label: 'Accessibility', color: '#a29bfe' },
-  { key: 'DNS & Email', label: 'DNS & Email', color: '#fd79a8' },
-  { key: 'AI Readiness', label: 'AI Readiness', color: '#ff7675' },
-]
 const toolsFilter  = ref('all')
 const toolsFiltered  = computed(() => toolsFilter.value === 'all' ? allTools : allTools.filter(t => t.pillar === toolsFilter.value))
 const toolsFeatured  = computed(() => toolsFiltered.value[0] ?? null)
 const toolsRest      = computed(() => toolsFiltered.value.slice(1))
 const toolsPillarCount = (key: string) => key === 'all' ? allTools.length : allTools.filter(t => t.pillar === key).length
 
-// ── Compare form ───────────────────────────────────────
 const compareUrlA = ref(''); const compareUrlB = ref('')
-function submitCompare() {
-  const a = compareUrlA.value.trim(); const b = compareUrlB.value.trim()
-  if (a && b) router.push(`/compare?urlA=${encodeURIComponent(a)}&urlB=${encodeURIComponent(b)}`)
-}
+function submitCompare() { const a = compareUrlA.value.trim(); const b = compareUrlB.value.trim(); if (a && b) router.push(`/compare?urlA=${encodeURIComponent(a)}&urlB=${encodeURIComponent(b)}`) }
+
+watch(userId, id => { if (id) data.loadUserData(id) }, { immediate: true })
 </script>
+
 
 <template>
   <div class="ds-shell">
