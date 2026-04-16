@@ -96,38 +96,40 @@ const scoreBg = (score: any) => {
 
 <template>
   <!-- ── Scanning state ───────────────────────── -->
-  <div v-if="scan.status === 'pending' || scan.status === 'running'" class="rs-scanning">
-    <div class="rs-scan-rings">
-      <div class="rs-ring rs-ring-1"/>
-      <div class="rs-ring rs-ring-2"/>
-      <div class="rs-ring rs-ring-3"/>
-      <div class="rs-ring rs-ring-spin"/>
-      <div class="rs-ring-dot"/>
+  <div v-if="scan.status === 'pending' || scan.status === 'running'" class="flex flex-col items-center justify-center py-20 px-0 gap-2.5">
+    <!-- Spinning rings -->
+    <div class="relative w-[100px] h-[100px] mb-6">
+      <div class="absolute inset-0 rounded-full border border-white/5"/>
+      <div class="absolute inset-[14px] rounded-full border border-white/7"/>
+      <div class="absolute inset-[28px] rounded-full border border-white/9"/>
+      <div class="absolute inset-0 rounded-full border-2 border-transparent border-t-primary animate-spin" style="animation: linear 1.4s infinite"/>
+      <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-2.5 h-2.5 rounded-full bg-primary animate-pulse" style="animation: 1.4s ease-in-out infinite"/>
     </div>
-    <div class="rs-scan-label">{{ scan.status === 'running' ? 'Scanning…' : 'Initialising…' }}</div>
-    <div class="rs-scan-url">{{ scan.url }}</div>
-    <div class="rs-scan-sub">Running 94 checks across security, performance, SEO, accessibility, AI readiness, DNS & trust</div>
-    <div class="rs-scan-dots">
-      <div class="rs-scan-dot" style="animation-delay:0s"/>
-      <div class="rs-scan-dot" style="animation-delay:0.2s"/>
-      <div class="rs-scan-dot" style="animation-delay:0.4s"/>
+    <div class="font-display text-lg font-bold text-white/90">Scanning…</div>
+    <div class="font-body text-[13px] text-white/50">{{ scan.url }}</div>
+    <div class="font-body text-[11px] text-white/30 max-w-[360px] text-center">Running 94 checks across security, performance, SEO, accessibility, AI readiness, DNS & trust</div>
+    <!-- Animated dots -->
+    <div class="flex gap-1.5 mt-2">
+      <div class="w-1.5 h-1.5 rounded-full bg-primary/50 animate-bounce" style="animation-delay:0s"/>
+      <div class="w-1.5 h-1.5 rounded-full bg-primary/50 animate-bounce" style="animation-delay:0.2s"/>
+      <div class="w-1.5 h-1.5 rounded-full bg-primary/50 animate-bounce" style="animation-delay:0.4s"/>
     </div>
   </div>
 
   <!-- ── Error state ──────────────────────────── -->
-  <div v-else-if="scan.status === 'error'" class="rs-error">
-    <div class="rs-error-icon">
+  <div v-else-if="scan.status === 'error'" class="flex flex-col items-center py-20 px-0 gap-2.5">
+    <div class="w-[52px] h-[52px] rounded-full bg-red-500/8 border border-red-500/15 flex items-center justify-center text-red-500 mb-1.5">
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
         <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
       </svg>
     </div>
-    <div class="rs-error-title">Scan failed</div>
-    <div class="rs-error-msg">{{ scan.errorMessage ?? 'Something went wrong.' }}</div>
-    <button class="rs-retry-btn" @click="emit('rescan', scan.url)">Try again</button>
+    <div class="font-display text-lg font-bold text-white/88">Scan failed</div>
+    <div class="font-body text-[13px] text-white/45 max-w-[300px] text-center">{{ scan.errorMessage ?? 'Something went wrong.' }}</div>
+    <button class="mt-2 font-display text-[12px] font-semibold text-white/60 bg-white/5 border border-white/10 rounded-lg px-4 py-2 cursor-pointer transition-colors duration-150 hover:bg-white/10" @click="emit('rescan', scan.url)">Try again</button>
   </div>
 
   <!-- ── Done state ───────────────────────────── -->
-  <div v-else class="ds-result-layout">
+  <div v-else class="flex flex-col gap-4">
     <ScanResultHeader
       :scan="scan"
       :is-monitored="isMonitored"
@@ -161,48 +163,9 @@ const scoreBg = (score: any) => {
     </template>
 
     <!-- No issues -->
-    <div v-else-if="scan.status === 'done'" class="rs2-all-pass">
+    <div v-else-if="scan.status === 'done'" class="flex items-center gap-2.5 p-5 rounded-[10px] bg-green-400/5 border border-green-400/15 font-display text-[13px] font-semibold text-green-400">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#00d4aa" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
       No issues found — everything looks great
     </div>
   </div>
 </template>
-
-<style scoped>
-/* ── Result: scanning state ──────────────────────────── */
-.rs-scanning {
-  display: flex; flex-direction: column; align-items: center; justify-content: center;
-  padding: 80px 0; gap: 10px;
-}
-.rs-scan-rings { position: relative; width: 100px; height: 100px; margin-bottom: 24px; }
-.rs-ring { position: absolute; border-radius: 50%; border: 1px solid rgba(255,255,255,0.05); }
-.rs-ring-1 { inset: 0; }
-.rs-ring-2 { inset: 14px; border-color: rgba(255,255,255,0.07); }
-.rs-ring-3 { inset: 28px; border-color: rgba(255,255,255,0.09); }
-.rs-ring-spin { inset: 0; border: 2px solid transparent; border-top-color: #ec3586; border-radius: 50%; animation: rs-spin 1.4s linear infinite; }
-@keyframes rs-spin { to { transform: rotate(360deg); } }
-.rs-ring-dot { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); width: 10px; height: 10px; border-radius: 50%; background: #ec3586; animation: rs-pulse 1.4s ease-in-out infinite; }
-@keyframes rs-pulse { 0%,100%{opacity:1;transform:translate(-50%,-50%) scale(1)} 50%{opacity:0.4;transform:translate(-50%,-50%) scale(0.8)} }
-.rs-scan-label { font-family: 'Space Grotesk', sans-serif; font-size: 18px; font-weight: 700; color: rgba(255,255,255,0.9); }
-.rs-scan-url   { font-family: 'DM Sans', sans-serif; font-size: 13px; color: rgba(255,255,255,0.5); }
-.rs-scan-sub   { font-family: 'DM Sans', sans-serif; font-size: 11px; color: rgba(255,255,255,0.3); max-width: 360px; text-align: center; }
-.rs-scan-dots  { display: flex; gap: 5px; margin-top: 8px; }
-.rs-scan-dot   { width: 5px; height: 5px; border-radius: 50%; background: rgba(236,53,134,0.5); animation: rs-pulse 1.4s ease-in-out infinite; }
-
-/* ── Result: error state ─────────────────────────────── */
-.rs-error { display: flex; flex-direction: column; align-items: center; padding: 80px 0; gap: 10px; }
-.rs-error-icon { width: 52px; height: 52px; border-radius: 50%; background: rgba(255,71,87,0.08); border: 1px solid rgba(255,71,87,0.15); display: flex; align-items: center; justify-content: center; color: #ff4757; margin-bottom: 6px; }
-.rs-error-title { font-family: 'Space Grotesk', sans-serif; font-size: 18px; font-weight: 700; color: rgba(255,255,255,0.88); }
-.rs-error-msg { font-family: 'DM Sans', sans-serif; font-size: 13px; color: rgba(255,255,255,0.45); max-width: 300px; text-align: center; }
-.rs-retry-btn { margin-top: 8px; font-family: 'Space Grotesk', sans-serif; font-size: 12px; font-weight: 600; color: rgba(255,255,255,0.6); background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 7px; padding: 8px 16px; cursor: pointer; transition: background 0.15s; }
-.rs-retry-btn:hover { background: rgba(255,255,255,0.1); }
-
-/* ── Result v2: all-pass state ───────────────────────── */
-.rs2-all-pass {
-  display: flex; align-items: center; gap: 10px;
-  padding: 20px; border-radius: 10px;
-  background: rgba(0,212,170,0.05); border: 1px solid rgba(0,212,170,0.15);
-  font-family: 'Space Grotesk', sans-serif; font-size: 13px; font-weight: 600;
-  color: #00d4aa;
-}
-</style>
