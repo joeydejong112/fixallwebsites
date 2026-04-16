@@ -1,6 +1,5 @@
 import { ref } from 'vue'
-import { useConvex } from '~/composables/useConvex'
-import { useConvexWs } from '~/composables/useConvexWs'
+import { useConvex, useConvexWs } from '~/composables/useConvex'
 
 export interface DashboardData {
   scans: import('vue').Ref<any[]>
