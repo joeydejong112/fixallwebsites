@@ -193,134 +193,18 @@ watch(userId, id => { if (id) data.loadUserData(id) }, { immediate: true })
                VIEW: OVERVIEW
           ══════════════════════════════════════════════════ -->
           <template v-if="currentView === 'overview'">
-            <div class="ds-stats-row">
-              <div class="ds-stat-card">
-                <div class="ds-stat-label">Total Scans</div>
-                <div class="ds-stat-value" style="color:#ec3586">{{ scans.length }}</div>
-                <div class="ds-stat-delta">Across all sites</div>
-              </div>
-              <div class="ds-stat-card">
-                <div class="ds-stat-label">Avg Score</div>
-                <div class="ds-stat-value" :style="{ color: avgScore != null ? scoreBg(avgScore) : 'rgba(255,255,255,0.2)' }">{{ avgScore ?? '—' }}</div>
-                <div class="ds-stat-delta">{{ doneScans.length }} completed</div>
-              </div>
-              <div class="ds-stat-card">
-                <div class="ds-stat-label">Low Score Sites</div>
-                <div class="ds-stat-value" style="color:#ff4757">{{ doneScans.filter(s => (s.overallScore ?? 100) < 60).length + scans.filter(s => s.status === 'error').length }}</div>
-                <div class="ds-stat-delta" style="color:rgba(255,71,87,0.6)">Score below 60</div>
-              </div>
-              <div class="ds-stat-card">
-                <div class="ds-stat-label">Monitored Sites</div>
-                <div class="ds-stat-value" style="color:#ffaa00">{{ monitors.length }}</div>
-                <div class="ds-stat-delta"><button class="ds-stat-link" @click="setView('bulk')">{{ bulkScans.length }} bulk scan{{ bulkScans.length !== 1 ? 's' : '' }}</button></div>
-              </div>
-            </div>
-
-            <div class="ds-mid-grid">
-              <div class="ds-card">
-                <div class="ds-card-header">
-                  <div class="ds-card-title">Pillar Scores</div>
-                  <button v-if="doneScans[0]" @click="openScan(doneScans[0])" class="ds-card-action">{{ hostname(doneScans[0].url) }} →</button>
-                  <span v-else class="ds-card-sub">Most recent scan</span>
-                </div>
-                <div v-if="!doneScans.length" class="ds-empty-state">
-                  <Logo :animate="false" class="ds-empty-logo" />
-                  <p>Scan a site to see pillar scores</p>
-                </div>
-                <div v-else class="ds-pillars-grid">
-                  <div v-for="[name, val, color] in [
-                    ['Security',      doneScans[0].securityScore,      '#00d4aa'],
-                    ['Performance',   doneScans[0].performanceScore,   '#ffaa00'],
-                    ['SEO',           doneScans[0].seoScore,           '#6c5ce7'],
-                    ['Accessibility', doneScans[0].accessibilityScore, '#a29bfe'],
-                    ['AI Readiness',  doneScans[0].aiScore,            '#ff7675'],
-                    ['DNS & Email',   doneScans[0].dnsScore,           '#74b9ff'],
-                    ['Trust',         doneScans[0].trustScore,         '#fd79a8'],
-                  ]" :key="String(name)" class="ds-pillar-row">
-                    <div class="ds-pillar-dot" :style="{ background: String(color) }"></div>
-                    <div class="ds-pillar-name">{{ name }}</div>
-                    <div class="ds-pillar-bar-bg"><div class="ds-pillar-bar" :style="{ width: (Number(val) || 0) + '%', background: String(color) }"></div></div>
-                    <div class="ds-pillar-score" :style="{ color: val != null ? String(color) : 'rgba(255,255,255,0.2)' }">{{ val ?? '—' }}</div>
-                  </div>
-                </div>
-              </div>
-
-              <div class="ds-card">
-                <div class="ds-card-header">
-                  <div class="ds-card-title">Recent Scans</div>
-                  <button @click="setView('history')" class="ds-card-action">See all →</button>
-                </div>
-                <div v-if="!scans.length" class="ds-empty-state"><p>No scans yet</p></div>
-                <template v-else>
-                  <button v-for="scan in scans.slice(0, 6)" :key="scan._id" @click="openScan(scan)" class="ds-scan-item">
-                    <div class="ds-scan-fav">
-                      <img v-if="faviconUrl(scan.url)" :src="faviconUrl(scan.url)!" class="w-4 h-4 rounded" loading="lazy" width="16" height="16" @error="($event.target as HTMLImageElement).style.display='none'" />
-                      <span v-else>{{ hostname(scan.url).charAt(0).toUpperCase() }}</span>
-                    </div>
-                    <div class="ds-scan-info">
-                      <div class="ds-scan-domain">{{ hostname(scan.url) }}</div>
-                      <div class="ds-scan-time">{{ relativeTime(scan._creationTime) }}</div>
-                    </div>
-                    <div class="ds-scan-right">
-                      <span v-if="scan.status === 'running'" class="ds-scan-running">●</span>
-                      <span v-else-if="scan.status === 'error'" class="ds-scan-score" style="color:#ff4757;font-size:16px;">!</span>
-                      <span v-else class="ds-scan-score" :style="{ color: scoreBg(scan.overallScore) }">{{ scan.overallScore ?? '—' }}</span>
-                    </div>
-                  </button>
-                </template>
-              </div>
-            </div>
-
-            <div class="ds-bottom-grid">
-              <div class="ds-card">
-                <div class="ds-card-header">
-                  <div class="ds-card-title">Monitored Sites</div>
-                  <button @click="setView('bulk')" class="ds-card-action">Bulk scan →</button>
-                </div>
-                <div v-if="!monitors.length" class="ds-empty-state">
-                  <p>No sites monitored</p>
-                  <p class="ds-empty-hint">Scan a site and use Watch to monitor it daily.</p>
-                </div>
-                <div v-else>
-                  <div v-for="m in monitors" :key="m._id" class="ds-monitor-row">
-                    <div class="ds-monitor-dot" :style="{ background: scoreBg(m.lastScore) }"></div>
-                    <div class="ds-monitor-info">
-                      <div class="ds-monitor-domain">{{ hostname(m.url) }}</div>
-                      <div class="ds-monitor-meta">{{ m.lastRunTime ? 'Checked ' + relativeTime(m.lastRunTime) : 'Not yet checked' }} · {{ m.frequency }}</div>
-                    </div>
-                    <div class="ds-monitor-score" :style="{ color: scoreBg(m.lastScore) }">
-                      {{ m.lastScore ?? '—' }}
-                      <span v-if="scoreTrend(m.url)" :style="{ color: trendColor(scoreTrend(m.url)) }">{{ scoreTrend(m.url) }}</span>
-                    </div>
-                    <div class="ds-monitor-actions">
-                      <button @click="openScanByUrl(m.url)" class="ds-monitor-link">View →</button>
-                      <button @click="toggleMonitor(m.url)" class="ds-monitor-stop">Stop</button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div class="ds-card">
-                <div class="ds-card-header">
-                  <div class="ds-card-title">Activity Feed</div>
-                  <span class="ds-card-sub" :style="{ color: scans.some(s => s.status === 'running') ? '#ec3586' : '#6b7280' }">{{ scans.some(s => s.status === 'running') ? '● Live' : 'Recent' }}</span>
-                </div>
-                <div v-if="!scans.length" class="ds-empty-state"><p>No activity yet</p></div>
-                <div v-else class="ds-activity-list">
-                  <button v-for="scan in scans.slice(0, 8)" :key="scan._id" @click="openScan(scan)" class="ds-activity-item">
-                    <div class="ds-activity-dot" :style="{ background: scan.status === 'done' ? scoreBg(scan.overallScore) : scan.status === 'running' ? '#ec3586' : scan.status === 'error' ? '#ff4757' : 'rgba(255,255,255,0.15)' }"></div>
-                    <div class="ds-activity-text">
-                      <span class="ds-activity-domain">{{ hostname(scan.url) }}</span>
-                      <span v-if="scan.status === 'done'">complete — score {{ scan.overallScore ?? '?' }}</span>
-                      <span v-else-if="scan.status === 'running'">scanning…</span>
-                      <span v-else-if="scan.status === 'error'">failed</span>
-                      <span v-else>queued</span>
-                    </div>
-                    <div class="ds-activity-time">{{ relativeTime(scan._creationTime) }}</div>
-                  </button>
-                </div>
-              </div>
-            </div>
+            <OverviewView
+              :scans="data.scans.value"
+              :done-scans="doneScans"
+              :monitors="data.monitors"
+              :bulk-scans="data.bulkScans"
+              :avg-score="avgScore"
+              :best-score="bestScore"
+              :open-scan-by-url="view.openScanByUrl"
+              :toggle-monitor="actions.toggleMonitor"
+              @set-view="view.setView"
+              @open-scan="view.openScan"
+            />
           </template>
 
           <!-- ══════════════════════════════════════════════
