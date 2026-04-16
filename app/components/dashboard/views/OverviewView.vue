@@ -1,5 +1,8 @@
 <script setup lang="ts">
-defineProps<{
+import { useScoreFormat } from '~/composables/dashboard/useScoreFormat'
+import { useScoreTrend } from '~/composables/dashboard/useScoreFormat'
+
+const props = defineProps<{
   scans: any[]
   doneScans: any[]
   monitors: any[]
@@ -14,6 +17,10 @@ const emit = defineEmits<{
   (e: 'set-view', v: string): void
   (e: 'open-scan', scan: any): void
 }>()
+
+const { scoreBg, hostname, relativeTime, faviconUrl, scoreColor, trendColor } = useScoreFormat()
+const doneScansRef = computed(() => props.doneScans)
+const { scoreTrend } = useScoreTrend(doneScansRef)
 </script>
 
 <template>
