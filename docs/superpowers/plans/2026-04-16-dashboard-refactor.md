@@ -24,6 +24,13 @@
 6. **Commit + push after every task** — each task ends with a commit. If git config blocks the push, surface the prepared commit message to the user instead of guessing credentials.
 7. **No auto memory writes, no auto security-auditor dispatches** — these are explicit user preferences. Skip both unless the user asks.
 8. **Type discipline** — every new `.ts` file uses explicit return types on exports. Every new `.vue` file uses `<script setup lang="ts">` with `defineProps<...>()` and `defineEmits<...>()` typed generic arguments — no runtime declarations.
+9. **Git ↔ checklist cross-reference (session start + resume)** — whenever the overseer starts or resumes work on this plan, **before dispatching anything**, it must:
+   a. Run `git log --oneline -20` and `git status`.
+   b. Identify the most recent commit whose subject matches a task in this file (e.g. `refactor(dashboard): extract sidebar component` → Task 2.1).
+   c. Confirm that every task at or before that commit has its `- [ ]` flipped to `- [x]` in this plan. If a task is committed but still unchecked, flip it now (one `Edit` call per task) and push the edit as `docs: sync plan checkboxes with git history`.
+   d. Confirm that no task after that commit has a premature `- [x]`. If one does, unflip it — the commit is the source of truth, the checkbox is not.
+   e. The next task to dispatch is the first `- [ ]` after the matched commit. Do not trust an in-memory TodoWrite list across sessions — always reconcile against git first.
+   Rationale: multi-session / multi-agent execution guarantees that at some point the checklist and the commit graph will disagree. Git wins; this rule makes that explicit.
 
 ---
 
