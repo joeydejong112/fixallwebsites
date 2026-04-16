@@ -5,7 +5,12 @@ import { useDashboardView } from '~/composables/dashboard/useDashboardView'
 import { useScoreFormat, useScoreTrend } from '~/composables/dashboard/useScoreFormat'
 import { useChartGeometry } from '~/composables/dashboard/useChartGeometry'
 import { allTools, toolPillars, TOOL_LINKS, PILLAR_COLORS } from '~/lib/dashboard/tools'
-import { toolComponentMap } from '~/lib/dashboard/toolComponentMap'
+import ToolsView from '~/components/dashboard/views/ToolsView.vue'
+import ToolDetailView from '~/components/dashboard/views/ToolDetailView.vue'
+import CompareView from '~/components/dashboard/views/CompareView.vue'
+import ChartDetailView from '~/components/dashboard/views/ChartDetailView.vue'
+import BulkView from '~/components/dashboard/views/BulkView.vue'
+import ChartsView from '~/components/dashboard/views/ChartsView.vue'
 
 definePageMeta({ middleware: 'auth' })
 useSeoMeta({ title: 'Dashboard — ScanPulse' })
@@ -634,18 +639,8 @@ watch(userId, id => { if (id) data.loadUserData(id) }, { immediate: true })
           <!-- ══════════════════════════════════════════════
                VIEW: TOOL DETAIL
           ══════════════════════════════════════════════════ -->
-          <template v-else-if="currentView === 'tool-detail' && currentToolComponent">
-            <div class="ds-tool-detail">
-              <Suspense>
-                <component :is="currentToolComponent" />
-                <template #fallback>
-                  <div class="ds-tool-loading">
-                    <div class="ds-tool-loading-dot" />
-                    <span>Loading tool…</span>
-                  </div>
-                </template>
-              </Suspense>
-            </div>
+          <template v-else-if="currentView === 'tool-detail'">
+            <ToolDetailView :slug="view.selectedTool.value" />
           </template>
 
           <!-- ══════════════════════════════════════════════
@@ -1191,11 +1186,6 @@ watch(userId, id => { if (id) data.loadUserData(id) }, { immediate: true })
 .ds-tools-sub-item:hover { color: #e8e8f0; }
 .ds-tools-sub-active { color: white !important; background: color-mix(in srgb, var(--ac) 10%, transparent) !important; }
 .ds-tools-sub-dot { width: 5px; height: 5px; border-radius: 50%; flex-shrink: 0; }
-
-/* ── Tool detail view ─────────────────────────────────── */
-.ds-tool-detail { min-height: 100%; }
-.ds-tool-loading { display: flex; align-items: center; gap: 12px; padding: 60px 0; justify-content: center; color: #6b7280; font-size: 13px; }
-.ds-tool-loading-dot { width: 8px; height: 8px; border-radius: 50%; background: #ec3586; animation: pulse 1s infinite; }
 
 /* ── Charts view ──────────────────────────────────────── */
 .ds-bar-chart { padding-top: 8px; }
