@@ -136,8 +136,8 @@ watch(userId, id => { if (id) data.loadUserData(id) }, { immediate: true })
             <OverviewView
               :scans="data.scans.value"
               :done-scans="doneScans"
-              :monitors="data.monitors"
-              :bulk-scans="data.bulkScans"
+              :monitors="data.monitors.value"
+              :bulk-scans="data.bulkScans.value"
               :avg-score="avgScore"
               :best-score="bestScore"
               :open-scan-by-url="view.openScanByUrl"
