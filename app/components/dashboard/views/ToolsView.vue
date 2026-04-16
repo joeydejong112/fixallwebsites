@@ -22,18 +22,18 @@ function openTool(slug: string) {
 <template>
   <div>
     <!-- Filter tabs -->
-    <div class="tl-tabs">
+    <div class="flex gap-0 overflow-x-auto border-b border-white/5 scrollbar-none shrink-0">
       <button
         v-for="p in toolPillars"
         :key="p.key"
-        class="tl-tab"
-        :class="{ 'tl-tab--active': toolsFilter === p.key }"
+        class="inline-flex items-center gap-[7px] font-display text-xs font-bold px-3 py-3 text-white/[0.28] bg-none border-none cursor-pointer border-b-2 border-transparent mb-[-1px] transition-colors duration-150 whitespace-nowrap hover:text-white/60"
+        :class="{ '!text-[var(--tc)] !border-b-2 !border-[var(--tc)]': toolsFilter === p.key }"
         :style="toolsFilter === p.key ? `--tc:${p.color}` : ''"
         @click="toolsFilter = p.key"
       >
-        <span v-if="p.key !== 'all'" class="tl-tdot" :style="`background:${p.color}`" />
+        <span v-if="p.key !== 'all'" class="w-[5px] h-[5px] rounded-full shrink-0" :style="`background:${p.color}`" />
         {{ p.label }}
-        <span class="tl-tcount">{{ toolsPillarCount(p.key) }}</span>
+        <span class="font-display text-[9px] bg-white/6 rounded px-[5px] py-px text-white/[0.22]">{{ toolsPillarCount(p.key) }}</span>
       </button>
     </div>
 
@@ -42,62 +42,62 @@ function openTool(slug: string) {
       <div
         v-if="toolsFeatured"
         :key="'feat-' + toolsFeatured.slug"
-        class="tl-feat"
+        class="relative overflow-hidden flex items-stretch rounded-[14px] bg-[#0e0e13] border border-white/7 text-decoration-none min-h-[200px] transition-all duration-200 hover:border-[var(--pc)] hover:translate-y-[-2px] hover:shadow-xl"
         :style="`--pc:${toolsFeatured.color}`"
         @click="openTool(toolsFeatured.slug)"
       >
-        <div class="tl-feat-shimmer" />
-        <div class="tl-feat-glow" :style="`background:radial-gradient(ellipse at 75% 50%, ${toolsFeatured.color}1a 0%, transparent 65%)`" />
-        <div class="tl-feat-deco" :style="`color:${toolsFeatured.color}`">
+        <div class="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[var(--pc)] to-transparent opacity-0 transition-opacity duration-300 hover:opacity-100" />
+        <div class="absolute inset-0 pointer-events-none" :style="`background:radial-gradient(ellipse at 75% 50%, ${toolsFeatured.color}1a 0%, transparent 65%)`" />
+        <div class="absolute right-[-20px] bottom-[-20px] opacity-[0.045] pointer-events-none transition-opacity duration-300 hover:opacity-70" :style="`color:${toolsFeatured.color}`">
           <svg width="120" height="120" viewBox="0 0 24 24" fill="currentColor" v-html="toolsFeatured.icon" />
         </div>
-        <div class="tl-feat-body">
-          <div class="tl-feat-top">
-            <div class="tl-feat-ring" :style="`color:${toolsFeatured.color};background:${toolsFeatured.color}15;border-color:${toolsFeatured.color}30`">
+        <div class="relative z-10 px-8 py-7 flex flex-col gap-[14px] flex-1">
+          <div class="flex items-center gap-3">
+            <div class="w-[46px] h-[46px] rounded-[12px] shrink-0 flex items-center justify-center border" :style="`color:${toolsFeatured.color};background:${toolsFeatured.color}15;border-color:${toolsFeatured.color}30`">
               <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" v-html="toolsFeatured.icon" />
             </div>
-            <div class="tl-feat-badges">
-              <span class="tl-fbadge" :style="`color:${toolsFeatured.color};background:${toolsFeatured.color}12;border-color:${toolsFeatured.color}30`">{{ toolsFeatured.pillar }}</span>
-              <span class="tl-fbadge tl-fbadge--free">Free</span>
-              <span class="tl-fbadge tl-fbadge--feat">Featured</span>
+            <div class="flex gap-[6px] items-center flex-wrap">
+              <span class="font-display text-[9px] font-bold tracking-[0.12em] uppercase px-[8px] py-[3px] rounded border" :style="`color:${toolsFeatured.color};background:${toolsFeatured.color}12;border-color:${toolsFeatured.color}30`">{{ toolsFeatured.pillar }}</span>
+              <span class="font-display text-[9px] font-bold tracking-[0.12em] uppercase px-[8px] py-[3px] rounded border text-[#00d4aa] bg-[#00d4aa]/8 border-[#00d4aa]/22">Free</span>
+              <span class="font-display text-[9px] font-bold tracking-[0.12em] uppercase px-[8px] py-[3px] rounded border text-[#ec3586] bg-[#ec3586]/8 border-[#ec3586]/22">Featured</span>
             </div>
           </div>
-          <h2 class="tl-feat-title">{{ toolsFeatured.title }}</h2>
-          <p class="tl-feat-desc">{{ toolsFeatured.desc }}</p>
-          <div class="tl-feat-foot">
-            <span class="tl-feat-checks" :style="`color:${toolsFeatured.color}`">
+          <h2 class="font-display text-[clamp(1.3rem,2.5vw,1.9rem)] font-extrabold text-white tracking-[-0.03em] m-0 leading-tight">{{ toolsFeatured.title }}</h2>
+          <p class="font-body text-[13px] text-white/[0.36] leading-relaxed m-0 flex-1">{{ toolsFeatured.desc }}</p>
+          <div class="flex items-center gap-4 mt-auto">
+            <span class="font-body text-[12px] font-semibold flex-1" :style="`color:${toolsFeatured.color}`">
               {{ toolsFeatured.fixes ? `✓ Fixes ${toolsFeatured.fixes} scan checks` : '✓ WCAG accessibility' }}
             </span>
-            <span class="tl-feat-cta" :style="`background:${toolsFeatured.color};color:#07070a`">Open tool →</span>
+            <span class="inline-flex items-center font-display text-[11px] font-extrabold tracking-[0.08em] uppercase px-[18px] py-[9px] rounded-[6px] transition-all duration-150 hover:brightness-110 hover:translate-x-[2px] shrink-0" :style="`background:${toolsFeatured.color};color:#07070a`">Open tool →</span>
           </div>
         </div>
       </div>
 
       <!-- Rest grid -->
-      <div v-if="toolsRest.length" key="rest-grid" class="tl-rest-grid">
+      <div v-if="toolsRest.length" key="rest-grid" class="grid grid-cols-[repeat(auto-fill,minmax(240px,1fr))] gap-3">
         <div
           v-for="(t, i) in toolsRest"
           :key="t.slug"
-          class="tl-rcard"
+          class="relative flex overflow-hidden rounded-[12px] bg-[#0e0e13] border border-white/[0.055] text-decoration-none transition-all duration-200 hover:border-[var(--pc)] hover:translate-y-[-2px] hover:shadow-[0_10px_30px_rgba(0,0,0,0.4),0_0_0_1px_var(--pc)] animate-[tl-card-in_0.3s_ease_both]"
           :style="`--pc:${t.color};--i:${i}`"
           @click="openTool(t.slug)"
         >
-          <div class="tl-rcard-accent" :style="`background:${t.color}`" />
-          <div class="tl-rcard-inner">
-            <div class="tl-rcard-head">
-              <div class="tl-rcard-icon" :style="`color:${t.color};background:${t.color}12;border:1px solid ${t.color}25`">
+          <div class="w-[3px] shrink-0 opacity-50 transition-opacity duration-200 hover:opacity-100" :style="`background:${t.color}`" />
+          <div class="flex flex-col gap-[9px] px-4 py-[18px] flex-1">
+            <div class="flex items-center gap-2">
+              <div class="w-[28px] h-[28px] rounded-[7px] flex items-center justify-center shrink-0" :style="`color:${t.color};background:${t.color}12;border:1px solid ${t.color}25`">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" v-html="t.icon" />
               </div>
-              <span class="tl-rcard-pillar" :style="`color:${t.color}`">{{ t.pillar }}</span>
-              <span class="tl-rcard-free">Free</span>
+              <span class="font-display text-[9px] font-bold tracking-[0.12em] uppercase flex-1" :style="`color:${t.color}`">{{ t.pillar }}</span>
+              <span class="font-display text-[8px] font-bold tracking-[0.1em] uppercase text-white/[0.2] bg-white/[0.04] border border-white/[0.08] rounded-[3px] px-[5px] py-[2px]">Free</span>
             </div>
-            <h3 class="tl-rcard-title">{{ t.title }}</h3>
-            <p class="tl-rcard-desc">{{ t.short }}</p>
-            <div class="tl-rcard-foot">
-              <span class="tl-rcard-checks" :style="`color:${t.color};background:${t.color}10;border:1px solid ${t.color}20`">
+            <h3 class="font-display text-[13px] font-bold text-white/[0.88] m-0 leading-snug transition-colors duration-150 hover:text-white">{{ t.title }}</h3>
+            <p class="font-body text-[11px] text-white/[0.26] leading-relaxed m-0 flex-1">{{ t.short }}</p>
+            <div class="flex items-center justify-between mt-1">
+              <span class="font-display text-[10px] px-[7px] py-px rounded-[4px]" :style="`color:${t.color};background:${t.color}10;border:1px solid ${t.color}20`">
                 {{ t.fixes ? `${t.fixes} checks` : 'WCAG' }}
               </span>
-              <span class="tl-rcard-cta">Open →</span>
+              <span class="font-display text-[11px] font-bold tracking-[0.04em] transition-all duration-150 hover:tracking-[0.08em]" :style="`color:var(--pc)`">Open →</span>
             </div>
           </div>
         </div>
@@ -107,58 +107,13 @@ function openTool(slug: string) {
 </template>
 
 <style scoped>
-/* ── Tools view ─────────────────────────────────────────── */
-.tl-tabs { display: flex; gap: 0; overflow-x: auto; border-bottom: 1px solid rgba(255,255,255,0.05); scrollbar-width: none; flex-shrink: 0; }
-.tl-tabs::-webkit-scrollbar { display: none; }
-.tl-tab { display: inline-flex; align-items: center; gap: 7px; font-family: 'Space Grotesk', sans-serif; font-size: 12px; font-weight: 700; padding: 12px 14px; color: rgba(255,255,255,0.28); background: none; border: none; cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; transition: color 0.15s, border-color 0.15s; white-space: nowrap; }
-.tl-tab:hover { color: rgba(255,255,255,0.6); }
-.tl-tab--active { color: var(--tc); border-bottom-color: var(--tc); }
-.tl-tdot { width: 5px; height: 5px; border-radius: 50%; flex-shrink: 0; }
-.tl-tcount { font-family: 'Space Grotesk', sans-serif; font-size: 9px; background: rgba(255,255,255,0.06); border-radius: 4px; padding: 1px 5px; color: rgba(255,255,255,0.22); }
-.tl-tab--active .tl-tcount { background: color-mix(in srgb, var(--tc) 15%, transparent); color: var(--tc); }
-
-.tl-feat { position: relative; overflow: hidden; display: flex; align-items: stretch; border-radius: 14px; background: #0e0e13; border: 1px solid rgba(255,255,255,0.07); text-decoration: none; min-height: 200px; transition: border-color 0.25s, transform 0.2s, box-shadow 0.25s; }
-.tl-feat:hover { border-color: var(--pc); transform: translateY(-2px); box-shadow: 0 20px 50px rgba(0,0,0,0.5), 0 0 0 1px var(--pc); }
-.tl-feat-shimmer { position: absolute; top: 0; left: 0; right: 0; height: 1px; background: linear-gradient(90deg, transparent, var(--pc), transparent); opacity: 0; transition: opacity 0.3s; }
-.tl-feat:hover .tl-feat-shimmer { opacity: 1; }
-.tl-feat-glow { position: absolute; inset: 0; pointer-events: none; }
-.tl-feat-deco { position: absolute; right: -20px; bottom: -20px; opacity: 0.045; pointer-events: none; transition: opacity 0.3s; }
-.tl-feat:hover .tl-feat-deco { opacity: 0.07; }
-.tl-feat-body { position: relative; z-index: 1; padding: 28px 32px; display: flex; flex-direction: column; gap: 14px; flex: 1; }
-.tl-feat-top { display: flex; align-items: center; gap: 12px; }
-.tl-feat-ring { width: 46px; height: 46px; border-radius: 12px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; border: 1px solid; }
-.tl-feat-badges { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
-.tl-fbadge { font-family: 'Space Grotesk', sans-serif; font-size: 9px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; padding: 3px 8px; border-radius: 4px; border: 1px solid; }
-.tl-fbadge--free { color: #00d4aa; background: rgba(0,212,170,0.08); border-color: rgba(0,212,170,0.22); }
-.tl-fbadge--feat { color: #ec3586; background: rgba(236,53,134,0.08); border-color: rgba(236,53,134,0.22); }
-.tl-feat-title { font-family: 'Space Grotesk', sans-serif; font-size: clamp(1.3rem, 2.5vw, 1.9rem); font-weight: 800; color: white; letter-spacing: -0.03em; margin: 0; line-height: 1.1; }
-.tl-feat-desc { font-family: 'DM Sans', sans-serif; font-size: 13px; color: rgba(255,255,255,0.36); line-height: 1.6; margin: 0; flex: 1; }
-.tl-feat-foot { display: flex; align-items: center; gap: 16px; margin-top: auto; }
-.tl-feat-checks { font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 600; flex: 1; }
-.tl-feat-cta { display: inline-flex; align-items: center; font-family: 'Space Grotesk', sans-serif; font-size: 11px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; padding: 9px 18px; border-radius: 6px; transition: filter 0.15s, transform 0.15s; flex-shrink: 0; }
-.tl-feat:hover .tl-feat-cta { filter: brightness(1.1); transform: translateX(2px); }
-
-.tl-rest-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px; }
-.tl-rcard { display: flex; position: relative; overflow: hidden; border-radius: 12px; background: #0e0e13; border: 1px solid rgba(255,255,255,0.055); text-decoration: none; transition: border-color 0.2s, transform 0.2s, box-shadow 0.2s; animation: tl-card-in 0.3s ease both; animation-delay: calc(var(--i) * 40ms); }
-@keyframes tl-card-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
-.tl-rcard:hover { border-color: var(--pc); transform: translateY(-2px); box-shadow: 0 10px 30px rgba(0,0,0,0.4), 0 0 0 1px var(--pc); }
-.tl-rcard-accent { width: 3px; flex-shrink: 0; opacity: 0.5; transition: opacity 0.2s; }
-.tl-rcard:hover .tl-rcard-accent { opacity: 1; }
-.tl-rcard-inner { display: flex; flex-direction: column; gap: 9px; padding: 18px 18px 18px 16px; flex: 1; }
-.tl-rcard-head { display: flex; align-items: center; gap: 8px; }
-.tl-rcard-icon { width: 28px; height: 28px; border-radius: 7px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-.tl-rcard-pillar { font-family: 'Space Grotesk', sans-serif; font-size: 9px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; flex: 1; }
-.tl-rcard-free { font-family: 'Space Grotesk', sans-serif; font-size: 8px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(255,255,255,0.2); background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 3px; padding: 2px 5px; }
-.tl-rcard-title { font-family: 'Space Grotesk', sans-serif; font-size: 13px; font-weight: 700; color: rgba(255,255,255,0.88); margin: 0; line-height: 1.3; transition: color 0.15s; }
-.tl-rcard:hover .tl-rcard-title { color: white; }
-.tl-rcard-desc { font-family: 'DM Sans', sans-serif; font-size: 11px; color: rgba(255,255,255,0.26); line-height: 1.5; margin: 0; flex: 1; }
-.tl-rcard-foot { display: flex; align-items: center; justify-content: space-between; margin-top: 4px; }
-.tl-rcard-checks { font-family: 'Space Grotesk', sans-serif; font-size: 10px; padding: 2px 7px; border-radius: 4px; }
-.tl-rcard-cta { font-family: 'Space Grotesk', sans-serif; font-size: 11px; font-weight: 700; color: var(--pc); letter-spacing: 0.04em; transition: letter-spacing 0.15s; }
-.tl-rcard:hover .tl-rcard-cta { letter-spacing: 0.08em; }
-
+/* ── TransitionGroup animations ─────────────────────────── */
 .tl-fade-enter-active { transition: opacity 0.2s, transform 0.2s; }
 .tl-fade-leave-active { transition: opacity 0.15s; }
 .tl-fade-enter-from { opacity: 0; transform: translateY(6px); }
 .tl-fade-leave-to   { opacity: 0; }
+
+/* ── Card entrance animation ────────────────────────────── */
+@keyframes tl-card-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
 </style>
