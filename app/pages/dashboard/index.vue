@@ -21,6 +21,7 @@ useSeoMeta({ title: 'Dashboard — ScanPulse' })
 
 const { userId } = useAuth()
 const data = useDashboardData()
+const { loading } = data
 const view = useDashboardView({ scans: data.scans, doneScans: computed(() => data.scans.value.filter(s => s.status === 'done')) })
 const actions = useScanActions(
   { scans: data.scans, monitors: data.monitors },
@@ -40,8 +41,8 @@ const router = useRouter()
 const newScanUrl = ref('')
 function submitNewScan() { const url = newScanUrl.value.trim(); if (url) { actions.handleScan(url); newScanUrl.value = '' } }
 function handleBack() {
-  if (view.currentView.value === 'tool-detail') view.setView('tools')
-  else if (view.currentView.value === 'chart-detail') view.setView('charts')
+  if (view.view.currentView.value.value === 'tool-detail') view.setView('tools')
+  else if (view.view.currentView.value.value === 'chart-detail') view.setView('charts')
   else view.setView('history')
 }
 
@@ -84,7 +85,7 @@ watch(userId, id => { if (id) data.loadUserData(id) }, { immediate: true })
 
     <!-- ── SIDEBAR ──────────────────────────────────────── -->
     <DashboardSidebar
-      :current-view="view.currentView.value"
+      :current-view="view.view.currentView.value.value"
       :tools-expanded="view.toolsExpanded.value"
       :selected-tool="view.selectedTool.value"
       :selected-scan-url="view.selectedScan.value?.url ?? null"
@@ -105,7 +106,7 @@ watch(userId, id => { if (id) data.loadUserData(id) }, { immediate: true })
       <DashboardTopbar
         :title="view.topbarInfo.value?.title ?? ''"
         :subtitle="view.topbarInfo.value?.sub ?? ''"
-        :show-back="['result','tool-detail','chart-detail'].includes(view.currentView.value)"
+        :show-back="['result','tool-detail','chart-detail'].includes(view.view.currentView.value.value)"
         :scanning="actions.scanning.value"
         v-model="newScanUrl"
         @back="handleBack"
@@ -131,7 +132,7 @@ watch(userId, id => { if (id) data.loadUserData(id) }, { immediate: true })
           <!-- ══════════════════════════════════════════════
                VIEW: OVERVIEW
           ══════════════════════════════════════════════════ -->
-          <template v-if="currentView === 'overview'">
+          <template v-if="view.currentView.value === 'overview'">
             <OverviewView
               :scans="data.scans.value"
               :done-scans="doneScans"
@@ -149,21 +150,21 @@ watch(userId, id => { if (id) data.loadUserData(id) }, { immediate: true })
           <!-- ══════════════════════════════════════════════
                VIEW: HISTORY
           ══════════════════════════════════════════════════ -->
-          <template v-else-if="currentView === 'history'">
+          <template v-else-if="view.currentView.value === 'history'">
             <HistoryView :scans="data.scans.value" :is-monitored="actions.isMonitored" @open-scan="view.openScan" @delete-scan="actions.deleteScan" @rescan="actions.reScan" @toggle-monitor="actions.toggleMonitor" />
           </template>
 
           <!-- ══════════════════════════════════════════════
                VIEW: COMPARE
           ══════════════════════════════════════════════════ -->
-          <template v-else-if="currentView === 'compare'">
+          <template v-else-if="view.currentView.value === 'compare'">
             <CompareView />
           </template>
 
           <!-- ══════════════════════════════════════════════
                VIEW: BULK SCAN
           ══════════════════════════════════════════════════ -->
-          <template v-else-if="currentView === 'bulk'">
+          <template v-else-if="view.currentView.value === 'bulk'">
             <div class="bg-[#0f0f14] border border-[#1e1e28] rounded-xl p-4">
               <div class="flex items-center justify-between mb-4">
                 <div class="font-display font-semibold text-[13px] text-white/70">Bulk Scans</div>
@@ -198,14 +199,14 @@ watch(userId, id => { if (id) data.loadUserData(id) }, { immediate: true })
           <!-- ══════════════════════════════════════════════
                VIEW: SCAN
           ══════════════════════════════════════════════════ -->
-          <template v-else-if="currentView === 'scan'">
+          <template v-else-if="view.currentView.value === 'scan'">
             <ScanView :scanning="actions.scanning.value" @submit="actions.handleScan" />
           </template>
 
           <!-- ══════════════════════════════════════════════
                VIEW: CHARTS
           ══════════════════════════════════════════════════ -->
-          <template v-else-if="currentView === 'charts'">
+          <template v-else-if="view.currentView.value === 'charts'">
 
             <!-- Stats strip -->
             <div class="grid grid-cols-4 gap-3.5">
@@ -429,7 +430,7 @@ watch(userId, id => { if (id) data.loadUserData(id) }, { immediate: true })
           <!-- ══════════════════════════════════════════════
                VIEW: CHART DETAIL
           ══════════════════════════════════════════════════ -->
-          <template v-else-if="currentView === 'chart-detail' && selectedChartUrl">
+          <template v-else-if="view.currentView.value === 'chart-detail' && selectedChartUrl">
             <div v-if="!chartDetailScans.length" class="flex flex-col items-center justify-center py-6 text-[13px] text-white/30 text-center"><p>No completed scans for this site.</p></div>
             <div v-else class="flex flex-col gap-5">
 
@@ -601,14 +602,14 @@ watch(userId, id => { if (id) data.loadUserData(id) }, { immediate: true })
             </div>
           </template>
 
-          <template v-else-if="currentView === 'tools'">
+          <template v-else-if="view.currentView.value === 'tools'">
             <ToolsView @open-tool="view.openTool" />
           </template>
 
           <!-- ══════════════════════════════════════════════
                VIEW: TOOL DETAIL
           ══════════════════════════════════════════════════ -->
-          <template v-else-if="currentView === 'tool-detail'">
+          <template v-else-if="view.currentView.value === 'tool-detail'">
             <ToolDetailView :slug="view.selectedTool.value" />
           </template>
 
@@ -616,7 +617,7 @@ watch(userId, id => { if (id) data.loadUserData(id) }, { immediate: true })
                VIEW: RESULT
           ══════════════════════════════════════════════════ -->
           <ResultView
-            v-if="view.currentView.value === 'result'"
+            v-if="view.view.currentView.value.value === 'result'"
             :scan="view.selectedScan.value"
             :is-monitored="actions.isMonitored"
             @rescan="actions.reScan"
@@ -626,7 +627,7 @@ watch(userId, id => { if (id) data.loadUserData(id) }, { immediate: true })
           />
 
           <!-- Previous scans of same site (shown when result view is active) -->
-          <div v-if="view.currentView.value === 'result' && scans.filter((s:any) => s.url === view.selectedScan.value?.url && s._id !== view.selectedScan.value?._id).length" class="bg-[#0f0f14] border border-[#1e1e28] rounded-xl p-4">
+          <div v-if="view.view.currentView.value.value === 'result' && scans.filter((s:any) => s.url === view.selectedScan.value?.url && s._id !== view.selectedScan.value?._id).length" class="bg-[#0f0f14] border border-[#1e1e28] rounded-xl p-4">
             <div class="flex items-center justify-between mb-4">
               <div class="font-display font-semibold text-[13px] text-white/70">Previous scans of {{ hostname(view.selectedScan.value?.url ?? '') }}</div>
             </div>
