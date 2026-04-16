@@ -11,6 +11,7 @@ import CompareView from '~/components/dashboard/views/CompareView.vue'
 import ChartDetailView from '~/components/dashboard/views/ChartDetailView.vue'
 import BulkView from '~/components/dashboard/views/BulkView.vue'
 import ChartsView from '~/components/dashboard/views/ChartsView.vue'
+import ResultView from '~/components/dashboard/views/ResultView.vue'
 
 definePageMeta({ middleware: 'auth' })
 useSeoMeta({ title: 'Dashboard — ScanPulse' })
@@ -44,41 +45,6 @@ function handleBack() {
 const doneScans = computed(() => data.scans.value.filter(s => s.status === 'done'))
 const avgScore  = computed(() => { if (!doneScans.value.length) return null; return Math.round(doneScans.value.reduce((s, x) => s + (x.overallScore ?? 0), 0) / doneScans.value.length) })
 const bestScore = computed(() => doneScans.value.length ? Math.max(...doneScans.value.map(s => s.overallScore ?? 0)) : null)
-const resultActiveTab = ref<IssueTab>('all')
-const resultExpandedFix = ref<string | null>(null)
-const resultCopied = ref(false)
-const resultIssueTabs: IssueTab[] = ['all', 'security', 'performance', 'seo', 'accessibility', 'ai', 'dns', 'trust']
-const resultExpandedIssues  = ref<Set<string>>(new Set())
-const resultCollapsedGroups = ref<Set<string>>(new Set(['pass']))
-
-function toggleResultIssue(title: string) { const s = new Set(resultExpandedIssues.value); if (s.has(title)) s.delete(title); else s.add(title); resultExpandedIssues.value = s }
-function toggleResultGroup(key: string) { const s = new Set(resultCollapsedGroups.value); if (s.has(key)) s.delete(key); else s.add(key); resultCollapsedGroups.value = s }
-const resultSeverityGroups = computed(() => {
-  const issues = (view.selectedScan.value?.issues ?? []).filter((i: any) => resultActiveTab.value === 'all' || i.pillar === resultActiveTab.value)
-  return { critical: issues.filter((i: any) => i.severity === 'critical'), warning: issues.filter((i: any) => i.severity === 'warning'), pass: issues.filter((i: any) => i.severity === 'pass') }
-})
-const resultToolCards = computed(() => {
-  if (!view.selectedScan.value?.issues) return []
-  const map = new Map<string, { count: number; hasCritical: boolean }>()
-  for (const issue of view.selectedScan.value.issues) {
-    if (issue.severity === 'pass') continue
-    const toolPath = TOOL_LINKS[issue.title as string]
-    if (!toolPath) continue
-    const tool = allTools.find(t => toolPath.endsWith(t.slug))
-    if (!tool) continue
-    const entry = map.get(tool.slug) ?? { count: 0, hasCritical: false }
-    entry.count++; if (issue.severity === 'critical') entry.hasCritical = true
-    map.set(tool.slug, entry)
-  }
-  return [...map.entries()].map(([slug, data]) => ({ tool: allTools.find(t => t.slug === slug)!, ...data })).sort((a, b) => (b.hasCritical ? 1 : 0) - (a.hasCritical ? 1 : 0) || b.count - a.count)
-})
-watch(resultActiveTab, () => { resultExpandedIssues.value = new Set() })
-const resultIssues = computed(() => {
-  if (!view.selectedScan.value?.issues) return []
-  if (resultActiveTab.value === 'all') return view.selectedScan.value.issues
-  return view.selectedScan.value.issues.filter((i: any) => i.pillar === resultActiveTab.value)
-})
-function shareResult() { if (!view.selectedScan.value?._id) return; navigator.clipboard.writeText(`${window.location.origin}/share/${view.selectedScan.value._id}`); resultCopied.value = true; setTimeout(() => { resultCopied.value = false }, 2000) }
 
 const topSites = computed(() => {
   const map = new Map<string, { url: string; count: number; latestScore: number | null }>()
@@ -646,308 +612,29 @@ watch(userId, id => { if (id) data.loadUserData(id) }, { immediate: true })
           <!-- ══════════════════════════════════════════════
                VIEW: RESULT
           ══════════════════════════════════════════════════ -->
-          <template v-else-if="currentView === 'result' && selectedScan">
+          <ResultView
+            v-if="view.currentView.value === 'result'"
+            :scan="view.selectedScan.value"
+            :is-monitored="actions.isMonitored"
+            @rescan="actions.reScan"
+            @delete="actions.deleteScan"
+            @open-tool="view.openTool"
+            @toggle-monitor="actions.toggleMonitor"
+          />
 
-            <!-- ── Scanning state ───────────────────────── -->
-            <div v-if="selectedScan.status === 'pending' || selectedScan.status === 'running'" class="rs-scanning">
-              <div class="rs-scan-rings">
-                <div class="rs-ring rs-ring-1"/>
-                <div class="rs-ring rs-ring-2"/>
-                <div class="rs-ring rs-ring-3"/>
-                <div class="rs-ring rs-ring-spin"/>
-                <div class="rs-ring-dot"/>
-              </div>
-              <div class="rs-scan-label">{{ selectedScan.status === 'running' ? 'Scanning…' : 'Initialising…' }}</div>
-              <div class="rs-scan-url">{{ selectedScan.url }}</div>
-              <div class="rs-scan-sub">Running 94 checks across security, performance, SEO, accessibility, AI readiness, DNS &amp; trust</div>
-              <div class="rs-scan-dots">
-                <div class="rs-scan-dot" style="animation-delay:0s"/>
-                <div class="rs-scan-dot" style="animation-delay:0.2s"/>
-                <div class="rs-scan-dot" style="animation-delay:0.4s"/>
-              </div>
+          <!-- Previous scans of same site (shown when result view is active) -->
+          <div v-if="view.currentView.value === 'result' && scans.filter((s:any) => s.url === view.selectedScan.value?.url && s._id !== view.selectedScan.value?._id).length" class="ds-card">
+            <div class="ds-card-header">
+              <div class="ds-card-title">Previous scans of {{ hostname(view.selectedScan.value?.url ?? '') }}</div>
             </div>
-
-            <!-- ── Error state ──────────────────────────── -->
-            <div v-else-if="selectedScan.status === 'error'" class="rs-error">
-              <div class="rs-error-icon">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
-                </svg>
+            <button v-for="s in scans.filter((s:any) => s.url === view.selectedScan.value?.url && s._id !== view.selectedScan.value?._id).slice(0, 5)" :key="s._id" @click="view.openScan(s)" class="ds-scan-item">
+              <div class="ds-scan-info">
+                <div class="ds-scan-domain">{{ relativeTime(s._creationTime) }}</div>
+                <div class="ds-scan-time">{{ statusLabel(s.status) }}</div>
               </div>
-              <div class="rs-error-title">Scan failed</div>
-              <div class="rs-error-msg">{{ selectedScan.errorMessage ?? 'Something went wrong.' }}</div>
-              <button class="rs-retry-btn" @click="handleScan(selectedScan.url)">Try again</button>
-            </div>
-
-            <!-- ── Done state ───────────────────────────── -->
-            <div v-else class="ds-result-layout">
-
-              <!-- ══ HEADER BAR ══ -->
-              <div class="rs2-header">
-                <!-- Mini score ring -->
-                <div class="rs2-mini-ring">
-                  <svg width="44" height="44" viewBox="0 0 44 44" style="transform:rotate(-90deg)">
-                    <circle cx="22" cy="22" r="18" fill="none" stroke="#1e1e28" stroke-width="4"/>
-                    <circle v-if="selectedScan.overallScore" cx="22" cy="22" r="18" fill="none"
-                      :stroke="scoreBg(selectedScan.overallScore)" stroke-width="4" stroke-linecap="round"
-                      :stroke-dasharray="`${(selectedScan.overallScore/100)*113} 113`"/>
-                  </svg>
-                  <span class="rs2-mini-score" :style="{ color: scoreBg(selectedScan.overallScore) }">{{ selectedScan.overallScore ?? '—' }}</span>
-                </div>
-
-                <!-- URL + meta -->
-                <div class="rs2-header-meta">
-                  <div class="rs2-url">{{ selectedScan.url }}</div>
-                  <div class="rs2-meta-row">
-                    <span class="rs2-time">{{ relativeTime(selectedScan._creationTime) }}</span>
-                    <span class="rs2-pill-done">● COMPLETE</span>
-                    <span v-if="isMonitored(selectedScan.url)" class="rs2-pill-monitored">● MONITORED</span>
-                  </div>
-                </div>
-
-                <!-- Actions -->
-                <div class="rs2-header-actions">
-                  <button @click="reScan(selectedScan.url)" class="rs2-act-btn">
-                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
-                    Re-scan
-                  </button>
-                  <button @click="toggleMonitor(selectedScan.url)" class="rs2-act-btn" :class="{ 'rs2-act-btn--danger-active': isMonitored(selectedScan.url) }">
-                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-                    {{ isMonitored(selectedScan.url) ? 'Stop monitoring' : 'Monitor' }}
-                  </button>
-                  <button @click="shareResult()" class="rs2-act-btn">
-                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8M16 6l-4-4-4 4M12 2v13"/></svg>
-                    {{ resultCopied ? 'Copied!' : 'Share' }}
-                  </button>
-                  <button @click="deleteScan(selectedScan._id)" class="rs2-act-btn rs2-act-btn--danger">
-                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6M10 11v6M14 11v6M9 6V4h6v2"/></svg>
-                    Delete
-                  </button>
-                </div>
-              </div>
-
-              <!-- ══ SCORE STRIP ══ -->
-              <div class="rs2-score-strip">
-                <div v-for="[name, val, color, bonus] in [
-                  ['Security',      selectedScan.securityScore,      '#00d4aa', false],
-                  ['Performance',   selectedScan.performanceScore,   '#ffaa00', false],
-                  ['SEO',           selectedScan.seoScore,           '#6c5ce7', false],
-                  ['Accessibility', selectedScan.accessibilityScore, '#a29bfe', false],
-                  ['AI Readiness',  selectedScan.aiScore,            '#ff7675', false],
-                  ['DNS & Email',   selectedScan.dnsScore,           '#74b9ff', true],
-                  ['Trust',         selectedScan.trustScore,         '#fd79a8', true],
-                ]" :key="String(name)" class="rs2-score-card" :style="`--pc:${color}`">
-                  <div class="rs2-score-card__label">
-                    {{ name }}
-                    <span v-if="bonus" class="rs2-score-card__bonus">BONUS</span>
-                  </div>
-                  <div class="rs2-score-card__num" :style="{ color: val != null ? String(color) : 'rgba(255,255,255,0.18)' }">{{ val ?? '—' }}</div>
-                  <div class="rs2-score-card__bar-bg">
-                    <div class="rs2-score-card__bar" :style="{ width: (Number(val)||0)+'%', background: String(color) }"/>
-                  </div>
-                </div>
-              </div>
-
-              <!-- ══ ISSUES ══ -->
-              <template v-if="selectedScan.issues?.length">
-
-                <!-- Issues heading -->
-                <div class="rs2-issues-hdr">
-                  <span class="rs2-issues-title">ISSUES</span>
-                  <span class="rs2-issues-count">{{ selectedScan.issues.filter((i:any) => i.severity !== 'pass').length }}</span>
-                </div>
-
-                <!-- Fix Now — large tool cards -->
-                <div v-if="resultToolCards.length" class="rs2-fix-panel">
-                  <div class="rs2-fix-panel-head">
-                    <span class="rs2-fix-panel-label">
-                      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/></svg>
-                      FIX NOW
-                    </span>
-                    <span class="rs2-fix-panel-sub">Tools that directly address your open issues</span>
-                  </div>
-                  <div class="rs2-fix-cards">
-                    <div
-                      v-for="{ tool, count, hasCritical, issues: toolIssues } in resultToolCards"
-                      :key="tool.slug"
-                      class="rs2-fix-card"
-                      :class="{ 'rs2-fix-card--critical': hasCritical }"
-                      :style="`--tc:${tool.color}`"
-                    >
-                      <div class="rs2-fix-card-badge" :class="hasCritical ? 'rs2-fix-card-badge--crit' : 'rs2-fix-card-badge--warn'">
-                        {{ count }} {{ hasCritical ? 'critical' : 'warning' }}{{ count === 1 ? '' : 's' }}
-                      </div>
-                      <div class="rs2-fix-card-body">
-                        <div class="rs2-fix-card-icon">
-                          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" :style="`color:${tool.color}`" v-html="tool.icon"/>
-                        </div>
-                        <div class="rs2-fix-card-title">{{ tool.title }}</div>
-                        <div class="rs2-fix-card-desc">{{ toolIssues?.slice(0,2).map((i:any) => i.title).join(', ') || tool.description }}</div>
-                      </div>
-                      <button class="rs2-fix-card-cta" @click="dashboardNavigate(`/tools/${tool.slug}`)">
-                        FIX ISSUES →
-                      </button>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Filter row -->
-                <div class="rs2-filter-row">
-                  <span class="rs2-filter-label">FILTER</span>
-                  <div class="rs2-filter-bar">
-                    <button
-                      v-for="tab in resultIssueTabs" :key="tab"
-                      class="rs2-chip"
-                      :class="{ 'rs2-chip--active': resultActiveTab === tab }"
-                      @click="resultActiveTab = tab"
-                    >
-                      {{ tab === 'all' ? 'All' : tab === 'seo' ? 'SEO' : tab === 'ai' ? 'AI' : tab === 'dns' ? 'DNS' : tab.charAt(0).toUpperCase() + tab.slice(1) }}
-                      <span v-if="issueTabCount(tab)" class="rs2-chip-count">{{ issueTabCount(tab) }}</span>
-                    </button>
-                  </div>
-                </div>
-
-                <!-- Severity groups -->
-                <div class="rs2-groups">
-
-                  <!-- Critical -->
-                  <div v-if="resultSeverityGroups.critical.length" class="rs2-sev-group">
-                    <button class="rs2-sev-head rs2-sev-head--critical" @click="toggleResultGroup('critical')">
-                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#ff4757" stroke-width="2.5"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-                      <span class="rs2-sev-label">CRITICAL</span>
-                      <span class="rs2-sev-cnt rs2-sev-cnt--critical">{{ resultSeverityGroups.critical.length }}</span>
-                      <span class="rs2-sev-sub">Immediate action needed</span>
-                      <svg class="rs2-sev-chevron" :class="{ open: !resultCollapsedGroups.has('critical') }" width="12" height="12" viewBox="0 0 12 12" fill="none">
-                        <path d="M2 4l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                      </svg>
-                    </button>
-                    <div v-if="!resultCollapsedGroups.has('critical')" class="rs2-issue-list">
-                      <div v-for="issue in resultSeverityGroups.critical" :key="issue.title" class="rs2-issue rs2-issue--critical">
-                        <!-- Title row -->
-                        <div class="rs2-issue-title-row">
-                          <span class="rs2-issue-bullet rs2-issue-bullet--critical">•</span>
-                          <span class="rs2-issue-title">{{ issue.title }}</span>
-                          <span class="rs2-sev-badge rs2-sev-badge--critical">CRITICAL</span>
-                          <span class="rs2-issue-pillar" :style="pillarColor(issue.pillar)">{{ issue.pillar?.toUpperCase() }}</span>
-                        </div>
-                        <!-- Description always visible -->
-                        <p class="rs2-issue-desc">{{ issue.description }}</p>
-                        <!-- HOW TO FIX toggle -->
-                        <template v-if="FIX_SNIPPETS[issue.title] || TOOL_LINKS[issue.title]">
-                          <button class="rs2-how-toggle" @click="toggleResultIssue(issue.title)">
-                            <svg width="10" height="10" viewBox="0 0 12 12" fill="none" class="rs2-how-chevron" :class="{ open: resultExpandedIssues.has(issue.title) }">
-                              <path d="M2 4l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                            </svg>
-                            HOW TO FIX
-                          </button>
-                          <div v-if="resultExpandedIssues.has(issue.title)" class="rs2-fix-expand">
-                            <div v-if="FIX_SNIPPETS[issue.title]" class="rs2-snippet">
-                              <pre class="rs2-pre">{{ FIX_SNIPPETS[issue.title].generic }}</pre>
-                            </div>
-                            <button v-if="TOOL_LINKS[issue.title]" class="rs2-open-tool" @click="dashboardNavigate(TOOL_LINKS[issue.title])">
-                              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/></svg>
-                              Build your {{ allTools.find(t => TOOL_LINKS[issue.title]?.endsWith(t.slug))?.title ?? 'tool' }} with our tool →
-                            </button>
-                          </div>
-                        </template>
-                      </div>
-                    </div>
-                  </div>
-
-                  <!-- Warning -->
-                  <div v-if="resultSeverityGroups.warning.length" class="rs2-sev-group">
-                    <button class="rs2-sev-head rs2-sev-head--warning" @click="toggleResultGroup('warning')">
-                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#ffaa00" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-                      <span class="rs2-sev-label">WARNINGS</span>
-                      <span class="rs2-sev-cnt rs2-sev-cnt--warning">{{ resultSeverityGroups.warning.length }}</span>
-                      <span class="rs2-sev-sub">Review recommended</span>
-                      <svg class="rs2-sev-chevron" :class="{ open: !resultCollapsedGroups.has('warning') }" width="12" height="12" viewBox="0 0 12 12" fill="none">
-                        <path d="M2 4l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                      </svg>
-                    </button>
-                    <div v-if="!resultCollapsedGroups.has('warning')" class="rs2-issue-list">
-                      <div v-for="issue in resultSeverityGroups.warning" :key="issue.title" class="rs2-issue rs2-issue--warning">
-                        <div class="rs2-issue-title-row">
-                          <span class="rs2-issue-bullet rs2-issue-bullet--warning">•</span>
-                          <span class="rs2-issue-title">{{ issue.title }}</span>
-                          <span class="rs2-sev-badge rs2-sev-badge--warning">WARNING</span>
-                          <span class="rs2-issue-pillar" :style="pillarColor(issue.pillar)">{{ issue.pillar?.toUpperCase() }}</span>
-                        </div>
-                        <p class="rs2-issue-desc">{{ issue.description }}</p>
-                        <template v-if="FIX_SNIPPETS[issue.title] || TOOL_LINKS[issue.title]">
-                          <button class="rs2-how-toggle" @click="toggleResultIssue(issue.title)">
-                            <svg width="10" height="10" viewBox="0 0 12 12" fill="none" class="rs2-how-chevron" :class="{ open: resultExpandedIssues.has(issue.title) }">
-                              <path d="M2 4l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                            </svg>
-                            HOW TO FIX
-                          </button>
-                          <div v-if="resultExpandedIssues.has(issue.title)" class="rs2-fix-expand">
-                            <div v-if="FIX_SNIPPETS[issue.title]" class="rs2-snippet">
-                              <pre class="rs2-pre">{{ FIX_SNIPPETS[issue.title].generic }}</pre>
-                            </div>
-                            <button v-if="TOOL_LINKS[issue.title]" class="rs2-open-tool" @click="dashboardNavigate(TOOL_LINKS[issue.title])">
-                              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/></svg>
-                              Build your {{ allTools.find(t => TOOL_LINKS[issue.title]?.endsWith(t.slug))?.title ?? 'tool' }} with our tool →
-                            </button>
-                          </div>
-                        </template>
-                      </div>
-                    </div>
-                  </div>
-
-                  <!-- Passing -->
-                  <div v-if="resultSeverityGroups.pass.length" class="rs2-sev-group">
-                    <button class="rs2-sev-head rs2-sev-head--pass" @click="toggleResultGroup('pass')">
-                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#00d4aa" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-                      <span class="rs2-sev-label">PASSING</span>
-                      <span class="rs2-sev-cnt rs2-sev-cnt--pass">{{ resultSeverityGroups.pass.length }}</span>
-                      <span class="rs2-sev-sub">All checks passed</span>
-                      <svg class="rs2-sev-chevron" :class="{ open: !resultCollapsedGroups.has('pass') }" width="12" height="12" viewBox="0 0 12 12" fill="none">
-                        <path d="M2 4l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                      </svg>
-                    </button>
-                    <div v-if="!resultCollapsedGroups.has('pass')" class="rs2-issue-list">
-                      <div v-for="issue in resultSeverityGroups.pass" :key="issue.title" class="rs2-issue rs2-issue--pass">
-                        <div class="rs2-issue-title-row">
-                          <span class="rs2-issue-bullet rs2-issue-bullet--pass">✓</span>
-                          <span class="rs2-issue-title">{{ issue.title }}</span>
-                          <span class="rs2-issue-pillar" :style="pillarColor(issue.pillar)">{{ issue.pillar?.toUpperCase() }}</span>
-                        </div>
-                        <p class="rs2-issue-desc">{{ issue.description }}</p>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div v-if="!resultSeverityGroups.critical.length && !resultSeverityGroups.warning.length && !resultSeverityGroups.pass.length" class="ds-empty-state">
-                    <p>No issues in this category</p>
-                  </div>
-
-                </div>
-
-              </template>
-
-              <!-- No issues -->
-              <div v-else-if="selectedScan.status === 'done'" class="rs2-all-pass">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#00d4aa" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-                No issues found — everything looks great
-              </div>
-
-              <!-- Other scans of same site -->
-              <div v-if="scans.filter((s:any) => s.url === selectedScan.url && s._id !== selectedScan._id).length" class="ds-card">
-                <div class="ds-card-header">
-                  <div class="ds-card-title">Previous scans of {{ hostname(selectedScan.url) }}</div>
-                </div>
-                <button v-for="s in scans.filter((s:any) => s.url === selectedScan.url && s._id !== selectedScan._id).slice(0, 5)" :key="s._id" @click="openScan(s)" class="ds-scan-item">
-                  <div class="ds-scan-info">
-                    <div class="ds-scan-domain">{{ relativeTime(s._creationTime) }}</div>
-                    <div class="ds-scan-time">{{ statusLabel(s.status) }}</div>
-                  </div>
-                  <span class="ds-scan-score" :style="{ color: scoreBg(s.overallScore) }">{{ s.overallScore ?? '—' }}</span>
-                </button>
-              </div>
-
-            </div>
-          </template>
+              <span class="ds-scan-score" :style="{ color: scoreBg(s.overallScore) }">{{ s.overallScore ?? '—' }}</span>
+            </button>
+          </div>
 
         </template>
       </div>
