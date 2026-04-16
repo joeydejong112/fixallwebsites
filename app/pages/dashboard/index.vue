@@ -212,13 +212,13 @@ watch(userId, id => { if (id) data.loadUserData(id) }, { immediate: true })
             <div class="grid grid-cols-4 gap-3.5">
               <div class="bg-[#0f0f14] border border-[#1e1e28] rounded-xl p-4">
                 <div class="text-[10px] font-semibold font-display uppercase tracking-widest text-white/40 mb-2">Total Scans</div>
-                <div class="font-display text-[28px] font-bold" style="color:#ec3586">{{ scans.length }}</div>
+                <div class="font-display text-[28px] font-bold" style="color:#ec3586">{{ data.scans.value.length }}</div>
                 <div class="text-[11px] text-white/30 mt-1">All time</div>
               </div>
               <div class="bg-[#0f0f14] border border-[#1e1e28] rounded-xl p-4">
                 <div class="text-[10px] font-semibold font-display uppercase tracking-widest text-white/40 mb-2">Completed</div>
                 <div class="font-display text-[28px] font-bold" :style="{ color: '#00d4aa' }">{{ doneScans.length }}</div>
-                <div class="text-[11px] text-white/30 mt-1">{{ scans.filter(s=>s.status==='error').length }} failed</div>
+                <div class="text-[11px] text-white/30 mt-1">{{ data.scans.value.filter(s=>s.status==='error').length }} failed</div>
               </div>
               <div class="bg-[#0f0f14] border border-[#1e1e28] rounded-xl p-4">
                 <div class="text-[10px] font-semibold font-display uppercase tracking-widest text-white/40 mb-2">Avg Score</div>
@@ -236,7 +236,7 @@ watch(userId, id => { if (id) data.loadUserData(id) }, { immediate: true })
               <!-- Scans per day bar chart -->
               <div class="bg-[#0f0f14] border border-[#1e1e28] rounded-xl p-4">
                 <div class="flex items-center justify-between mb-4"><div class="font-display font-semibold text-[13px] text-white/70">Scans per Day (last 14 days)</div></div>
-                <div v-if="!scans.length" class="flex flex-col items-center justify-center py-6 text-[13px] text-white/30 text-center"><p>No scans yet</p></div>
+                <div v-if="!data.scans.value.length" class="flex flex-col items-center justify-center py-6 text-[13px] text-white/30 text-center"><p>No scans yet</p></div>
                 <div v-else class="pt-2">
                   <div class="flex items-end gap-1 h-[120px]">
                     <div v-for="(day, i) in scansPerDay" :key="i" class="flex-1 flex flex-col items-center gap-0.5 h-full">
@@ -627,11 +627,11 @@ watch(userId, id => { if (id) data.loadUserData(id) }, { immediate: true })
           />
 
           <!-- Previous scans of same site (shown when result view is active) -->
-          <div v-if="view.currentView.value === 'result' && scans.filter((s:any) => s.url === view.selectedScan.value?.url && s._id !== view.selectedScan.value?._id).length" class="bg-[#0f0f14] border border-[#1e1e28] rounded-xl p-4">
+          <div v-if="view.currentView.value === 'result' && data.scans.value.filter((s:any) => s.url === view.selectedScan.value?.url && s._id !== view.selectedScan.value?._id).length" class="bg-[#0f0f14] border border-[#1e1e28] rounded-xl p-4">
             <div class="flex items-center justify-between mb-4">
               <div class="font-display font-semibold text-[13px] text-white/70">Previous scans of {{ hostname(view.selectedScan.value?.url ?? '') }}</div>
             </div>
-            <button v-for="s in scans.filter((s:any) => s.url === view.selectedScan.value?.url && s._id !== view.selectedScan.value?._id).slice(0, 5)" :key="s._id" @click="view.openScan(s)" class="flex items-center gap-2.5 py-2.5 border-b border-[#1e1e28] last:border-b-0 bg-transparent border-l-0 border-r-0 border-t-0 w-full text-left cursor-pointer transition-opacity hover:opacity-75">
+            <button v-for="s in data.scans.value.filter((s:any) => s.url === view.selectedScan.value?.url && s._id !== view.selectedScan.value?._id).slice(0, 5)" :key="s._id" @click="view.openScan(s)" class="flex items-center gap-2.5 py-2.5 border-b border-[#1e1e28] last:border-b-0 bg-transparent border-l-0 border-r-0 border-t-0 w-full text-left cursor-pointer transition-opacity hover:opacity-75">
               <div class="flex-1 min-w-0">
                 <div class="text-[13px] font-body text-white/90">{{ relativeTime(s._creationTime) }}</div>
                 <div class="text-[11px] text-white/30 mt-0.5">{{ statusLabel(s.status) }}</div>
