@@ -41,8 +41,8 @@ const router = useRouter()
 const newScanUrl = ref('')
 function submitNewScan() { const url = newScanUrl.value.trim(); if (url) { actions.handleScan(url); newScanUrl.value = '' } }
 function handleBack() {
-  if (view.view.currentView.value.value === 'tool-detail') view.setView('tools')
-  else if (view.view.currentView.value.value === 'chart-detail') view.setView('charts')
+  if (view.currentView.value === 'tool-detail') view.setView('tools')
+  else if (view.currentView.value === 'chart-detail') view.setView('charts')
   else view.setView('history')
 }
 
@@ -85,7 +85,7 @@ watch(userId, id => { if (id) data.loadUserData(id) }, { immediate: true })
 
     <!-- ── SIDEBAR ──────────────────────────────────────── -->
     <DashboardSidebar
-      :current-view="view.view.currentView.value.value"
+      :current-view="view.currentView.value"
       :tools-expanded="view.toolsExpanded.value"
       :selected-tool="view.selectedTool.value"
       :selected-scan-url="view.selectedScan.value?.url ?? null"
@@ -106,7 +106,7 @@ watch(userId, id => { if (id) data.loadUserData(id) }, { immediate: true })
       <DashboardTopbar
         :title="view.topbarInfo.value?.title ?? ''"
         :subtitle="view.topbarInfo.value?.sub ?? ''"
-        :show-back="['result','tool-detail','chart-detail'].includes(view.view.currentView.value.value)"
+        :show-back="['result','tool-detail','chart-detail'].includes(view.currentView.value)"
         :scanning="actions.scanning.value"
         v-model="newScanUrl"
         @back="handleBack"
@@ -617,7 +617,7 @@ watch(userId, id => { if (id) data.loadUserData(id) }, { immediate: true })
                VIEW: RESULT
           ══════════════════════════════════════════════════ -->
           <ResultView
-            v-if="view.view.currentView.value.value === 'result'"
+            v-if="view.currentView.value === 'result'"
             :scan="view.selectedScan.value"
             :is-monitored="actions.isMonitored"
             @rescan="actions.reScan"
@@ -627,7 +627,7 @@ watch(userId, id => { if (id) data.loadUserData(id) }, { immediate: true })
           />
 
           <!-- Previous scans of same site (shown when result view is active) -->
-          <div v-if="view.view.currentView.value.value === 'result' && scans.filter((s:any) => s.url === view.selectedScan.value?.url && s._id !== view.selectedScan.value?._id).length" class="bg-[#0f0f14] border border-[#1e1e28] rounded-xl p-4">
+          <div v-if="view.currentView.value === 'result' && scans.filter((s:any) => s.url === view.selectedScan.value?.url && s._id !== view.selectedScan.value?._id).length" class="bg-[#0f0f14] border border-[#1e1e28] rounded-xl p-4">
             <div class="flex items-center justify-between mb-4">
               <div class="font-display font-semibold text-[13px] text-white/70">Previous scans of {{ hostname(view.selectedScan.value?.url ?? '') }}</div>
             </div>
