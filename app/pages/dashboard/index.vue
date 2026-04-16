@@ -294,40 +294,7 @@ watch(userId, id => { if (id) data.loadUserData(id) }, { immediate: true })
                VIEW: SCAN
           ══════════════════════════════════════════════════ -->
           <template v-else-if="currentView === 'scan'">
-            <div class="ds-scan-hero">
-              <div class="ds-scan-hero-inner">
-                <div class="ds-scan-hero-title">What site do you want to audit?</div>
-                <div class="ds-scan-hero-sub">Analyze across Security, Performance, SEO, Accessibility, AI Readiness, DNS & Email, and Trust</div>
-                <div class="ds-scan-hero-form">
-                  <input v-model="newScanUrl" class="ds-scan-hero-input" placeholder="https://example.com" @keydown.enter="submitNewScan" />
-                  <button class="ds-scan-hero-btn" @click="submitNewScan" :disabled="scanning || !newScanUrl.trim()">
-                    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="white" stroke-width="2"><circle cx="7" cy="7" r="5"/><path d="M11 11l3 3"/></svg>
-                    {{ scanning ? 'Scanning…' : 'Run Full Audit' }}
-                  </button>
-                </div>
-                <div class="ds-pillar-chips">
-                  <div v-for="[n, c] in [['Security','#00d4aa'],['Performance','#ffaa00'],['SEO','#6c5ce7'],['Accessibility','#a29bfe'],['AI Readiness','#ff7675'],['DNS & Email','#74b9ff'],['Trust','#fd79a8']]" :key="String(n)" class="ds-pillar-chip" :style="{ borderColor: String(c), color: String(c) }">{{ n }}</div>
-                </div>
-              </div>
-            </div>
-
-            <div v-if="doneScans.length" class="ds-card">
-              <div class="ds-card-header">
-                <div class="ds-card-title">Recently Scanned</div>
-                <button @click="setView('history')" class="ds-card-action">All history →</button>
-              </div>
-              <div class="ds-scan-recent-grid">
-                <button v-for="scan in doneScans.slice(0, 8)" :key="scan._id" @click="openScan(scan)" class="ds-scan-recent-card">
-                  <div class="ds-scan-recent-fav">
-                    <img v-if="faviconUrl(scan.url)" :src="faviconUrl(scan.url)!" loading="lazy" width="20" height="20" @error="($event.target as HTMLImageElement).style.display='none'" />
-                    <span v-else>{{ hostname(scan.url).charAt(0).toUpperCase() }}</span>
-                  </div>
-                  <div class="ds-scan-recent-domain">{{ hostname(scan.url) }}</div>
-                  <div class="ds-scan-recent-score" :style="{ color: scoreBg(scan.overallScore) }">{{ scan.overallScore ?? '—' }}</div>
-                  <div class="ds-scan-recent-time">{{ relativeTime(scan._creationTime) }}</div>
-                </button>
-              </div>
-            </div>
+            <ScanView :scanning="actions.scanning.value" @submit="actions.handleScan" />
           </template>
 
           <!-- ══════════════════════════════════════════════
@@ -1298,29 +1265,6 @@ watch(userId, id => { if (id) data.loadUserData(id) }, { immediate: true })
 .ds-tool-detail { min-height: 100%; }
 .ds-tool-loading { display: flex; align-items: center; gap: 12px; padding: 60px 0; justify-content: center; color: #6b7280; font-size: 13px; }
 .ds-tool-loading-dot { width: 8px; height: 8px; border-radius: 50%; background: #ec3586; animation: pulse 1s infinite; }
-
-/* ── Scan view ────────────────────────────────────────── */
-.ds-scan-hero { background: linear-gradient(135deg, rgba(236,53,134,0.06) 0%, rgba(108,92,231,0.06) 100%); border: 1px solid rgba(236,53,134,0.15); border-radius: 14px; padding: 40px 24px; display: flex; justify-content: center; }
-.ds-scan-hero-inner { max-width: 560px; width: 100%; text-align: center; }
-.ds-scan-hero-title { font-family: 'Space Grotesk', sans-serif; font-size: 20px; font-weight: 700; color: #e8e8f0; margin-bottom: 8px; }
-.ds-scan-hero-sub { font-size: 13px; color: #6b7280; margin-bottom: 22px; line-height: 1.5; }
-.ds-scan-hero-form { display: flex; gap: 8px; }
-.ds-scan-hero-input { flex: 1; background: #0f0f14; border: 1px solid #1e1e28; border-radius: 10px; padding: 11px 16px; color: #e8e8f0; font-size: 14px; outline: none; font-family: 'DM Sans', sans-serif; transition: border-color 0.15s; }
-.ds-scan-hero-input::placeholder { color: #6b7280; }
-.ds-scan-hero-input:focus { border-color: rgba(236,53,134,0.4); }
-.ds-scan-hero-btn { background: #ec3586; color: white; border: none; border-radius: 10px; padding: 11px 20px; font-size: 13px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 8px; font-family: 'Space Grotesk', sans-serif; white-space: nowrap; transition: opacity 0.15s; }
-.ds-scan-hero-btn:disabled { opacity: 0.5; cursor: not-allowed; }
-.ds-scan-hero-btn:hover:not(:disabled) { opacity: 0.88; }
-.ds-pillar-chips { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin-top: 16px; }
-.ds-pillar-chip { font-size: 10px; font-weight: 600; font-family: 'Space Grotesk', sans-serif; letter-spacing: 0.06em; padding: 3px 10px; border-radius: 20px; border: 1px solid; background: transparent; text-transform: uppercase; }
-.ds-scan-recent-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 10px; }
-.ds-scan-recent-card { background: #16161e; border: 1px solid #1e1e28; border-radius: 10px; padding: 14px; display: flex; flex-direction: column; align-items: center; gap: 6px; cursor: pointer; text-align: center; transition: border-color 0.15s, background 0.15s; }
-.ds-scan-recent-card:hover { background: #1e1e28; border-color: rgba(255,255,255,0.1); }
-.ds-scan-recent-fav { width: 36px; height: 36px; background: #0f0f14; border-radius: 9px; display: flex; align-items: center; justify-content: center; font-size: 14px; color: #9898b0; overflow: hidden; }
-.ds-scan-recent-fav img { width: 20px; height: 20px; border-radius: 4px; }
-.ds-scan-recent-domain { font-size: 12px; font-weight: 500; color: #e8e8f0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 130px; }
-.ds-scan-recent-score { font-family: 'Space Grotesk', sans-serif; font-size: 22px; font-weight: 700; }
-.ds-scan-recent-time { font-size: 10px; color: #6b7280; }
 
 /* ── Charts view ──────────────────────────────────────── */
 .ds-bar-chart { padding-top: 8px; }
