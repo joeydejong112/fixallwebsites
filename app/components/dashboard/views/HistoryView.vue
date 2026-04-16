@@ -131,19 +131,5 @@ const faviconUrl = (url: string) => {
 </template>
 
 <style scoped>
-@apply flex items-center gap-3;
-@apply bg-[#0f0f14] border border-[#1e1e28] rounded-lg px-3 py-[7px] text-[13px] w-[260px] outline-none transition-colors duration-150;
-@apply bg-[#1e1e28];
-@apply flex items-center gap-3 px-4 py-3 border-b border-white/[0.04] w-full bg-none border-l-0 border-r-0 text-left text-inherit font-inherit last:border-b-0 hover:bg-white/[0.025];
-@apply w-[7px] h-[7px] rounded-full flex-shrink-0;
-@apply w-6 h-6 rounded flex items-center justify-center text-[11px] font-bold flex-shrink-0 text-[#9898b0] bg-white/[0.06] font-['Space_Grotesk'];
-@apply flex-1 min-w-0;
-@apply flex items-end gap-[3px] h-7;
-@apply w-[6px] rounded-[2px] transition-all duration-300 min-h-[1px];
-@apply font-['Space_Grotesk'] font-bold text-[20px] flex-shrink-0 w-10 text-right;
-@apply flex gap-[2px] items-center flex-shrink-0;
-@apply w-7 h-7 rounded-md flex items-center justify-center bg-none border-none text-white/30 cursor-pointer transition-all duration-150 hover:bg-white/6 hover:text-white/70;
-@apply w-7 h-7 rounded-md flex items-center justify-center bg-none border-none text-white/30 cursor-pointer transition-all duration-150 hover:bg-white/6 hover:text-white/70 text-primary;
-@apply w-7 h-7 rounded-md flex items-center justify-center bg-none border-none text-white/30 cursor-pointer transition-all duration-150 hover:bg-primary/10 hover:text-primary;
-@apply text-[12px] text-primary bg-none border-none cursor-pointer mt-1;
+/* button utilities — already applied via inline classes in template */
 </style>

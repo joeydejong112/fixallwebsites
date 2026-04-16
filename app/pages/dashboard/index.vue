@@ -12,6 +12,9 @@ import ChartDetailView from '~/components/dashboard/views/ChartDetailView.vue'
 import BulkView from '~/components/dashboard/views/BulkView.vue'
 import ChartsView from '~/components/dashboard/views/ChartsView.vue'
 import ResultView from '~/components/dashboard/result/ResultView.vue'
+import OverviewView from '~/components/dashboard/views/OverviewView.vue'
+import ScanView from '~/components/dashboard/views/ScanView.vue'
+import HistoryView from '~/components/dashboard/views/HistoryView.vue'
 
 definePageMeta({ middleware: 'auth' })
 useSeoMeta({ title: 'Dashboard — ScanPulse' })
