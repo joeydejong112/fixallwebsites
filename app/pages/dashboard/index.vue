@@ -27,7 +27,6 @@ const { scoreTrend } = useScoreTrend(data.scans)
 const geom = useChartGeometry()
 
 // ── View-local state (moves to view components in Phase 3) ──
-const filterStatus = ref<'all' | 'pass' | 'warning' | 'critical'>('all')
 const router = useRouter()
 const newScanUrl = ref('')
 function submitNewScan() { const url = newScanUrl.value.trim(); if (url) { actions.handleScan(url); newScanUrl.value = '' } }
@@ -40,18 +39,6 @@ function handleBack() {
 const doneScans = computed(() => data.scans.value.filter(s => s.status === 'done'))
 const avgScore  = computed(() => { if (!doneScans.value.length) return null; return Math.round(doneScans.value.reduce((s, x) => s + (x.overallScore ?? 0), 0) / doneScans.value.length) })
 const bestScore = computed(() => doneScans.value.length ? Math.max(...doneScans.value.map(s => s.overallScore ?? 0)) : null)
-const filteredScans = computed(() => {
-  if (filterStatus.value === 'all') return data.scans.value
-  return data.scans.value.filter(s => {
-    const score = s.overallScore ?? 0
-    if (filterStatus.value === 'pass')     return s.status === 'done' && score >= 80
-    if (filterStatus.value === 'warning')  return s.status === 'done' && score >= 60 && score < 80
-    if (filterStatus.value === 'critical') return s.status === 'error' || (s.status === 'done' && score < 60)
-    return true
-  })
-})
-
-type IssueTab = 'all' | 'security' | 'performance' | 'seo' | 'accessibility' | 'ai' | 'dns' | 'trust'
 const resultActiveTab = ref<IssueTab>('all')
 const resultExpandedFix = ref<string | null>(null)
 const resultCopied = ref(false)
@@ -87,14 +74,6 @@ const resultIssues = computed(() => {
   return view.selectedScan.value.issues.filter((i: any) => i.pillar === resultActiveTab.value)
 })
 function shareResult() { if (!view.selectedScan.value?._id) return; navigator.clipboard.writeText(`${window.location.origin}/share/${view.selectedScan.value._id}`); resultCopied.value = true; setTimeout(() => { resultCopied.value = false }, 2000) }
-
-const filteredHistoryScans = computed(() => {
-  let list = filteredScans.value
-  const q = historySearch.value.toLowerCase()
-  if (q) list = list.filter(s => s.url.toLowerCase().includes(q))
-  return list
-})
-const historySearch = ref('')
 
 const scansPerDay = computed(() => {
   const days: { label: string; count: number }[] = []
@@ -348,56 +327,7 @@ watch(userId, id => { if (id) data.loadUserData(id) }, { immediate: true })
                VIEW: HISTORY
           ══════════════════════════════════════════════════ -->
           <template v-else-if="currentView === 'history'">
-            <div class="ds-history-toolbar">
-              <input v-model="historySearch" class="ds-history-search" placeholder="Search URLs…" />
-              <div class="ds-filter-tabs">
-                <button v-for="f in ['all','pass','warning','critical']" :key="f" @click="filterStatus = f as any" class="ds-filter-tab" :class="{ 'ds-filter-active': filterStatus === f }">{{ f }}</button>
-              </div>
-              <span class="ds-history-count">{{ filteredHistoryScans.length }} scan{{ filteredHistoryScans.length !== 1 ? 's' : '' }}</span>
-            </div>
-
-            <div class="ds-card" style="padding:0;overflow:hidden;">
-              <div v-if="!filteredHistoryScans.length" class="ds-empty-state" style="padding:40px 0;">
-                <Logo :animate="false" class="ds-empty-logo" />
-                <p>{{ scans.length ? 'No scans match the filter.' : 'No scans yet. Enter a URL above.' }}</p>
-                <button v-if="scans.length" @click="filterStatus = 'all'; historySearch = ''" class="ds-empty-btn">Clear filters</button>
-              </div>
-              <button v-else v-for="scan in filteredHistoryScans" :key="scan._id" @click="openScan(scan)" class="ds-history-row">
-                <div class="ds-history-status-dot" :class="{
-                  'dot-pending': scan.status === 'pending',
-                  'dot-running': scan.status === 'running',
-                  'dot-done': scan.status === 'done',
-                  'dot-error': scan.status === 'error',
-                }"></div>
-                <div class="ds-scan-fav">
-                  <img v-if="faviconUrl(scan.url)" :src="faviconUrl(scan.url)!" class="w-4 h-4 rounded" loading="lazy" width="16" height="16" @error="($event.target as HTMLImageElement).style.display='none'" />
-                  <span v-else>{{ hostname(scan.url).charAt(0).toUpperCase() }}</span>
-                </div>
-                <div class="ds-scan-info">
-                  <div class="ds-scan-domain">{{ scan.url }}</div>
-                  <div class="ds-scan-time">{{ statusLabel(scan.status) }} · {{ relativeTime(scan._creationTime) }}</div>
-                </div>
-                <div v-if="scan.status === 'done'" class="ds-history-pillars">
-                  <div v-for="[c, v] in [['#00d4aa', scan.securityScore],['#ffaa00', scan.performanceScore],['#6c5ce7', scan.seoScore]]" :key="String(c)" class="ds-mini-bar-wrap">
-                    <div class="ds-mini-bar" :style="{ height: (Number(v) || 0) * 0.28 + 'px', background: String(c) }"></div>
-                  </div>
-                </div>
-                <div class="ds-history-score" :style="{ color: scan.status === 'done' ? scoreBg(scan.overallScore) : 'rgba(255,255,255,0.2)' }">
-                  {{ scan.status === 'done' ? (scan.overallScore ?? '—') : scan.status === 'running' ? '…' : '—' }}
-                </div>
-                <div class="ds-history-actions" @click.stop>
-                  <button @click="reScan(scan.url)" class="ds-icon-btn" title="Re-scan">
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4v5h5M20 20v-5h-5"/><path d="M4.93 19.07A10 10 0 0 0 20 12M19.07 4.93A10 10 0 0 0 4 12"/></svg>
-                  </button>
-                  <button @click="toggleMonitor(scan.url)" class="ds-icon-btn" :class="{ 'ds-icon-btn--active': isMonitored(scan.url) }" title="Toggle monitor">
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-                  </button>
-                  <button @click="deleteScan(scan._id)" class="ds-icon-btn ds-icon-btn--danger" title="Delete">
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg>
-                  </button>
-                </div>
-              </button>
-            </div>
+            <HistoryView :scans="data.scans.value" :is-monitored="actions.isMonitored" @open-scan="view.openScan" @delete-scan="actions.deleteScan" @rescan="actions.reScan" @toggle-monitor="actions.toggleMonitor" />
           </template>
 
           <!-- ══════════════════════════════════════════════
@@ -915,94 +845,8 @@ watch(userId, id => { if (id) data.loadUserData(id) }, { immediate: true })
             </div>
           </template>
 
-          <!-- ══════════════════════════════════════════════
-               VIEW: TOOLS
-          ══════════════════════════════════════════════════ -->
           <template v-else-if="currentView === 'tools'">
-
-            <!-- Filter tabs -->
-            <div class="tl-tabs">
-              <button
-                v-for="p in toolPillars" :key="p.key"
-                class="tl-tab"
-                :class="{ 'tl-tab--active': toolsFilter === p.key }"
-                :style="toolsFilter === p.key ? `--tc:${p.color}` : ''"
-                @click="toolsFilter = p.key"
-              >
-                <span v-if="p.key !== 'all'" class="tl-tdot" :style="`background:${p.color}`"/>
-                {{ p.label }}
-                <span class="tl-tcount">{{ toolsPillarCount(p.key) }}</span>
-              </button>
-            </div>
-
-            <TransitionGroup name="tl-fade">
-
-              <!-- Featured card -->
-              <div
-                v-if="toolsFeatured"
-                :key="'feat-' + toolsFeatured.slug"
-                class="tl-feat"
-                :style="`--pc:${toolsFeatured.color}`"
-                @click="openTool(toolsFeatured.slug)"
-              >
-                <div class="tl-feat-shimmer" />
-                <div class="tl-feat-glow" :style="`background:radial-gradient(ellipse at 75% 50%, ${toolsFeatured.color}1a 0%, transparent 65%)`" />
-                <div class="tl-feat-deco" :style="`color:${toolsFeatured.color}`">
-                  <svg width="120" height="120" viewBox="0 0 24 24" fill="currentColor" v-html="toolsFeatured.icon"/>
-                </div>
-                <div class="tl-feat-body">
-                  <div class="tl-feat-top">
-                    <div class="tl-feat-ring" :style="`color:${toolsFeatured.color};background:${toolsFeatured.color}15;border-color:${toolsFeatured.color}30`">
-                      <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" v-html="toolsFeatured.icon"/>
-                    </div>
-                    <div class="tl-feat-badges">
-                      <span class="tl-fbadge" :style="`color:${toolsFeatured.color};background:${toolsFeatured.color}12;border-color:${toolsFeatured.color}30`">{{ toolsFeatured.pillar }}</span>
-                      <span class="tl-fbadge tl-fbadge--free">Free</span>
-                      <span class="tl-fbadge tl-fbadge--feat">Featured</span>
-                    </div>
-                  </div>
-                  <h2 class="tl-feat-title">{{ toolsFeatured.title }}</h2>
-                  <p class="tl-feat-desc">{{ toolsFeatured.desc }}</p>
-                  <div class="tl-feat-foot">
-                    <span class="tl-feat-checks" :style="`color:${toolsFeatured.color}`">
-                      {{ toolsFeatured.fixes ? `✓ Fixes ${toolsFeatured.fixes} scan checks` : '✓ WCAG accessibility' }}
-                    </span>
-                    <span class="tl-feat-cta" :style="`background:${toolsFeatured.color};color:#07070a`">Open tool →</span>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Rest grid -->
-              <div v-if="toolsRest.length" key="rest-grid" class="tl-rest-grid">
-                <div
-                  v-for="(t, i) in toolsRest"
-                  :key="t.slug"
-                  class="tl-rcard"
-                  :style="`--pc:${t.color};--i:${i}`"
-                  @click="openTool(t.slug)"
-                >
-                  <div class="tl-rcard-accent" :style="`background:${t.color}`" />
-                  <div class="tl-rcard-inner">
-                    <div class="tl-rcard-head">
-                      <div class="tl-rcard-icon" :style="`color:${t.color};background:${t.color}12;border:1px solid ${t.color}25`">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" v-html="t.icon"/>
-                      </div>
-                      <span class="tl-rcard-pillar" :style="`color:${t.color}`">{{ t.pillar }}</span>
-                      <span class="tl-rcard-free">Free</span>
-                    </div>
-                    <h3 class="tl-rcard-title">{{ t.title }}</h3>
-                    <p class="tl-rcard-desc">{{ t.short }}</p>
-                    <div class="tl-rcard-foot">
-                      <span class="tl-rcard-checks" :style="`color:${t.color};background:${t.color}10;border:1px solid ${t.color}20`">
-                        {{ t.fixes ? `${t.fixes} checks` : 'WCAG' }}
-                      </span>
-                      <span class="tl-rcard-cta">Open →</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-            </TransitionGroup>
+            <ToolsView @open-tool="view.openTool" />
           </template>
 
           <!-- ══════════════════════════════════════════════
