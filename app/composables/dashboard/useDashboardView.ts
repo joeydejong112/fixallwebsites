@@ -49,6 +49,16 @@ export function useDashboardView(opts: {
     if (slug) openTool(slug)
   }
 
+  const route = useRoute()
+  const applyQueryView = () => {
+    const q = route.query.view
+    if (typeof q === 'string' && (['overview', 'scan', 'history', 'compare', 'bulk', 'charts', 'chart-detail', 'tools', 'tool-detail', 'result'] as const).includes(q as View)) {
+      setView(q as View)
+    }
+  }
+  onMounted(applyQueryView)
+  watch(() => route.query.view, applyQueryView)
+
   const currentToolMeta = computed(() => allTools.find(t => t.slug === selectedTool.value) ?? null)
 
   const { hostname, relativeTime } = useScoreFormat()
