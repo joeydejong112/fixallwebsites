@@ -64,11 +64,11 @@ export function useDashboardView(opts: {
   const { hostname, relativeTime } = useScoreFormat()
   const topbarInfo = computed(() => ({
     overview:     { title: 'Command Center',  sub: 'Overview of all your scans' },
-    history:      { title: 'Scan History',    sub: `${opts.scans.value.length} scans` },
+    history:      { title: 'Scan History',    sub: `${opts.scans.value?.length ?? 0} scans` },
     compare:      { title: 'Compare',         sub: 'Side-by-side competitor analysis' },
     bulk:         { title: 'Bulk Scan',       sub: 'Scan multiple URLs at once' },
     scan:         { title: 'New Scan',        sub: 'Analyze a website across 7 pillars' },
-    charts:       { title: 'Charts',          sub: `Analytics for ${opts.doneScans.value.length} completed scans` },
+    charts:       { title: 'Charts',          sub: `Analytics for ${opts.doneScans.value?.length ?? 0} completed scans` },
     tools:        { title: 'Tools',           sub: '10 free web audit tools' },
     'tool-detail':  { title: currentToolMeta.value?.title ?? 'Tool', sub: currentToolMeta.value?.pillar ?? '' },
     'chart-detail': { title: selectedChartUrl.value ? hostname(selectedChartUrl.value) : 'Site Charts', sub: 'Score history & pillar breakdown' },

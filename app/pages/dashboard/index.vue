@@ -212,13 +212,13 @@ watch(userId, id => { if (id) data.loadUserData(id) }, { immediate: true })
             <div class="grid grid-cols-4 gap-3.5">
               <div class="bg-[#0f0f14] border border-[#1e1e28] rounded-xl p-4">
                 <div class="text-[10px] font-semibold font-display uppercase tracking-widest text-white/40 mb-2">Total Scans</div>
-                <div class="font-display text-[28px] font-bold" style="color:#ec3586">{{ data.scans.value.length }}</div>
+                <div class="font-display text-[28px] font-bold" style="color:#ec3586">{{ data.scans.value?.length ?? 0 }}</div>
                 <div class="text-[11px] text-white/30 mt-1">All time</div>
               </div>
               <div class="bg-[#0f0f14] border border-[#1e1e28] rounded-xl p-4">
                 <div class="text-[10px] font-semibold font-display uppercase tracking-widest text-white/40 mb-2">Completed</div>
                 <div class="font-display text-[28px] font-bold" :style="{ color: '#00d4aa' }">{{ doneScans.length }}</div>
-                <div class="text-[11px] text-white/30 mt-1">{{ data.scans.value.filter(s=>s.status==='error').length }} failed</div>
+                <div class="text-[11px] text-white/30 mt-1">{{ data.scans.value?.filter(s=>s.status==='error').length ?? 0 }} failed</div>
               </div>
               <div class="bg-[#0f0f14] border border-[#1e1e28] rounded-xl p-4">
                 <div class="text-[10px] font-semibold font-display uppercase tracking-widest text-white/40 mb-2">Avg Score</div>
