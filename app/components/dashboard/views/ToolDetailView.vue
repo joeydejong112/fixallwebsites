@@ -12,27 +12,20 @@ const currentToolComponent = computed(() => {
 </script>
 
 <template>
-  <div class="ds-tool-detail">
+  <div class="min-h-full">
     <template v-if="slug && currentToolComponent">
       <Suspense>
         <component :is="currentToolComponent" />
         <template #fallback>
-          <div class="ds-tool-loading">
-            <div class="ds-tool-loading-dot" />
+          <div class="flex items-center gap-3 py-[60px] justify-center text-[#6b7280] text-[13px]">
+            <div class="w-2 h-2 rounded-full bg-primary animate-pulse" />
             <span>Loading tool…</span>
           </div>
         </template>
       </Suspense>
     </template>
-    <div v-else class="ds-tool-empty">
+    <div v-else class="flex items-center justify-center py-[80px] text-[#6b7280] text-sm">
       <span>Select a tool to get started</span>
     </div>
   </div>
 </template>
-
-<style scoped>
-.ds-tool-detail { min-height: 100%; }
-.ds-tool-loading { display: flex; align-items: center; gap: 12px; padding: 60px 0; justify-content: center; color: #6b7280; font-size: 13px; }
-.ds-tool-loading-dot { width: 8px; height: 8px; border-radius: 50%; background: #ec3586; animation: pulse 1s infinite; }
-.ds-tool-empty { display: flex; align-items: center; justify-content: center; padding: 80px 0; color: #6b7280; font-size: 14px; }
-</style>
