@@ -237,7 +237,12 @@ function setView(v: View) {
     if (resultPollInterval) { clearInterval(resultPollInterval); resultPollInterval = null }
   }
 }
-function openScan(scan: any) { selectedScan.value = scan; currentView.value = 'result' }
+function openScan(scan: any) {
+  selectedScan.value = scan; currentView.value = 'result'
+  resultExpandedIssues.value  = new Set()
+  resultCollapsedGroups.value = new Set(['pass'])
+  resultActiveTab.value       = 'all'
+}
 function openScanByUrl(url: string) {
   const s = scans.value.filter(x => x.url === url && x.status === 'done').sort((a, b) => b._creationTime - a._creationTime)[0]
   if (s) openScan(s)
@@ -292,6 +297,52 @@ const resultActiveTab = ref<IssueTab>('all')
 const resultExpandedFix = ref<string | null>(null)
 const resultCopied = ref(false)
 const resultIssueTabs: IssueTab[] = ['all', 'security', 'performance', 'seo', 'accessibility', 'ai', 'dns', 'trust']
+
+// ── Result: A+C redesign state ─────────────────────────
+const resultExpandedIssues  = ref<Set<string>>(new Set())
+const resultCollapsedGroups = ref<Set<string>>(new Set(['pass']))
+
+function toggleResultIssue(title: string) {
+  const s = new Set(resultExpandedIssues.value)
+  if (s.has(title)) s.delete(title); else s.add(title)
+  resultExpandedIssues.value = s
+}
+function toggleResultGroup(key: string) {
+  const s = new Set(resultCollapsedGroups.value)
+  if (s.has(key)) s.delete(key); else s.add(key)
+  resultCollapsedGroups.value = s
+}
+
+const resultSeverityGroups = computed(() => {
+  const issues = (selectedScan.value?.issues ?? [])
+    .filter((i: any) => resultActiveTab.value === 'all' || i.pillar === resultActiveTab.value)
+  return {
+    critical: issues.filter((i: any) => i.severity === 'critical'),
+    warning:  issues.filter((i: any) => i.severity === 'warning'),
+    pass:     issues.filter((i: any) => i.severity === 'pass'),
+  }
+})
+
+const resultToolCards = computed(() => {
+  if (!selectedScan.value?.issues) return []
+  const map = new Map<string, { count: number; hasCritical: boolean }>()
+  for (const issue of selectedScan.value.issues) {
+    if (issue.severity === 'pass') continue
+    const toolPath = TOOL_LINKS[issue.title as string]
+    if (!toolPath) continue
+    const tool = allTools.find(t => toolPath.endsWith(t.slug))
+    if (!tool) continue
+    const entry = map.get(tool.slug) ?? { count: 0, hasCritical: false }
+    entry.count++
+    if (issue.severity === 'critical') entry.hasCritical = true
+    map.set(tool.slug, entry)
+  }
+  return [...map.entries()]
+    .map(([slug, data]) => ({ tool: allTools.find(t => t.slug === slug)!, ...data }))
+    .sort((a, b) => (b.hasCritical ? 1 : 0) - (a.hasCritical ? 1 : 0) || b.count - a.count)
+})
+
+watch(resultActiveTab, () => { resultExpandedIssues.value = new Set() })
 const resultIssues = computed(() => {
   if (!selectedScan.value?.issues) return []
   if (resultActiveTab.value === 'all') return selectedScan.value.issues
@@ -506,9 +557,7 @@ function submitCompare() {
     <aside class="ds-sidebar">
       <div class="ds-logo">
         <NuxtLink to="/" class="ds-logo-inner">
-          <div class="ds-logo-mark">
-            <svg viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="3" fill="white"/><circle cx="8" cy="8" r="6" stroke="white" stroke-width="1.5"/></svg>
-          </div>
+          <Logo class="w-[28px] h-[28px]" :animate="false" />
           <span class="ds-logo-text">ScanPulse</span>
         </NuxtLink>
         <span v-if="convexUser" class="ds-plan-badge" :class="convexUser.plan === 'pro' ? 'ds-plan-pro' : 'ds-plan-free'">
@@ -1484,43 +1533,52 @@ function submitCompare() {
             <!-- ── Done state ───────────────────────────── -->
             <div v-else class="ds-result-layout">
 
-              <!-- Score hero -->
-              <div class="ds-card ds-result-hero">
-                <div class="ds-result-ring-wrap">
-                  <svg width="120" height="120" viewBox="0 0 120 120" style="transform:rotate(-90deg)">
-                    <circle cx="60" cy="60" r="50" fill="none" stroke="#1e1e28" stroke-width="10"/>
-                    <circle v-if="selectedScan.overallScore"
-                      cx="60" cy="60" r="50" fill="none"
-                      :stroke="scoreBg(selectedScan.overallScore)" stroke-width="10"
-                      stroke-linecap="round"
-                      :stroke-dasharray="`${(selectedScan.overallScore / 100) * 314} 314`"
-                    />
+              <!-- ══ HEADER BAR ══ -->
+              <div class="rs2-header">
+                <!-- Mini score ring -->
+                <div class="rs2-mini-ring">
+                  <svg width="44" height="44" viewBox="0 0 44 44" style="transform:rotate(-90deg)">
+                    <circle cx="22" cy="22" r="18" fill="none" stroke="#1e1e28" stroke-width="4"/>
+                    <circle v-if="selectedScan.overallScore" cx="22" cy="22" r="18" fill="none"
+                      :stroke="scoreBg(selectedScan.overallScore)" stroke-width="4" stroke-linecap="round"
+                      :stroke-dasharray="`${(selectedScan.overallScore/100)*113} 113`"/>
                   </svg>
-                  <div class="ds-result-ring-num">
-                    <div class="ds-result-big-score" :style="{ color: scoreBg(selectedScan.overallScore) }">{{ selectedScan.overallScore ?? '—' }}</div>
-                    <div class="ds-result-score-label">/100</div>
+                  <span class="rs2-mini-score" :style="{ color: scoreBg(selectedScan.overallScore) }">{{ selectedScan.overallScore ?? '—' }}</span>
+                </div>
+
+                <!-- URL + meta -->
+                <div class="rs2-header-meta">
+                  <div class="rs2-url">{{ selectedScan.url }}</div>
+                  <div class="rs2-meta-row">
+                    <span class="rs2-time">{{ relativeTime(selectedScan._creationTime) }}</span>
+                    <span class="rs2-pill-done">● COMPLETE</span>
+                    <span v-if="isMonitored(selectedScan.url)" class="rs2-pill-monitored">● MONITORED</span>
                   </div>
                 </div>
-                <div class="ds-result-meta">
-                  <div class="ds-result-url">{{ selectedScan.url }}</div>
-                  <div class="ds-result-time">Scanned {{ relativeTime(selectedScan._creationTime) }}</div>
-                  <div class="ds-result-status-row">
-                    <span class="ds-status-pill ds-s-done">Complete</span>
-                    <span v-if="isMonitored(selectedScan.url)" class="ds-monitored-tag">● Monitored</span>
-                  </div>
-                  <div class="ds-result-actions">
-                    <button @click="reScan(selectedScan.url)" class="ds-action-btn">Re-scan</button>
-                    <button @click="toggleMonitor(selectedScan.url)" class="ds-action-btn" :class="{ 'ds-action-btn--active': isMonitored(selectedScan.url) }">
-                      {{ isMonitored(selectedScan.url) ? 'Stop monitoring' : 'Monitor' }}
-                    </button>
-                    <button @click="shareResult()" class="ds-action-btn">{{ resultCopied ? 'Copied!' : 'Share' }}</button>
-                    <button @click="deleteScan(selectedScan._id)" class="ds-action-btn ds-action-btn--danger">Delete</button>
-                  </div>
+
+                <!-- Actions -->
+                <div class="rs2-header-actions">
+                  <button @click="reScan(selectedScan.url)" class="rs2-act-btn">
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
+                    Re-scan
+                  </button>
+                  <button @click="toggleMonitor(selectedScan.url)" class="rs2-act-btn" :class="{ 'rs2-act-btn--danger-active': isMonitored(selectedScan.url) }">
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                    {{ isMonitored(selectedScan.url) ? 'Stop monitoring' : 'Monitor' }}
+                  </button>
+                  <button @click="shareResult()" class="rs2-act-btn">
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8M16 6l-4-4-4 4M12 2v13"/></svg>
+                    {{ resultCopied ? 'Copied!' : 'Share' }}
+                  </button>
+                  <button @click="deleteScan(selectedScan._id)" class="rs2-act-btn rs2-act-btn--danger">
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6M10 11v6M14 11v6M9 6V4h6v2"/></svg>
+                    Delete
+                  </button>
                 </div>
               </div>
 
-              <!-- 7 Pillar scores -->
-              <div class="rs-pillars-grid">
+              <!-- ══ SCORE STRIP ══ -->
+              <div class="rs2-score-strip">
                 <div v-for="[name, val, color, bonus] in [
                   ['Security',      selectedScan.securityScore,      '#00d4aa', false],
                   ['Performance',   selectedScan.performanceScore,   '#ffaa00', false],
@@ -1529,66 +1587,200 @@ function submitCompare() {
                   ['AI Readiness',  selectedScan.aiScore,            '#ff7675', false],
                   ['DNS & Email',   selectedScan.dnsScore,           '#74b9ff', true],
                   ['Trust',         selectedScan.trustScore,         '#fd79a8', true],
-                ]" :key="String(name)" class="rs-pillar-card" :style="`--pc:${color}`">
-                  <div class="rs-pillar-card-top"/>
-                  <div class="rs-pillar-card-glow"/>
-                  <div class="rs-pillar-label">
+                ]" :key="String(name)" class="rs2-score-card" :style="`--pc:${color}`">
+                  <div class="rs2-score-card__label">
                     {{ name }}
-                    <span v-if="bonus" class="rs-pillar-bonus">bonus</span>
+                    <span v-if="bonus" class="rs2-score-card__bonus">BONUS</span>
                   </div>
-                  <div class="rs-pillar-score" :style="{ color: val != null ? String(color) : 'rgba(255,255,255,0.18)' }">{{ val ?? '—' }}</div>
-                  <div class="rs-pillar-bar-bg">
-                    <div class="rs-pillar-bar" :style="{ width: (Number(val) || 0) + '%', background: String(color) }"/>
+                  <div class="rs2-score-card__num" :style="{ color: val != null ? String(color) : 'rgba(255,255,255,0.18)' }">{{ val ?? '—' }}</div>
+                  <div class="rs2-score-card__bar-bg">
+                    <div class="rs2-score-card__bar" :style="{ width: (Number(val)||0)+'%', background: String(color) }"/>
                   </div>
                 </div>
               </div>
 
-              <!-- Issues section -->
-              <div class="ds-card" v-if="selectedScan.issues?.length">
-                <div class="ds-card-header">
-                  <div class="ds-card-title">Issues <span class="rs-issue-total">{{ selectedScan.issues.length }}</span></div>
+              <!-- ══ ISSUES ══ -->
+              <template v-if="selectedScan.issues?.length">
+
+                <!-- Issues heading -->
+                <div class="rs2-issues-hdr">
+                  <span class="rs2-issues-title">ISSUES</span>
+                  <span class="rs2-issues-count">{{ selectedScan.issues.filter((i:any) => i.severity !== 'pass').length }}</span>
                 </div>
-                <!-- Tab bar -->
-                <div class="rs-tabs">
-                  <button
-                    v-for="tab in resultIssueTabs" :key="tab"
-                    class="rs-tab"
-                    :class="{ 'rs-tab--active': resultActiveTab === tab }"
-                    @click="resultActiveTab = tab; resultExpandedFix = null"
-                  >
-                    {{ tab === 'all' ? 'All' : tab === 'seo' ? 'SEO' : tab === 'ai' ? 'AI' : tab === 'dns' ? 'DNS' : tab.charAt(0).toUpperCase() + tab.slice(1) }}
-                    <span v-if="issueTabCount(tab)" class="rs-tab-count">{{ issueTabCount(tab) }}</span>
-                  </button>
-                </div>
-                <!-- Issue list -->
-                <div class="rs-issues">
-                  <div v-for="issue in resultIssues" :key="issue.title" class="rs-issue">
-                    <button class="rs-issue-head" @click="resultExpandedFix = resultExpandedFix === issue.title ? null : issue.title">
-                      <span class="rs-sev" :class="`rs-sev--${issue.severity}`">{{ issue.severity }}</span>
-                      <span class="rs-issue-title">{{ issue.title }}</span>
-                      <span class="rs-issue-pillar" :style="pillarColor(issue.pillar)">{{ issue.pillar }}</span>
-                      <span v-if="FIX_SNIPPETS[issue.title]" class="rs-fix-badge">Fix →</span>
-                      <svg class="rs-issue-chevron" :class="{ open: resultExpandedFix === issue.title }" width="12" height="12" viewBox="0 0 12 12" fill="none">
-                        <path d="M2 4l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                      </svg>
-                    </button>
-                    <div v-if="resultExpandedFix === issue.title" class="rs-issue-body">
-                      <p class="rs-issue-desc">{{ issue.description }}</p>
-                      <div v-if="FIX_SNIPPETS[issue.title]" class="rs-snippet">
-                        <pre class="rs-pre">{{ FIX_SNIPPETS[issue.title].generic }}</pre>
+
+                <!-- Fix Now — large tool cards -->
+                <div v-if="resultToolCards.length" class="rs2-fix-panel">
+                  <div class="rs2-fix-panel-head">
+                    <span class="rs2-fix-panel-label">
+                      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/></svg>
+                      FIX NOW
+                    </span>
+                    <span class="rs2-fix-panel-sub">Tools that directly address your open issues</span>
+                  </div>
+                  <div class="rs2-fix-cards">
+                    <div
+                      v-for="{ tool, count, hasCritical, issues: toolIssues } in resultToolCards"
+                      :key="tool.slug"
+                      class="rs2-fix-card"
+                      :class="{ 'rs2-fix-card--critical': hasCritical }"
+                      :style="`--tc:${tool.color}`"
+                    >
+                      <div class="rs2-fix-card-badge" :class="hasCritical ? 'rs2-fix-card-badge--crit' : 'rs2-fix-card-badge--warn'">
+                        {{ count }} {{ hasCritical ? 'critical' : 'warning' }}{{ count === 1 ? '' : 's' }}
                       </div>
-                      <button v-if="TOOL_LINKS[issue.title]" class="rs-tool-link" @click="dashboardNavigate(TOOL_LINKS[issue.title])">
-                        Fix with {{ allTools.find(t => TOOL_LINKS[issue.title]?.endsWith(t.slug))?.title ?? 'tool' }} →
+                      <div class="rs2-fix-card-body">
+                        <div class="rs2-fix-card-icon">
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" :style="`color:${tool.color}`" v-html="tool.icon"/>
+                        </div>
+                        <div class="rs2-fix-card-title">{{ tool.title }}</div>
+                        <div class="rs2-fix-card-desc">{{ toolIssues?.slice(0,2).map((i:any) => i.title).join(', ') || tool.description }}</div>
+                      </div>
+                      <button class="rs2-fix-card-cta" @click="dashboardNavigate(`/tools/${tool.slug}`)">
+                        FIX ISSUES →
                       </button>
                     </div>
                   </div>
-                  <div v-if="!resultIssues.length" class="ds-empty-state"><p>No issues in this category</p></div>
                 </div>
-              </div>
+
+                <!-- Filter row -->
+                <div class="rs2-filter-row">
+                  <span class="rs2-filter-label">FILTER</span>
+                  <div class="rs2-filter-bar">
+                    <button
+                      v-for="tab in resultIssueTabs" :key="tab"
+                      class="rs2-chip"
+                      :class="{ 'rs2-chip--active': resultActiveTab === tab }"
+                      @click="resultActiveTab = tab"
+                    >
+                      {{ tab === 'all' ? 'All' : tab === 'seo' ? 'SEO' : tab === 'ai' ? 'AI' : tab === 'dns' ? 'DNS' : tab.charAt(0).toUpperCase() + tab.slice(1) }}
+                      <span v-if="issueTabCount(tab)" class="rs2-chip-count">{{ issueTabCount(tab) }}</span>
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Severity groups -->
+                <div class="rs2-groups">
+
+                  <!-- Critical -->
+                  <div v-if="resultSeverityGroups.critical.length" class="rs2-sev-group">
+                    <button class="rs2-sev-head rs2-sev-head--critical" @click="toggleResultGroup('critical')">
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#ff4757" stroke-width="2.5"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                      <span class="rs2-sev-label">CRITICAL</span>
+                      <span class="rs2-sev-cnt rs2-sev-cnt--critical">{{ resultSeverityGroups.critical.length }}</span>
+                      <span class="rs2-sev-sub">Immediate action needed</span>
+                      <svg class="rs2-sev-chevron" :class="{ open: !resultCollapsedGroups.has('critical') }" width="12" height="12" viewBox="0 0 12 12" fill="none">
+                        <path d="M2 4l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                      </svg>
+                    </button>
+                    <div v-if="!resultCollapsedGroups.has('critical')" class="rs2-issue-list">
+                      <div v-for="issue in resultSeverityGroups.critical" :key="issue.title" class="rs2-issue rs2-issue--critical">
+                        <!-- Title row -->
+                        <div class="rs2-issue-title-row">
+                          <span class="rs2-issue-bullet rs2-issue-bullet--critical">•</span>
+                          <span class="rs2-issue-title">{{ issue.title }}</span>
+                          <span class="rs2-sev-badge rs2-sev-badge--critical">CRITICAL</span>
+                          <span class="rs2-issue-pillar" :style="pillarColor(issue.pillar)">{{ issue.pillar?.toUpperCase() }}</span>
+                        </div>
+                        <!-- Description always visible -->
+                        <p class="rs2-issue-desc">{{ issue.description }}</p>
+                        <!-- HOW TO FIX toggle -->
+                        <template v-if="FIX_SNIPPETS[issue.title] || TOOL_LINKS[issue.title]">
+                          <button class="rs2-how-toggle" @click="toggleResultIssue(issue.title)">
+                            <svg width="10" height="10" viewBox="0 0 12 12" fill="none" class="rs2-how-chevron" :class="{ open: resultExpandedIssues.has(issue.title) }">
+                              <path d="M2 4l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                            HOW TO FIX
+                          </button>
+                          <div v-if="resultExpandedIssues.has(issue.title)" class="rs2-fix-expand">
+                            <div v-if="FIX_SNIPPETS[issue.title]" class="rs2-snippet">
+                              <pre class="rs2-pre">{{ FIX_SNIPPETS[issue.title].generic }}</pre>
+                            </div>
+                            <button v-if="TOOL_LINKS[issue.title]" class="rs2-open-tool" @click="dashboardNavigate(TOOL_LINKS[issue.title])">
+                              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/></svg>
+                              Build your {{ allTools.find(t => TOOL_LINKS[issue.title]?.endsWith(t.slug))?.title ?? 'tool' }} with our tool →
+                            </button>
+                          </div>
+                        </template>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Warning -->
+                  <div v-if="resultSeverityGroups.warning.length" class="rs2-sev-group">
+                    <button class="rs2-sev-head rs2-sev-head--warning" @click="toggleResultGroup('warning')">
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#ffaa00" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                      <span class="rs2-sev-label">WARNINGS</span>
+                      <span class="rs2-sev-cnt rs2-sev-cnt--warning">{{ resultSeverityGroups.warning.length }}</span>
+                      <span class="rs2-sev-sub">Review recommended</span>
+                      <svg class="rs2-sev-chevron" :class="{ open: !resultCollapsedGroups.has('warning') }" width="12" height="12" viewBox="0 0 12 12" fill="none">
+                        <path d="M2 4l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                      </svg>
+                    </button>
+                    <div v-if="!resultCollapsedGroups.has('warning')" class="rs2-issue-list">
+                      <div v-for="issue in resultSeverityGroups.warning" :key="issue.title" class="rs2-issue rs2-issue--warning">
+                        <div class="rs2-issue-title-row">
+                          <span class="rs2-issue-bullet rs2-issue-bullet--warning">•</span>
+                          <span class="rs2-issue-title">{{ issue.title }}</span>
+                          <span class="rs2-sev-badge rs2-sev-badge--warning">WARNING</span>
+                          <span class="rs2-issue-pillar" :style="pillarColor(issue.pillar)">{{ issue.pillar?.toUpperCase() }}</span>
+                        </div>
+                        <p class="rs2-issue-desc">{{ issue.description }}</p>
+                        <template v-if="FIX_SNIPPETS[issue.title] || TOOL_LINKS[issue.title]">
+                          <button class="rs2-how-toggle" @click="toggleResultIssue(issue.title)">
+                            <svg width="10" height="10" viewBox="0 0 12 12" fill="none" class="rs2-how-chevron" :class="{ open: resultExpandedIssues.has(issue.title) }">
+                              <path d="M2 4l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                            HOW TO FIX
+                          </button>
+                          <div v-if="resultExpandedIssues.has(issue.title)" class="rs2-fix-expand">
+                            <div v-if="FIX_SNIPPETS[issue.title]" class="rs2-snippet">
+                              <pre class="rs2-pre">{{ FIX_SNIPPETS[issue.title].generic }}</pre>
+                            </div>
+                            <button v-if="TOOL_LINKS[issue.title]" class="rs2-open-tool" @click="dashboardNavigate(TOOL_LINKS[issue.title])">
+                              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/></svg>
+                              Build your {{ allTools.find(t => TOOL_LINKS[issue.title]?.endsWith(t.slug))?.title ?? 'tool' }} with our tool →
+                            </button>
+                          </div>
+                        </template>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Passing -->
+                  <div v-if="resultSeverityGroups.pass.length" class="rs2-sev-group">
+                    <button class="rs2-sev-head rs2-sev-head--pass" @click="toggleResultGroup('pass')">
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#00d4aa" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                      <span class="rs2-sev-label">PASSING</span>
+                      <span class="rs2-sev-cnt rs2-sev-cnt--pass">{{ resultSeverityGroups.pass.length }}</span>
+                      <span class="rs2-sev-sub">All checks passed</span>
+                      <svg class="rs2-sev-chevron" :class="{ open: !resultCollapsedGroups.has('pass') }" width="12" height="12" viewBox="0 0 12 12" fill="none">
+                        <path d="M2 4l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                      </svg>
+                    </button>
+                    <div v-if="!resultCollapsedGroups.has('pass')" class="rs2-issue-list">
+                      <div v-for="issue in resultSeverityGroups.pass" :key="issue.title" class="rs2-issue rs2-issue--pass">
+                        <div class="rs2-issue-title-row">
+                          <span class="rs2-issue-bullet rs2-issue-bullet--pass">✓</span>
+                          <span class="rs2-issue-title">{{ issue.title }}</span>
+                          <span class="rs2-issue-pillar" :style="pillarColor(issue.pillar)">{{ issue.pillar?.toUpperCase() }}</span>
+                        </div>
+                        <p class="rs2-issue-desc">{{ issue.description }}</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div v-if="!resultSeverityGroups.critical.length && !resultSeverityGroups.warning.length && !resultSeverityGroups.pass.length" class="ds-empty-state">
+                    <p>No issues in this category</p>
+                  </div>
+
+                </div>
+
+              </template>
 
               <!-- No issues -->
-              <div v-else-if="selectedScan.status === 'done'" class="ds-card">
-                <div style="padding:12px 0;text-align:center;color:#00d4aa;font-family:'Space Grotesk',sans-serif;font-weight:700;">✓ No issues found</div>
+              <div v-else-if="selectedScan.status === 'done'" class="rs2-all-pass">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#00d4aa" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                No issues found — everything looks great
               </div>
 
               <!-- Other scans of same site -->
@@ -1638,8 +1830,6 @@ function submitCompare() {
 .ds-sidebar::-webkit-scrollbar { display: none; }
 .ds-logo { padding: 18px 16px; border-bottom: 1px solid #1e1e28; display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
 .ds-logo-inner { display: flex; align-items: center; gap: 9px; text-decoration: none; }
-.ds-logo-mark { width: 26px; height: 26px; background: #ec3586; border-radius: 7px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-.ds-logo-mark svg { width: 15px; height: 15px; }
 .ds-logo-text { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 15px; color: #e8e8f0; }
 .ds-plan-badge { font-family: 'Space Grotesk', sans-serif; font-size: 9px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; padding: 2px 6px; border-radius: 4px; margin-left: auto; }
 .ds-plan-pro { background: rgba(236,53,134,0.12); color: #ec3586; border: 1px solid rgba(236,53,134,0.25); }
@@ -2208,5 +2398,219 @@ function submitCompare() {
 .cht-p-val {
   font-family: 'Space Grotesk', sans-serif; font-size: 10px; font-weight: 700;
   width: 22px; text-align: right; flex-shrink: 0;
+}
+
+/* ── Result v2: header ───────────────────────────────── */
+.rs2-header {
+  display: flex; align-items: center; gap: 14px;
+  background: #0f0f14; border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 12px; padding: 12px 16px;
+}
+/* Mini ring */
+.rs2-mini-ring {
+  position: relative; width: 44px; height: 44px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+}
+.rs2-mini-score {
+  position: absolute; font-family: 'Space Grotesk', sans-serif;
+  font-size: 11px; font-weight: 800; line-height: 1;
+}
+.rs2-header-meta { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.rs2-url {
+  font-family: 'Space Grotesk', sans-serif; font-size: 13px; font-weight: 700;
+  color: rgba(255,255,255,0.88); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.rs2-meta-row { display: flex; align-items: center; gap: 7px; flex-wrap: wrap; }
+.rs2-time { font-family: 'DM Sans', sans-serif; font-size: 11px; color: rgba(255,255,255,0.28); }
+.rs2-pill-done {
+  font-family: 'Space Grotesk', sans-serif; font-size: 8px; font-weight: 700;
+  letter-spacing: 0.1em; text-transform: uppercase; padding: 2px 6px; border-radius: 4px;
+  color: #00d4aa; background: rgba(0,212,170,0.1); border: 1px solid rgba(0,212,170,0.2);
+}
+.rs2-pill-monitored {
+  font-family: 'Space Grotesk', sans-serif; font-size: 8px; font-weight: 700;
+  letter-spacing: 0.08em; text-transform: uppercase; padding: 2px 6px; border-radius: 4px;
+  color: #ec3586; background: rgba(236,53,134,0.08); border: 1px solid rgba(236,53,134,0.2);
+}
+/* Action buttons — horizontal row on the right */
+.rs2-header-actions { display: flex; flex-direction: row; gap: 6px; flex-shrink: 0; flex-wrap: wrap; justify-content: flex-end; }
+.rs2-act-btn {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-family: 'Space Grotesk', sans-serif; font-size: 11px; font-weight: 600;
+  padding: 5px 10px; border-radius: 7px; border: 1px solid rgba(255,255,255,0.09);
+  background: rgba(255,255,255,0.04); color: rgba(255,255,255,0.55); cursor: pointer;
+  transition: background 0.12s, color 0.12s, border-color 0.12s; white-space: nowrap;
+}
+.rs2-act-btn:hover { background: rgba(255,255,255,0.09); color: rgba(255,255,255,0.85); border-color: rgba(255,255,255,0.16); }
+.rs2-act-btn--danger-active { color: #ec3586; border-color: rgba(236,53,134,0.3); background: rgba(236,53,134,0.08); }
+.rs2-act-btn--danger { color: rgba(255,71,87,0.5); }
+.rs2-act-btn--danger:hover { color: #ff4757; background: rgba(255,71,87,0.08); border-color: rgba(255,71,87,0.2); }
+
+/* ── Score strip ─────────────────────────────────────── */
+.rs2-score-strip {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 8px;
+}
+.rs2-score-card {
+  background: #0f0f14; border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 10px; padding: 12px 14px 10px;
+  display: flex; flex-direction: column; gap: 8px;
+  position: relative; overflow: hidden;
+}
+.rs2-score-card::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+  background: linear-gradient(90deg, transparent, var(--pc) 50%, transparent);
+  opacity: 0.5;
+}
+.rs2-score-card__label {
+  font-family: 'Space Grotesk', sans-serif; font-size: 9px; font-weight: 700;
+  letter-spacing: 0.13em; text-transform: uppercase;
+  color: color-mix(in srgb, var(--pc) 75%, white);
+  display: flex; align-items: center; gap: 5px;
+}
+.rs2-score-card__bonus {
+  font-size: 7px; color: rgba(255,255,255,0.3); background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.08); border-radius: 3px; padding: 1px 4px;
+  letter-spacing: 0.1em;
+}
+.rs2-score-card__num {
+  font-family: 'Space Grotesk', sans-serif; font-size: 30px; font-weight: 800;
+  line-height: 1; letter-spacing: -0.04em;
+}
+.rs2-score-card__bar-bg { height: 3px; background: rgba(255,255,255,0.07); border-radius: 2px; overflow: hidden; }
+.rs2-score-card__bar    { height: 100%; border-radius: 2px; transition: width 0.6s cubic-bezier(0.4,0,0.2,1); min-width: 2px; }
+
+/* ── Result v2: issues heading ───────────────────────── */
+.rs2-issues-hdr {
+  display: flex; align-items: center; gap: 10px;
+  margin-bottom: 6px; padding: 0 4px;
+}
+.rs2-issues-title { font-family: 'Space Grotesk', sans-serif; font-size: 11px; font-weight: 700; color: rgba(255,255,255,0.4); letter-spacing: 0.1em; }
+.rs2-issues-count { font-family: 'Space Grotesk', sans-serif; font-size: 11px; font-weight: 700; padding: 2px 6px; border-radius: 4px; background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.5); }
+
+/* ── Result v2: fix now panel ────────────────────────── */
+.rs2-fix-panel {
+  display: flex; flex-direction: column; gap: 14px;
+  padding: 16px; border-radius: 12px; margin-bottom: 20px;
+  background: rgba(255,255,255,0.015); border: 1px solid rgba(255,255,255,0.05);
+}
+.rs2-fix-panel-head { display: flex; align-items: center; justify-content: space-between; }
+.rs2-fix-panel-label {
+  display: flex; align-items: center; gap: 6px;
+  font-family: 'Space Grotesk', sans-serif; font-size: 11px; font-weight: 800;
+  letter-spacing: 0.08em; color: #ec3586;
+}
+.rs2-fix-panel-sub { font-family: 'DM Sans', sans-serif; font-size: 11px; color: rgba(255,255,255,0.25); }
+
+.rs2-fix-cards { display: flex; gap: 12px; overflow-x: auto; padding-bottom: 6px; }
+.rs2-fix-cards::-webkit-scrollbar { height: 6px; }
+.rs2-fix-cards::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
+
+.rs2-fix-card {
+  display: flex; flex-direction: column; width: 220px; flex-shrink: 0;
+  border-radius: 10px; background: #0f0f14; border: 1px solid rgba(255,255,255,0.06);
+  padding: 14px; position: relative; overflow: hidden; transition: transform 0.2s, border-color 0.2s;
+}
+.rs2-fix-card:hover { transform: translateY(-2px); border-color: var(--tc); box-shadow: 0 8px 24px rgba(0,0,0,0.3); }
+.rs2-fix-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: var(--tc); opacity: 0.8; }
+.rs2-fix-card-badge { align-self: flex-end; font-family: 'Space Grotesk', sans-serif; font-size: 9px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; padding: 2px 6px; border-radius: 4px; margin-bottom: 8px; }
+.rs2-fix-card-badge--crit { background: rgba(255,71,87,0.1); color: #ff4757; }
+.rs2-fix-card-badge--warn { background: rgba(255,170,0,0.1); color: #ffaa00; }
+
+.rs2-fix-card-body { display: flex; flex-direction: column; gap: 8px; flex: 1; margin-bottom: 16px; }
+.rs2-fix-card-icon { width: 32px; height: 32px; border-radius: 8px; background: rgba(255,255,255,0.03); display: flex; align-items: center; justify-content: center; }
+.rs2-fix-card-title { font-family: 'Space Grotesk', sans-serif; font-size: 14px; font-weight: 700; color: rgba(255,255,255,0.9); }
+.rs2-fix-card-desc { font-family: 'DM Sans', sans-serif; font-size: 11px; color: rgba(255,255,255,0.4); line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; text-overflow: ellipsis; }
+
+.rs2-fix-card-cta { font-family: 'Space Grotesk', sans-serif; font-size: 10px; font-weight: 800; letter-spacing: 0.08em; color: var(--tc); text-transform: uppercase; background: none; border: none; cursor: pointer; text-align: left; padding: 0; transition: filter 0.2s; }
+.rs2-fix-card-cta:hover { filter: brightness(1.2); }
+
+/* ── Result v2: filter row ───────────────────────────── */
+.rs2-filter-row { display: flex; align-items: center; gap: 14px; margin-bottom: 12px; margin-top: 20px; }
+.rs2-filter-label { font-family: 'Space Grotesk', sans-serif; font-size: 10px; font-weight: 700; letter-spacing: 0.15em; color: rgba(255,255,255,0.25); }
+.rs2-filter-bar { display: flex; gap: 6px; flex-wrap: wrap; }
+.rs2-chip {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-family: 'Space Grotesk', sans-serif; font-size: 11px; font-weight: 600;
+  padding: 4px 10px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(255,255,255,0.02); color: rgba(255,255,255,0.4); cursor: pointer; transition: all 0.12s;
+}
+.rs2-chip:hover { color: rgba(255,255,255,0.7); border-color: rgba(255,255,255,0.15); background: rgba(255,255,255,0.04); }
+.rs2-chip--active { background: rgba(236,53,134,0.12); border-color: rgba(236,53,134,0.3); color: #ec3586; }
+.rs2-chip-count { font-size: 10px; background: rgba(255,255,255,0.07); border-radius: 4px; padding: 1px 5px; }
+.rs2-chip--active .rs2-chip-count { background: rgba(236,53,134,0.15); }
+
+/* ── Result v2: severity groups ──────────────────────── */
+.rs2-groups { display: flex; flex-direction: column; gap: 12px; }
+.rs2-sev-group { border-radius: 12px; border: 1px solid rgba(255,255,255,0.06); background: rgba(255,255,255,0.01); }
+.rs2-sev-head {
+  display: flex; align-items: center; gap: 10px;
+  padding: 14px 18px; width: 100%; border: none; background: transparent;
+  cursor: pointer; transition: background 0.12s;
+}
+.rs2-sev-head:hover { background: rgba(255,255,255,0.02); }
+
+.rs2-sev-label { font-family: 'Space Grotesk', sans-serif; font-size: 13px; font-weight: 800; letter-spacing: 0.05em; color: rgba(255,255,255,0.8); }
+.rs2-sev-head--critical .rs2-sev-label { color: #ff4757; }
+.rs2-sev-cnt { font-family: 'Space Grotesk', sans-serif; font-size: 10px; font-weight: 800; width: 18px; height: 18px; display: flex; align-items: center; justify-content: center; border-radius: 4px; }
+.rs2-sev-cnt--critical { background: rgba(255,71,87,0.15); color: #ff4757; }
+.rs2-sev-cnt--warning { background: rgba(255,170,0,0.15); color: #ffaa00; }
+.rs2-sev-cnt--pass { background: rgba(0,212,170,0.15); color: #00d4aa; }
+.rs2-sev-sub { font-family: 'DM Sans', sans-serif; font-size: 12px; color: rgba(255,255,255,0.3); flex: 1; text-align: left; }
+.rs2-sev-chevron { flex-shrink: 0; color: rgba(255,255,255,0.3); transition: transform 0.2s; }
+.rs2-sev-chevron.open { transform: rotate(180deg); color: rgba(255,255,255,0.6); }
+
+.rs2-issue-list { padding: 0 16px 16px; display: flex; flex-direction: column; gap: 8px; }
+.rs2-issue {
+  padding: 14px 16px; border-radius: 8px; border: 1px solid transparent; transition: background 0.15s, border-color 0.15s;
+}
+.rs2-issue:hover { background: rgba(255,255,255,0.02); border-color: rgba(255,255,255,0.05); }
+
+.rs2-issue-title-row { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+.rs2-issue-bullet { font-size: 16px; line-height: 1; }
+.rs2-issue-bullet--critical { color: #ff4757; }
+.rs2-issue-bullet--warning { color: #ffaa00; font-size: 12px; }
+.rs2-issue-bullet--pass { color: #00d4aa; font-size: 12px; }
+
+.rs2-issue-title { font-family: 'Space Grotesk', sans-serif; font-size: 13.5px; font-weight: 700; color: rgba(255,255,255,0.85); }
+.rs2-issue--pass .rs2-issue-title { color: rgba(255,255,255,0.5); }
+.rs2-sev-badge { font-family: 'Space Grotesk', sans-serif; font-size: 8px; font-weight: 800; letter-spacing: 0.1em; padding: 2px 5px; border-radius: 4px; }
+.rs2-sev-badge--critical { background: #ff4757; color: #fff; }
+.rs2-sev-badge--warning { background: #ffaa00; color: #000; }
+.rs2-issue-pillar { font-family: 'Space Grotesk', sans-serif; font-size: 9px; font-weight: 700; letter-spacing: 0.1em; margin-left: auto; color: rgba(255,255,255,0.3); }
+
+.rs2-issue-desc { font-family: 'DM Sans', sans-serif; font-size: 12.5px; color: rgba(255,255,255,0.45); line-height: 1.5; margin: 0 0 10px 18px; }
+
+.rs2-how-toggle {
+  display: inline-flex; align-items: center; gap: 6px; margin-left: 18px;
+  font-family: 'Space Grotesk', sans-serif; font-size: 10px; font-weight: 700; letter-spacing: 0.1em; color: rgba(255,255,255,0.3);
+  background: none; border: none; cursor: pointer; padding: 4px 6px; border-radius: 4px; transition: background 0.15s, color 0.15s;
+}
+.rs2-how-toggle:hover { color: rgba(255,255,255,0.6); background: rgba(255,255,255,0.05); }
+.rs2-how-chevron { transition: transform 0.2s; }
+.rs2-how-chevron.open { transform: rotate(180deg); }
+
+.rs2-fix-expand {
+  margin: 12px 0 0 18px; display: flex; flex-direction: column; gap: 12px;
+  background: rgba(255,255,255,0.015); border: 1px solid rgba(255,255,255,0.04); border-radius: 8px; padding: 16px;
+}
+.rs2-snippet { background: #07070a; border: 1px solid rgba(255,255,255,0.08); border-radius: 6px; overflow: hidden; }
+.rs2-pre { font-family: 'Fira Mono','Cascadia Code',monospace; font-size: 11px; line-height: 1.6; color: rgba(255,255,255,0.65); padding: 12px; margin: 0; overflow-x: auto; white-space: pre; }
+.rs2-open-tool {
+  align-self: flex-start; display: inline-flex; align-items: center; gap: 8px;
+  font-family: 'Space Grotesk', sans-serif; font-size: 12px; font-weight: 700;
+  color: #ec3586; background: rgba(236,53,134,0.08); border: 1px solid rgba(236,53,134,0.25);
+  border-radius: 6px; padding: 8px 14px; cursor: pointer; transition: background 0.12s;
+}
+.rs2-open-tool:hover { background: rgba(236,53,134,0.15); }
+
+/* ── Result v2: all-pass state ───────────────────────── */
+.rs2-all-pass {
+  display: flex; align-items: center; gap: 10px;
+  padding: 20px; border-radius: 10px;
+  background: rgba(0,212,170,0.05); border: 1px solid rgba(0,212,170,0.15);
+  font-family: 'Space Grotesk', sans-serif; font-size: 13px; font-weight: 600;
+  color: #00d4aa;
 }
 </style>

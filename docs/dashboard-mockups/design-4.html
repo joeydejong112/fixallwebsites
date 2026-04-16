@@ -1,0 +1,699 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ScanPulse — Overview Cards (Bento)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #07070a;
+    --surface: #0f0f14;
+    --elevated: #16161e;
+    --border: #1e1e2a;
+    --primary: #ec3586;
+    --security: #00d4aa;
+    --performance: #ffaa00;
+    --seo: #6c5ce7;
+    --accessibility: #a29bfe;
+    --ai: #ff7675;
+    --dns: #74b9ff;
+    --trust: #fd79a8;
+    --text: #ffffff;
+    --muted: #8888a4;
+    --success: #00d4aa;
+    --warning: #ffaa00;
+    --danger: #ff4757;
+  }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    display: flex;
+    height: 100vh;
+    overflow: hidden;
+    font-size: 14px;
+  }
+
+  /* Sidebar */
+  .sidebar {
+    width: 220px;
+    min-width: 220px;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+  }
+  .sidebar-logo {
+    padding: 22px 18px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .logo-mark {
+    width: 30px; height: 30px;
+    background: var(--primary);
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .logo-mark svg { width: 16px; height: 16px; }
+  .logo-text {
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 700; font-size: 17px;
+  }
+  .sidebar-nav { flex: 1; padding: 10px 0; overflow-y: auto; }
+  .nav-section {
+    font-size: 10px; font-weight: 600; text-transform: uppercase;
+    letter-spacing: 1px; color: var(--muted);
+    padding: 12px 18px 5px;
+  }
+  .nav-item {
+    display: flex; align-items: center; gap: 9px;
+    padding: 8px 18px;
+    color: var(--muted); font-size: 13px; font-weight: 500;
+    cursor: pointer; border-left: 3px solid transparent;
+    transition: all 0.15s; text-decoration: none;
+  }
+  .nav-item:hover { background: var(--elevated); color: var(--text); }
+  .nav-item.active {
+    color: var(--primary);
+    background: rgba(236,53,134,0.07);
+    border-left-color: var(--primary);
+  }
+  .nav-pip { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .sidebar-footer {
+    padding: 14px 18px;
+    border-top: 1px solid var(--border);
+  }
+  .quota-label { font-size: 11px; color: var(--muted); margin-bottom: 5px; }
+  .quota-bar { height: 4px; background: var(--border); border-radius: 2px; overflow: hidden; }
+  .quota-fill { height: 100%; width: 62%; background: var(--primary); border-radius: 2px; }
+  .quota-note { font-size: 11px; color: var(--muted); margin-top: 4px; }
+
+  /* Main */
+  .main-wrap { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+
+  /* Header */
+  .header {
+    height: 58px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center;
+    padding: 0 24px; gap: 14px; flex-shrink: 0;
+  }
+  .header-title {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 15px; font-weight: 600; flex: 1;
+  }
+  .header-domain {
+    display: flex; align-items: center; gap: 8px;
+    background: var(--elevated);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 6px 12px;
+    font-size: 13px; font-weight: 500;
+  }
+  .domain-status {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: var(--success);
+  }
+  .search-box {
+    display: flex; align-items: center; gap: 7px;
+    background: var(--elevated);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 6px 12px; width: 200px;
+    font-size: 13px; color: var(--muted);
+  }
+  .search-box input {
+    background: none; border: none; outline: none;
+    color: var(--text); font-family: 'DM Sans', sans-serif;
+    font-size: 13px; width: 100%;
+  }
+  .search-box input::placeholder { color: var(--muted); }
+  .new-scan-btn {
+    display: flex; align-items: center; gap: 6px;
+    background: var(--primary); color: white;
+    border: none; border-radius: 8px;
+    padding: 8px 16px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px; font-weight: 600; cursor: pointer;
+    transition: opacity 0.15s;
+  }
+  .new-scan-btn:hover { opacity: 0.85; }
+  .avatar {
+    width: 34px; height: 34px;
+    background: linear-gradient(135deg, var(--primary), #8e44ad);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 700; font-size: 13px; cursor: pointer;
+    flex-shrink: 0;
+  }
+
+  /* Content: Bento grid */
+  .content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px;
+  }
+  .bento-grid {
+    display: grid;
+    grid-template-columns: 320px 1fr 1fr 1fr;
+    grid-template-rows: auto auto auto;
+    gap: 14px;
+  }
+
+  /* Base card */
+  .bcard {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    overflow: hidden;
+    transition: border-color 0.15s, transform 0.15s;
+    cursor: pointer;
+  }
+  .bcard:hover { border-color: rgba(255,255,255,0.12); transform: translateY(-1px); }
+
+  /* Hero score card — spans 2 rows, 1 col */
+  .bcard-hero {
+    grid-column: 1;
+    grid-row: 1 / 3;
+    display: flex;
+    flex-direction: column;
+  }
+  .hero-banner {
+    background: linear-gradient(135deg, rgba(236,53,134,0.25) 0%, rgba(142,68,173,0.15) 100%);
+    border-bottom: 1px solid rgba(236,53,134,0.2);
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+  }
+  .hero-label {
+    font-size: 11px; font-weight: 600; text-transform: uppercase;
+    letter-spacing: 1px; color: rgba(236,53,134,0.8);
+  }
+  .hero-domain {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 14px; font-weight: 600;
+    color: var(--text);
+  }
+  .hero-ring-wrap {
+    position: relative;
+    width: 160px; height: 160px;
+    margin: 16px auto 8px;
+  }
+  .hero-ring-wrap svg { width: 160px; height: 160px; transform: rotate(-90deg); }
+  .hero-ring-label {
+    position: absolute; top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+  }
+  .hero-score {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 48px; font-weight: 700; line-height: 1;
+    background: linear-gradient(135deg, #ec3586, #fd79a8);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .hero-score-label { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .hero-body { padding: 16px; flex: 1; display: flex; flex-direction: column; gap: 10px; }
+  .hero-stat-row {
+    display: flex; justify-content: space-between;
+    background: var(--elevated);
+    border-radius: 8px;
+    padding: 10px 14px;
+  }
+  .hero-stat { text-align: center; }
+  .hero-stat-val {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 20px; font-weight: 700; line-height: 1;
+  }
+  .hero-stat-lbl { font-size: 11px; color: var(--muted); margin-top: 2px; }
+  .hero-meta { font-size: 12px; color: var(--muted); text-align: center; }
+  .hero-cta {
+    display: flex; align-items: center; justify-content: center; gap: 6px;
+    background: var(--primary);
+    color: white; border: none; border-radius: 8px;
+    padding: 10px; width: 100%;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px; font-weight: 600; cursor: pointer;
+    transition: opacity 0.15s; margin-top: auto;
+  }
+  .hero-cta:hover { opacity: 0.85; }
+
+  /* Pillar card */
+  .bcard-pillar { display: flex; flex-direction: column; }
+  .pillar-card-header {
+    padding: 14px 16px 10px;
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; gap: 8px;
+  }
+  .pillar-header-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .pillar-header-name {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 13px; font-weight: 600; flex: 1;
+  }
+  .pillar-header-score {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 22px; font-weight: 700;
+  }
+  .pillar-card-body { padding: 12px 16px; flex: 1; display: flex; flex-direction: column; gap: 8px; }
+  .pillar-bar-track {
+    height: 5px; background: var(--border); border-radius: 3px; overflow: hidden;
+    margin-bottom: 4px;
+  }
+  .pillar-bar-fill { height: 100%; border-radius: 3px; }
+  .pillar-issue-line {
+    display: flex; align-items: center; gap: 6px;
+    font-size: 12px; color: var(--muted);
+  }
+  .pil-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+  .pillar-grade-badge {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 24px; height: 24px; border-radius: 6px;
+    font-size: 11px; font-weight: 700;
+    align-self: flex-end;
+  }
+
+  /* Recent scans card — spans 2 cols */
+  .bcard-scans {
+    grid-column: 2 / 4;
+    grid-row: 3;
+  }
+  .card-head {
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--border);
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 13px; font-weight: 600;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .card-head-action {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 12px; color: var(--primary); font-weight: 500; cursor: pointer;
+  }
+  table { width: 100%; border-collapse: collapse; }
+  thead th {
+    font-size: 10px; font-weight: 600; text-transform: uppercase;
+    letter-spacing: 0.8px; color: var(--muted);
+    padding: 8px 16px; text-align: left;
+    border-bottom: 1px solid var(--border);
+  }
+  tbody tr { cursor: pointer; transition: background 0.15s; }
+  tbody tr:hover { background: var(--elevated); }
+  tbody td { padding: 10px 16px; font-size: 13px; border-bottom: 1px solid rgba(30,30,42,0.5); }
+  tbody tr:last-child td { border-bottom: none; }
+  .score-pill {
+    display: inline-flex; align-items: center; justify-content: center;
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 11px; font-weight: 700;
+    padding: 2px 9px; border-radius: 20px;
+  }
+  .s-good { background: rgba(0,212,170,0.12); color: var(--success); }
+  .s-warn { background: rgba(255,170,0,0.12); color: var(--warning); }
+  .s-bad  { background: rgba(255,71,87,0.12); color: var(--danger); }
+  .status-chip {
+    display: inline-flex; align-items: center; gap: 5px;
+    font-size: 11px; font-weight: 500;
+  }
+  .schip-dot { width: 6px; height: 6px; border-radius: 50%; }
+
+  /* Issues summary card — 1 col, row 3 -->
+  .bcard-issues {
+    grid-column: 4;
+    grid-row: 2 / 4;
+  }
+  .issue-summary-item {
+    display: flex; align-items: center; gap: 8px;
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border);
+    cursor: pointer; transition: background 0.15s;
+  }
+  .issue-summary-item:last-child { border-bottom: none; }
+  .issue-summary-item:hover { background: var(--elevated); }
+  .issue-sev-indicator {
+    width: 4px; height: 32px; border-radius: 2px; flex-shrink: 0;
+  }
+  .issue-sum-text { flex: 1; }
+  .issue-sum-title { font-size: 12px; font-weight: 500; margin-bottom: 1px; }
+  .issue-sum-meta { font-size: 11px; color: var(--muted); }
+  .issue-sum-tag {
+    font-size: 10px; font-weight: 600; text-transform: uppercase;
+    padding: 2px 6px; border-radius: 4px; flex-shrink: 0;
+  }
+</style>
+</head>
+<body>
+
+<!-- Sidebar -->
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-mark">
+      <svg viewBox="0 0 16 16" fill="none">
+        <circle cx="8" cy="8" r="2.5" fill="white"/>
+        <circle cx="8" cy="8" r="5.5" stroke="white" stroke-width="1.2" opacity="0.5"/>
+        <circle cx="8" cy="8" r="7.5" stroke="white" stroke-width="0.8" opacity="0.25"/>
+      </svg>
+    </div>
+    <span class="logo-text">ScanPulse</span>
+  </div>
+
+  <nav class="sidebar-nav">
+    <div class="nav-section">Main</div>
+    <a class="nav-item active" href="#">
+      <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+      Dashboard
+    </a>
+    <a class="nav-item" href="#">
+      <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      Scans
+    </a>
+
+    <div class="nav-section">Pillars</div>
+    <a class="nav-item" href="#"><div class="nav-pip" style="background:var(--security)"></div> Security</a>
+    <a class="nav-item" href="#"><div class="nav-pip" style="background:var(--performance)"></div> Performance</a>
+    <a class="nav-item" href="#"><div class="nav-pip" style="background:var(--seo)"></div> SEO</a>
+    <a class="nav-item" href="#"><div class="nav-pip" style="background:var(--accessibility)"></div> Accessibility</a>
+    <a class="nav-item" href="#"><div class="nav-pip" style="background:var(--ai)"></div> AI Readiness</a>
+    <a class="nav-item" href="#"><div class="nav-pip" style="background:var(--dns)"></div> DNS &amp; Email</a>
+    <a class="nav-item" href="#"><div class="nav-pip" style="background:var(--trust)"></div> Trust</a>
+
+    <div class="nav-section">Account</div>
+    <a class="nav-item" href="#">
+      <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+      Settings
+    </a>
+    <a class="nav-item" href="#">
+      <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>
+      Billing
+    </a>
+  </nav>
+
+  <div class="sidebar-footer">
+    <div class="quota-label">Scan quota — 31 / 50 used</div>
+    <div class="quota-bar"><div class="quota-fill"></div></div>
+    <div class="quota-note">19 remaining this month</div>
+  </div>
+</aside>
+
+<!-- Main -->
+<div class="main-wrap">
+  <header class="header">
+    <div class="header-title">Overview</div>
+    <div class="header-domain">
+      <div class="domain-status"></div>
+      techstartup.io
+    </div>
+    <div class="search-box">
+      <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      <input type="text" placeholder="Search...">
+    </div>
+    <button class="new-scan-btn">
+      <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
+      New Scan
+    </button>
+    <div class="avatar">JD</div>
+  </header>
+
+  <div class="content">
+    <div class="bento-grid">
+
+      <!-- Hero card -->
+      <div class="bcard bcard-hero">
+        <div class="hero-banner">
+          <div class="hero-label">Latest Scan</div>
+          <div class="hero-domain">techstartup.io</div>
+        </div>
+        <div style="padding:0 20px;">
+          <div class="hero-ring-wrap">
+            <svg viewBox="0 0 160 160">
+              <circle cx="80" cy="80" r="64" fill="none" stroke="#1e1e2a" stroke-width="11"/>
+              <circle cx="80" cy="80" r="64" fill="none" stroke="url(#heroGrad)" stroke-width="11"
+                stroke-dasharray="349.1 402" stroke-linecap="round"/>
+              <defs>
+                <linearGradient id="heroGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <stop offset="0%" style="stop-color:#ec3586"/>
+                  <stop offset="100%" style="stop-color:#fd79a8"/>
+                </linearGradient>
+              </defs>
+            </svg>
+            <div class="hero-ring-label">
+              <div class="hero-score">87</div>
+              <div class="hero-score-label">Overall</div>
+            </div>
+          </div>
+        </div>
+        <div class="hero-body">
+          <div class="hero-stat-row">
+            <div class="hero-stat">
+              <div class="hero-stat-val" style="color:var(--danger)">2</div>
+              <div class="hero-stat-lbl">Critical</div>
+            </div>
+            <div class="hero-stat">
+              <div class="hero-stat-val" style="color:var(--warning)">9</div>
+              <div class="hero-stat-lbl">Warnings</div>
+            </div>
+            <div class="hero-stat">
+              <div class="hero-stat-val" style="color:var(--muted)">13</div>
+              <div class="hero-stat-lbl">Info</div>
+            </div>
+          </div>
+          <div class="hero-meta">Scanned Apr 8, 2026 · 2:14 PM UTC</div>
+          <button class="hero-cta">
+            <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 8 12 12 14 14"/></svg>
+            Scan Again
+          </button>
+        </div>
+      </div>
+
+      <!-- Security -->
+      <div class="bcard bcard-pillar">
+        <div class="pillar-card-header" style="background:rgba(0,212,170,0.06);">
+          <div class="pillar-header-dot" style="background:var(--security)"></div>
+          <div class="pillar-header-name">Security</div>
+          <div class="pillar-header-score" style="color:var(--security)">91</div>
+        </div>
+        <div class="pillar-card-body">
+          <div class="pillar-bar-track"><div class="pillar-bar-fill" style="width:91%;background:var(--security)"></div></div>
+          <div class="pillar-issue-line"><div class="pil-dot" style="background:var(--danger)"></div> Missing CSP header</div>
+          <div class="pillar-issue-line"><div class="pil-dot" style="background:var(--warning)"></div> HSTS max-age too short</div>
+          <div class="pillar-grade-badge" style="background:rgba(0,212,170,0.12);color:var(--security)">A−</div>
+        </div>
+      </div>
+
+      <!-- Performance -->
+      <div class="bcard bcard-pillar">
+        <div class="pillar-card-header" style="background:rgba(255,170,0,0.06);">
+          <div class="pillar-header-dot" style="background:var(--performance)"></div>
+          <div class="pillar-header-name">Performance</div>
+          <div class="pillar-header-score" style="color:var(--performance)">78</div>
+        </div>
+        <div class="pillar-card-body">
+          <div class="pillar-bar-track"><div class="pillar-bar-fill" style="width:78%;background:var(--performance)"></div></div>
+          <div class="pillar-issue-line"><div class="pil-dot" style="background:var(--warning)"></div> LCP 3.7s — over threshold</div>
+          <div class="pillar-issue-line"><div class="pil-dot" style="background:var(--warning)"></div> Render-blocking JS detected</div>
+          <div class="pillar-grade-badge" style="background:rgba(255,170,0,0.12);color:var(--performance)">B+</div>
+        </div>
+      </div>
+
+      <!-- SEO -->
+      <div class="bcard bcard-pillar">
+        <div class="pillar-card-header" style="background:rgba(108,92,231,0.06);">
+          <div class="pillar-header-dot" style="background:var(--seo)"></div>
+          <div class="pillar-header-name">SEO</div>
+          <div class="pillar-header-score" style="color:var(--seo)">85</div>
+        </div>
+        <div class="pillar-card-body">
+          <div class="pillar-bar-track"><div class="pillar-bar-fill" style="width:85%;background:var(--seo)"></div></div>
+          <div class="pillar-issue-line"><div class="pil-dot" style="background:var(--warning)"></div> 3 duplicate meta descriptions</div>
+          <div class="pillar-issue-line"><div class="pil-dot" style="background:var(--warning)"></div> Missing canonical on /blog</div>
+          <div class="pillar-grade-badge" style="background:rgba(108,92,231,0.12);color:var(--seo)">A−</div>
+        </div>
+      </div>
+
+      <!-- Accessibility -->
+      <div class="bcard bcard-pillar">
+        <div class="pillar-card-header" style="background:rgba(162,155,254,0.06);">
+          <div class="pillar-header-dot" style="background:var(--accessibility)"></div>
+          <div class="pillar-header-name">Accessibility</div>
+          <div class="pillar-header-score" style="color:var(--accessibility)">72</div>
+        </div>
+        <div class="pillar-card-body">
+          <div class="pillar-bar-track"><div class="pillar-bar-fill" style="width:72%;background:var(--accessibility)"></div></div>
+          <div class="pillar-issue-line"><div class="pil-dot" style="background:var(--warning)"></div> 13 images missing alt text</div>
+          <div class="pillar-issue-line"><div class="pil-dot" style="background:var(--warning)"></div> Low contrast in navigation</div>
+          <div class="pillar-grade-badge" style="background:rgba(162,155,254,0.12);color:var(--accessibility)">C+</div>
+        </div>
+      </div>
+
+      <!-- AI Readiness -->
+      <div class="bcard bcard-pillar">
+        <div class="pillar-card-header" style="background:rgba(255,118,117,0.06);">
+          <div class="pillar-header-dot" style="background:var(--ai)"></div>
+          <div class="pillar-header-name">AI Readiness</div>
+          <div class="pillar-header-score" style="color:var(--ai)">68</div>
+        </div>
+        <div class="pillar-card-body">
+          <div class="pillar-bar-track"><div class="pillar-bar-fill" style="width:68%;background:var(--ai)"></div></div>
+          <div class="pillar-issue-line"><div class="pil-dot" style="background:var(--danger)"></div> No JSON-LD schema markup</div>
+          <div class="pillar-issue-line"><div class="pil-dot" style="background:var(--warning)"></div> llms.txt file missing</div>
+          <div class="pillar-grade-badge" style="background:rgba(255,118,117,0.12);color:var(--ai)">C</div>
+        </div>
+      </div>
+
+      <!-- DNS & Email -->
+      <div class="bcard bcard-pillar">
+        <div class="pillar-card-header" style="background:rgba(116,185,255,0.06);">
+          <div class="pillar-header-dot" style="background:var(--dns)"></div>
+          <div class="pillar-header-name">DNS &amp; Email</div>
+          <div class="pillar-header-score" style="color:var(--dns)">94</div>
+        </div>
+        <div class="pillar-card-body">
+          <div class="pillar-bar-track"><div class="pillar-bar-fill" style="width:94%;background:var(--dns)"></div></div>
+          <div class="pillar-issue-line"><div class="pil-dot" style="background:var(--muted)"></div> DMARC policy: p=none</div>
+          <div class="pillar-issue-line" style="color:rgba(136,136,164,0.5)"><div class="pil-dot" style="background:rgba(136,136,164,0.3)"></div> SPF &amp; DKIM: passing ✓</div>
+          <div class="pillar-grade-badge" style="background:rgba(116,185,255,0.12);color:var(--dns)">A</div>
+        </div>
+      </div>
+
+      <!-- Trust -->
+      <div class="bcard bcard-pillar">
+        <div class="pillar-card-header" style="background:rgba(253,121,168,0.06);">
+          <div class="pillar-header-dot" style="background:var(--trust)"></div>
+          <div class="pillar-header-name">Trust</div>
+          <div class="pillar-header-score" style="color:var(--trust)">88</div>
+        </div>
+        <div class="pillar-card-body">
+          <div class="pillar-bar-track"><div class="pillar-bar-fill" style="width:88%;background:var(--trust)"></div></div>
+          <div class="pillar-issue-line"><div class="pil-dot" style="background:var(--warning)"></div> SSL cert expires in 42 days</div>
+          <div class="pillar-issue-line" style="color:rgba(136,136,164,0.5)"><div class="pil-dot" style="background:rgba(136,136,164,0.3)"></div> Privacy policy found ✓</div>
+          <div class="pillar-grade-badge" style="background:rgba(253,121,168,0.12);color:var(--trust)">A−</div>
+        </div>
+      </div>
+
+      <!-- Issues summary card -->
+      <div class="bcard bcard-issues">
+        <div class="card-head">
+          Issues Summary
+          <span style="font-size:11px;background:rgba(255,71,87,0.1);color:var(--danger);padding:2px 8px;border-radius:20px;font-weight:600;">24 open</span>
+        </div>
+        <div class="issue-summary-item">
+          <div class="issue-sev-indicator" style="background:var(--danger)"></div>
+          <div class="issue-sum-text">
+            <div class="issue-sum-title">No CSP header</div>
+            <div class="issue-sum-meta">XSS risk elevated</div>
+          </div>
+          <div class="issue-sum-tag" style="background:rgba(0,212,170,0.08);color:var(--security)">Sec</div>
+        </div>
+        <div class="issue-summary-item">
+          <div class="issue-sev-indicator" style="background:var(--danger)"></div>
+          <div class="issue-sum-text">
+            <div class="issue-sum-title">No JSON-LD schema</div>
+            <div class="issue-sum-meta">AI crawl blocked</div>
+          </div>
+          <div class="issue-sum-tag" style="background:rgba(255,118,117,0.08);color:var(--ai)">AI</div>
+        </div>
+        <div class="issue-summary-item">
+          <div class="issue-sev-indicator" style="background:var(--warning)"></div>
+          <div class="issue-sum-text">
+            <div class="issue-sum-title">LCP 3.7s</div>
+            <div class="issue-sum-meta">Exceeds 2.5s target</div>
+          </div>
+          <div class="issue-sum-tag" style="background:rgba(255,170,0,0.08);color:var(--performance)">Perf</div>
+        </div>
+        <div class="issue-summary-item">
+          <div class="issue-sev-indicator" style="background:var(--warning)"></div>
+          <div class="issue-sum-text">
+            <div class="issue-sum-title">13 missing alt texts</div>
+            <div class="issue-sum-meta">WCAG 2.1 AA fail</div>
+          </div>
+          <div class="issue-sum-tag" style="background:rgba(162,155,254,0.08);color:var(--accessibility)">A11y</div>
+        </div>
+        <div class="issue-summary-item">
+          <div class="issue-sev-indicator" style="background:var(--warning)"></div>
+          <div class="issue-sum-text">
+            <div class="issue-sum-title">HSTS max-age low</div>
+            <div class="issue-sum-meta">Under 6 months</div>
+          </div>
+          <div class="issue-sum-tag" style="background:rgba(0,212,170,0.08);color:var(--security)">Sec</div>
+        </div>
+        <div class="issue-summary-item">
+          <div class="issue-sev-indicator" style="background:var(--muted)"></div>
+          <div class="issue-sum-text">
+            <div class="issue-sum-title">DMARC p=none</div>
+            <div class="issue-sum-meta">Spoofing not blocked</div>
+          </div>
+          <div class="issue-sum-tag" style="background:rgba(116,185,255,0.08);color:var(--dns)">DNS</div>
+        </div>
+        <div class="issue-summary-item">
+          <div class="issue-sev-indicator" style="background:var(--muted)"></div>
+          <div class="issue-sum-text">
+            <div class="issue-sum-title">SSL expires in 42d</div>
+            <div class="issue-sum-meta">Renew before May 20</div>
+          </div>
+          <div class="issue-sum-tag" style="background:rgba(253,121,168,0.08);color:var(--trust)">Trust</div>
+        </div>
+      </div>
+
+      <!-- Recent scans table -->
+      <div class="bcard bcard-scans">
+        <div class="card-head">
+          Recent Scans
+          <span class="card-head-action">View all →</span>
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>Domain</th>
+              <th>Score</th>
+              <th>Issues</th>
+              <th>Status</th>
+              <th>Date</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>techstartup.io</strong></td>
+              <td><span class="score-pill s-good">87</span></td>
+              <td style="color:var(--muted)">24 issues</td>
+              <td><span class="status-chip"><span class="schip-dot" style="background:var(--success)"></span>Complete</span></td>
+              <td style="color:var(--muted)">Today, 2:14 PM</td>
+            </tr>
+            <tr>
+              <td><strong>techstartup.io</strong></td>
+              <td><span class="score-pill s-good">84</span></td>
+              <td style="color:var(--muted)">27 issues</td>
+              <td><span class="status-chip"><span class="schip-dot" style="background:var(--success)"></span>Complete</span></td>
+              <td style="color:var(--muted)">Yesterday, 9:02 AM</td>
+            </tr>
+            <tr>
+              <td><strong>staging.techstartup.io</strong></td>
+              <td><span class="score-pill s-warn">71</span></td>
+              <td style="color:var(--muted)">38 issues</td>
+              <td><span class="status-chip"><span class="schip-dot" style="background:var(--success)"></span>Complete</span></td>
+              <td style="color:var(--muted)">Apr 7, 4:30 PM</td>
+            </tr>
+            <tr>
+              <td><strong>api.techstartup.io</strong></td>
+              <td><span class="score-pill s-good">79</span></td>
+              <td style="color:var(--muted)">19 issues</td>
+              <td><span class="status-chip"><span class="schip-dot" style="background:var(--success)"></span>Complete</span></td>
+              <td style="color:var(--muted)">Apr 6, 11:15 AM</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
