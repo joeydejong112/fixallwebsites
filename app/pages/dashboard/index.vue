@@ -75,41 +75,6 @@ const resultIssues = computed(() => {
 })
 function shareResult() { if (!view.selectedScan.value?._id) return; navigator.clipboard.writeText(`${window.location.origin}/share/${view.selectedScan.value._id}`); resultCopied.value = true; setTimeout(() => { resultCopied.value = false }, 2000) }
 
-const scansPerDay = computed(() => {
-  const days: { label: string; count: number }[] = []
-  for (let i = 13; i >= 0; i--) {
-    const d = new Date(Date.now() - i * 86400000)
-    const label = d.toLocaleDateString('en', { month: 'short', day: 'numeric' })
-    const start = new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime()
-    const end = start + 86400000
-    const count = data.scans.value.filter(s => s._creationTime >= start && s._creationTime < end).length
-    days.push({ label, count })
-  }
-  return days
-})
-const avgPillarScores = computed(() => {
-  const avg = (key: string) => { const vals = doneScans.value.map((s: any) => s[key]).filter((v: any) => v != null); return vals.length ? Math.round(vals.reduce((a: number, b: number) => a + b, 0) / vals.length) : 0 }
-  return [
-    { name: 'Security',      score: avg('securityScore'),      color: '#00d4aa' },
-    { name: 'Performance',   score: avg('performanceScore'),   color: '#ffaa00' },
-    { name: 'SEO',           score: avg('seoScore'),           color: '#6c5ce7' },
-    { name: 'Accessibility', score: avg('accessibilityScore'), color: '#a29bfe' },
-    { name: 'AI Readiness',  score: avg('aiScore'),            color: '#ff7675' },
-    { name: 'DNS & Email',   score: avg('dnsScore'),           color: '#74b9ff' },
-    { name: 'Trust',         score: avg('trustScore'),         color: '#fd79a8' },
-  ]
-})
-const scoreDistribution = computed(() => {
-  const critical = doneScans.value.filter(s => (s.overallScore ?? 0) < 60).length
-  const warning  = doneScans.value.filter(s => { const sc = s.overallScore ?? 0; return sc >= 60 && sc < 80 }).length
-  const good     = doneScans.value.filter(s => (s.overallScore ?? 0) >= 80).length
-  const total    = doneScans.value.length || 1
-  return [
-    { label: 'Good (80+)',      count: good,     pct: Math.round(good     / total * 100), color: '#00d4aa' },
-    { label: 'Warning (60–79)', count: warning,  pct: Math.round(warning  / total * 100), color: '#ffaa00' },
-    { label: 'Critical (<60)', count: critical,  pct: Math.round(critical / total * 100), color: '#ff4757' },
-  ]
-})
 const topSites = computed(() => {
   const map = new Map<string, { url: string; count: number; latestScore: number | null }>()
   for (const s of doneScans.value) { const e = map.get(s.url); if (e) e.count++; else map.set(s.url, { url: s.url, count: 1, latestScore: s.overallScore ?? null }) }
@@ -218,41 +183,7 @@ watch(userId, id => { if (id) data.loadUserData(id) }, { immediate: true })
                VIEW: COMPARE
           ══════════════════════════════════════════════════ -->
           <template v-else-if="currentView === 'compare'">
-            <div class="ds-card">
-              <div class="ds-card-header"><div class="ds-card-title">New Comparison</div></div>
-              <div class="ds-compare-form">
-                <div class="ds-compare-col">
-                  <label class="ds-compare-label">Site A</label>
-                  <input v-model="compareUrlA" class="ds-compare-input" placeholder="https://yoursite.com" />
-                </div>
-                <div class="ds-compare-vs">vs</div>
-                <div class="ds-compare-col">
-                  <label class="ds-compare-label">Site B (Competitor)</label>
-                  <input v-model="compareUrlB" class="ds-compare-input" placeholder="https://competitor.com" />
-                </div>
-                <button @click="submitCompare" class="ds-compare-btn" :disabled="!compareUrlA.trim() || !compareUrlB.trim()">
-                  Compare →
-                </button>
-              </div>
-            </div>
-
-            <div class="ds-card">
-              <div class="ds-card-header"><div class="ds-card-title">Past Comparisons</div></div>
-              <div v-if="!recentComparisons.length" class="ds-empty-state">
-                <p>No comparisons yet</p>
-                <p class="ds-empty-hint">Enter two URLs above to compare sites side by side.</p>
-              </div>
-              <NuxtLink v-else v-for="c in recentComparisons" :key="`${c.scanIdA}-${c.scanIdB}`" :to="`/compare/${c.scanIdA}/${c.scanIdB}`" class="ds-history-row ds-comparison-row">
-                <div class="ds-scan-info">
-                  <div class="ds-scan-domain">
-                    <span style="color:#e8e8f0">{{ hostname(c.urlA) }}</span>
-                    <span style="color:#6b7280;margin:0 8px;">vs</span>
-                    <span style="color:#9898b0">{{ hostname(c.urlB) }}</span>
-                  </div>
-                </div>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="2"><path d="M9 5l7 7-7 7"/></svg>
-              </NuxtLink>
-            </div>
+            <CompareView />
           </template>
 
           <!-- ══════════════════════════════════════════════
