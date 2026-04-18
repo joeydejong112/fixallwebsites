@@ -78,7 +78,7 @@ while (true) {
   await new Promise(r => setTimeout(r, 2000))
 }
 
-console.log('Overall score:', result.scores?.overall)`,
+`,
 
   python: `import requests, time
 
