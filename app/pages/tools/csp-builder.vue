@@ -9,45 +9,52 @@ useSeoMeta({
 const _siteUrl = useRequestURL()
 useHead({ link: [{ rel: 'canonical', href: _siteUrl.origin + _siteUrl.pathname }] })
 
+// ── State ────────────────────────────────────────────────────────────────────
 interface Directive {
   name: string
   description: string
   sources: string[]
   newSource: string
+  _animKey?: number
 }
 
 const directives = reactive<Directive[]>([
-  { name: 'default-src',     description: 'Fallback for all resource types not covered by a specific directive.', sources: ["'self'"], newSource: '' },
-  { name: 'script-src',      description: 'Controls JavaScript sources.', sources: ["'self'"], newSource: '' },
-  { name: 'style-src',       description: 'Controls CSS sources.', sources: ["'self'"], newSource: '' },
-  { name: 'img-src',         description: 'Controls image sources.', sources: ["'self'", 'data:'], newSource: '' },
-  { name: 'font-src',        description: 'Controls font file sources.', sources: ["'self'"], newSource: '' },
-  { name: 'connect-src',     description: 'Controls URLs for fetch, XHR, WebSocket.', sources: ["'self'"], newSource: '' },
-  { name: 'frame-src',       description: 'Controls sources for <frame> and <iframe>.', sources: ["'none'"], newSource: '' },
-  { name: 'media-src',       description: 'Controls sources for <audio> and <video>.', sources: ["'self'"], newSource: '' },
-  { name: 'object-src',      description: 'Controls sources for <object>, <embed>, <applet>.', sources: ["'none'"], newSource: '' },
-  { name: 'base-uri',        description: 'Restricts URLs in <base> elements.', sources: ["'self'"], newSource: '' },
-  { name: 'form-action',     description: 'Restricts URLs for form submissions.', sources: ["'self'"], newSource: '' },
-  { name: 'frame-ancestors', description: 'Controls which origins may embed this page (replaces X-Frame-Options).', sources: ["'none'"], newSource: '' },
+  { name: 'default-src',      description: 'Fallback for all resource types not covered by a specific directive.', sources: ["'self'"],         newSource: '', _animKey: 0 },
+  { name: 'script-src',       description: 'Controls JavaScript sources.',                                        sources: ["'self'"],         newSource: '', _animKey: 0 },
+  { name: 'style-src',        description: 'Controls CSS sources.',                                                sources: ["'self'"],         newSource: '', _animKey: 0 },
+  { name: 'img-src',          description: 'Controls image sources.',                                              sources: ["'self'", 'data:'],newSource: '', _animKey: 0 },
+  { name: 'font-src',         description: 'Controls font file sources.',                                           sources: ["'self'"],         newSource: '', _animKey: 0 },
+  { name: 'connect-src',      description: 'Controls URLs for fetch, XHR, WebSocket.',                              sources: ["'self'"],         newSource: '', _animKey: 0 },
+  { name: 'frame-src',        description: 'Controls sources for <frame> and <iframe>.',                          sources: ["'none'"],         newSource: '', _animKey: 0 },
+  { name: 'media-src',        description: 'Controls sources for <audio> and <video>.',                            sources: ["'self'"],         newSource: '', _animKey: 0 },
+  { name: 'object-src',       description: 'Controls sources for <object>, <embed>, <applet>.',                    sources: ["'none'"],         newSource: '', _animKey: 0 },
+  { name: 'base-uri',         description: 'Restricts URLs in <base> elements.',                                   sources: ["'self'"],         newSource: '', _animKey: 0 },
+  { name: 'form-action',      description: 'Restricts URLs for form submissions.',                                 sources: ["'self'"],         newSource: '', _animKey: 0 },
+  { name: 'frame-ancestors',  description: 'Controls which origins may embed this page (replaces X-Frame-Options).', sources: ["'none'"],         newSource: '', _animKey: 0 },
 ])
+
+// ── Logic ────────────────────────────────────────────────────────────────────
+const UNSAFE = ["'unsafe-inline'", "'unsafe-eval'", '*', 'data:']
 
 function addSource(dir: Directive) {
   const src = dir.newSource.trim()
   if (!src || dir.sources.includes(src)) return
   dir.sources.push(src)
   dir.newSource = ''
+  dir._animKey = (dir._animKey ?? 0) + 1
 }
 
 function removeSource(dir: Directive, src: string) {
   dir.sources = dir.sources.filter(s => s !== src)
 }
 
-const UNSAFE = ["'unsafe-inline'", "'unsafe-eval'", '*']
-
 function warnings(dir: Directive): string[] {
-  return dir.sources.filter(s => UNSAFE.includes(s)).map(s =>
-    s === '*' ? `${dir.name}: wildcard '*' allows any origin` : `${dir.name}: ${s} weakens XSS protection`
-  )
+  return dir.sources
+    .filter(s => UNSAFE.includes(s))
+    .map(s => s === '*'
+      ? `${dir.name}: wildcard '*' allows any origin`
+      : `${dir.name}: ${s} weakens XSS protection`
+    )
 }
 
 const allWarnings = computed(() => directives.flatMap(warnings))
@@ -61,331 +68,189 @@ const cspValue = computed(() =>
 
 const headerLine = computed(() => `Content-Security-Policy: ${cspValue.value}`)
 
+// Score uplift
+const hasUnsafe = computed(() => directives.some(d => d.sources.some(s => UNSAFE.includes(s))))
+const uplift = computed(() => hasUnsafe.value ? 9 : 12)
+const securityScore = computed(() => 78 + uplift.value)
+const overallScore  = computed(() => 74 + Math.round(uplift.value * 0.4))
+
+// Copy
 const copied = ref(false)
 async function copy() {
   await navigator.clipboard.writeText(headerLine.value)
   copied.value = true
-  setTimeout(() => copied.value = false, 2000)
+  setTimeout(() => copied.value = false, 1600)
 }
 
-function isBad(src: string) { return UNSAFE.includes(src) }
+function isUnsafe(src: string) { return UNSAFE.includes(src) }
 </script>
 
 <template>
   <div class="page-bg">
+    <div class="grid-bg" />
+    <div class="atm-security" />
+
     <div class="tool-shell">
 
-      <div class="tool-header">
-        <div class="tool-badge">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z"/></svg>
-          Security
+      <!-- ── Header strip ──────────────────────────────────── -->
+      <div class="header-strip">
+        <div class="card-accent-top" />
+        <div class="header-inner">
+          <div class="header-left">
+            <div class="breadcrumb">
+              <NuxtLink to="/dashboard" class="bc-link">Dashboard</NuxtLink>
+              <span class="bc-sep">/</span>
+              <NuxtLink to="/tools" class="bc-link">Tools</NuxtLink>
+              <span class="bc-sep">/</span>
+              <span class="bc-here">CSP Builder</span>
+            </div>
+            <div class="header-title-row">
+              <div class="pillar-icon">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                </svg>
+              </div>
+              <div>
+                <div class="eyebrow-pillar">
+                  <span class="eyebrow-swatch" />
+                  Security &middot; Builder
+                </div>
+                <h1 class="display header-title">Content Security Policy</h1>
+                <p class="header-sub">Construct the CSP header that tells browsers which sources are allowed to load your scripts, styles, images and frames.</p>
+              </div>
+            </div>
+          </div>
+          <div class="header-right">
+            <div class="uplift-block">
+              <div class="uplift-label">Score uplift</div>
+              <div class="num uplift-num">+{{ uplift }}</div>
+            </div>
+            <button class="btn btn-ghost header-btn">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+              Reset
+            </button>
+            <button class="btn btn-primary header-btn">
+              Save &amp; rescan
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+            </button>
+          </div>
         </div>
-        <h1 class="tool-title">CSP Header Builder</h1>
-        <p class="tool-subtitle">Build a <code>Content-Security-Policy</code> header visually. Add trusted sources per directive, see warnings for dangerous values, then copy the final header.</p>
       </div>
 
-      <!-- Warnings -->
+      <!-- ── Warnings ──────────────────────────────────────── -->
       <div v-if="allWarnings.length" class="warn-banner">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" class="warn-icon"><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/></svg>
+        <svg class="warn-icon" width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/>
+        </svg>
         <div>
           <p v-for="w in allWarnings" :key="w" class="warn-line">{{ w }}</p>
         </div>
       </div>
 
+      <!-- ── Two-column layout ─────────────────────────────── -->
       <div class="tool-columns">
 
-        <!-- Directive editor -->
+        <!-- LEFT: Directive editor -->
         <div class="directives-col">
-          <div v-for="dir in directives" :key="dir.name" class="dir-card">
-            <div class="dir-header">
-              <code class="dir-name">{{ dir.name }}</code>
-              <p class="dir-desc">{{ dir.description }}</p>
-            </div>
-
-            <!-- Source chips -->
-            <div class="source-chips">
-              <span
-                v-for="src in dir.sources"
-                :key="src"
-                class="chip"
-                :class="{ 'chip--bad': isBad(src) }"
-              >
-                {{ src }}
-                <button class="chip-remove" @click="removeSource(dir, src)">×</button>
-              </span>
-            </div>
-
-            <!-- Add source -->
-            <div class="add-source-row">
-              <input
-                v-model="dir.newSource"
-                class="add-input"
-                type="text"
-                placeholder="e.g. https://cdn.example.com"
-                @keydown.enter="addSource(dir)"
-              />
-              <button class="add-btn" @click="addSource(dir)">Add</button>
-            </div>
-          </div>
+          <div class="eyebrow" style="margin-bottom: 10px">Directive editor</div>
+          <p class="directives-hint">
+            Add allowed sources per directive. Tags with a warning icon weaken protection &mdash; remove them where possible.
+          </p>
+          <CspDirectivePanel
+            :directives="directives"
+            @add-source="addSource"
+            @remove-source="removeSource"
+          />
         </div>
 
-        <!-- Output -->
+        <!-- RIGHT: Output + Impact + Install -->
         <div class="output-col">
-
-          <div class="output-card">
-            <div class="output-header">
-              <div class="output-title-row">
-                <span class="output-dot"></span>
-                <p class="output-label">Content-Security-Policy header</p>
-              </div>
-              <button class="copy-btn" @click="copy">
-                <svg v-if="!copied" width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
-                <svg v-else width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
-                {{ copied ? 'Copied!' : 'Copy header' }}
-              </button>
-            </div>
-            <pre class="output-code">{{ headerLine }}</pre>
-          </div>
-
-          <div class="output-card">
-            <div class="output-header">
-              <div class="output-title-row">
-                <span class="output-dot output-dot--dim"></span>
-                <p class="output-label">Value only</p>
-              </div>
-            </div>
-            <pre class="output-code output-code--dim">{{ cspValue }}</pre>
-          </div>
-
-          <!-- Pro -->
-          <div class="output-card pro-card">
-            <div class="output-header">
-              <div class="output-title-row">
-                <span class="output-dot output-dot--pro"></span>
-                <p class="output-label">Presets &amp; platform install</p>
-              </div>
-              <span class="pro-badge">Pro</span>
-            </div>
-            <ProGate feature="Unlock presets & platform guides">
-              <div class="pro-placeholder">
-                <div class="preset-row">
-                  <button class="preset-btn">Strict</button>
-                  <button class="preset-btn">Google Analytics</button>
-                  <button class="preset-btn">Cloudflare</button>
-                </div>
-                <div class="platform-tabs-mock">
-                  <span class="ptab ptab--active">Nginx</span>
-                  <span class="ptab">Apache</span>
-                  <span class="ptab">Next.js</span>
-                  <span class="ptab">&lt;meta&gt;</span>
-                </div>
-              </div>
-            </ProGate>
-          </div>
+          <CspOutputPanel
+            :header-line="headerLine"
+            :csp-value="cspValue"
+            :uplift="uplift"
+            :security-score="securityScore"
+            :overall-score="overallScore"
+            :has-unsafe="hasUnsafe"
+            :copied="copied"
+            @copy="copy"
+          />
         </div>
+
       </div>
+
       <ToolSeoSection slug="csp-builder" />
     </div>
   </div>
 </template>
 
 <style scoped>
-.page-bg { min-height: 100vh; background: #07070a; }
-.tool-shell { max-width: 100%; padding: 48px 28px 80px; }
+/* ── Layout ─────────────────────────────────────────────────── */
+.page-bg { min-height: 100vh; background: var(--canvas); position: relative; overflow: hidden; }
+.grid-bg { position: absolute; inset: 0; opacity: 0.35; }
+.atm-security { position: absolute; top: -100px; right: -100px; width: 600px; height: 600px; background: radial-gradient(circle, rgba(0,212,170,0.06), transparent 60%); pointer-events: none; }
 
-/* ── Header ──────────────────────────────────────────────── */
-.tool-header { margin-bottom: 24px; }
-.tool-badge {
-  display: inline-flex; align-items: center; gap: 5px;
-  font-family: 'Space Grotesk', sans-serif; font-size: 9px; font-weight: 700;
-  letter-spacing: 0.16em; text-transform: uppercase;
-  padding: 4px 10px; border-radius: 3px; margin-bottom: 12px;
-  color: #00d4aa;
-  background: rgba(0,212,170,0.1);
-  border: 1px solid rgba(0,212,170,0.2);
-}
-.tool-title {
-  font-family: 'Space Grotesk', sans-serif;
-  font-size: clamp(1.8rem, 4vw, 2.6rem);
-  font-weight: 800; color: white; letter-spacing: -0.03em; margin-bottom: 10px;
-}
-.tool-subtitle {
-  font-family: 'DM Sans', sans-serif; font-size: 15px;
-  color: rgba(255,255,255,0.60); line-height: 1.6; max-width: 580px;
-}
-.tool-subtitle code {
-  font-family: monospace; font-size: 13px;
-  background: rgba(255,255,255,0.07); padding: 1px 5px; border-radius: 3px;
-  color: rgba(255,255,255,0.55);
+.tool-shell { position: relative; max-width: 100%; padding: 0 32px 80px; }
+
+/* ── Header strip ────────────────────────────────────────────── */
+.header-strip { position: relative; padding: 22px 0; border-bottom: 1px solid var(--border); margin-bottom: 24px; }
+.card-accent-top { position: absolute; top: 0; left: 0; right: 0; height: 2px; background: linear-gradient(to right, var(--p-security), transparent); }
+.header-inner { display: flex; justify-content: space-between; align-items: center; gap: 16px; }
+
+.header-left { display: flex; flex-direction: column; gap: 0; }
+
+.breadcrumb { display: flex; align-items: center; gap: 6px; font-family: var(--font-display); font-size: 12px; color: var(--text-muted); margin-bottom: 10px; }
+.bc-link { color: var(--text-muted); text-decoration: none; cursor: pointer; transition: color 0.15s; }
+.bc-link:hover { color: var(--text); }
+.bc-sep { opacity: 0.4; }
+.bc-here { color: var(--text); }
+
+.header-title-row { display: flex; align-items: center; gap: 16px; }
+
+.pillar-icon {
+  width: 42px; height: 42px; border-radius: 10px;
+  background: rgba(0,212,170,0.15);
+  display: flex; align-items: center; justify-content: center;
+  color: var(--p-security); flex-shrink: 0;
 }
 
-/* ── Warning banner ──────────────────────────────────────── */
-.warn-banner {
-  display: flex; align-items: flex-start; gap: 10px;
-  padding: 14px 18px; margin-bottom: 20px;
-  background: rgba(255,71,87,0.06);
-  border: 1px solid rgba(255,71,87,0.18);
-  border-left: 3px solid #ff4757;
-  border-radius: 8px;
+.eyebrow-pillar {
+  font-family: var(--font-display); font-size: 11px; letter-spacing: 0.2em;
+  text-transform: uppercase; font-weight: 600;
+  color: var(--p-security); margin-bottom: 3px;
+  display: inline-flex; align-items: center; gap: 8px;
 }
+.eyebrow-swatch { width: 22px; height: 2px; background: var(--p-security); display: inline-block; }
+
+.header-title { font-family: var(--font-display); font-size: 30px; font-weight: 700; letter-spacing: -0.03em; margin: 0 0 4px; color: var(--text); line-height: 1; }
+.header-sub { font-family: var(--font-body); font-size: 13px; color: var(--text-muted); margin: 0; line-height: 1.55; max-width: 540px; }
+
+.header-right { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+.uplift-block { text-align: right; }
+.uplift-label { font-size: 10px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--text-faint); margin-bottom: 4px; font-family: var(--font-display); font-weight: 600; }
+.uplift-num { font-family: var(--font-display); font-weight: 700; letter-spacing: -0.05em; font-size: 30px; color: var(--p-security); line-height: 1; }
+.header-btn { height: 40px; }
+
+/* ── Warning banner ──────────────────────────────────────────── */
+.warn-banner { display: flex; align-items: flex-start; gap: 10px; padding: 14px 18px; margin-bottom: 20px; background: rgba(255,71,87,0.06); border: 1px solid rgba(255,71,87,0.18); border-left: 3px solid #ff4757; border-radius: 8px; }
 .warn-icon { color: #ff4757; flex-shrink: 0; margin-top: 1px; }
-.warn-line {
-  font-family: 'DM Sans', sans-serif; font-size: 12px;
-  color: rgba(255,100,110,0.9); margin: 0; line-height: 1.6;
-}
+.warn-line { font-family: var(--font-body); font-size: 12px; color: rgba(255,100,110,0.9); margin: 0; line-height: 1.6; }
 
-/* ── Columns ─────────────────────────────────────────────── */
-.tool-columns {
-  display: grid; grid-template-columns: 1fr 1fr;
-  gap: 20px; align-items: start;
-}
-@media (max-width: 768px) { .tool-columns { grid-template-columns: 1fr; } }
+/* ── Two-column ───────────────────────────────────────────────── */
+.tool-columns { display: grid; grid-template-columns: 40% 60%; gap: 0; border-top: 1px solid var(--border); }
+@media (max-width: 900px) { .tool-columns { grid-template-columns: 1fr; } }
 
-/* ── Directive cards ─────────────────────────────────────── */
-.directives-col { display: flex; flex-direction: column; gap: 8px; }
+.directives-col { padding: 32px 32px 60px; border-right: 1px solid var(--border); }
+.directives-hint { font-family: var(--font-body); font-size: 14px; color: var(--text-muted); margin: 10px 0 24px; line-height: 1.55; }
+.directives-hint::before { content: ''; }
 
-.dir-card {
-  background: #0c0c12; border: 1px solid rgba(255,255,255,0.06);
-  border-left: 3px solid rgba(0,212,170,0.3);
-  border-radius: 10px; padding: 14px 16px;
-  display: flex; flex-direction: column; gap: 10px;
-  transition: border-left-color 0.2s;
-}
-.dir-card:hover { border-left-color: #00d4aa; }
+.output-col { padding: 32px 32px 60px; display: flex; flex-direction: column; gap: 22px; }
 
-.dir-header { display: flex; flex-direction: column; gap: 4px; }
-.dir-name {
-  font-family: 'Fira Mono', monospace; font-size: 11px; font-weight: 600;
-  color: #00d4aa; background: rgba(0,212,170,0.1);
-  border: 1px solid rgba(0,212,170,0.18);
-  padding: 3px 8px; border-radius: 4px; align-self: flex-start;
-}
-.dir-desc {
-  font-family: 'DM Sans', sans-serif; font-size: 12px;
-  color: rgba(255,255,255,0.50); margin: 0;
-}
-
-/* ── Chips ───────────────────────────────────────────────── */
-.source-chips { display: flex; flex-wrap: wrap; gap: 6px; }
-.chip {
-  display: inline-flex; align-items: center; gap: 4px;
-  font-family: 'Fira Mono', monospace; font-size: 11px;
-  color: rgba(255,255,255,0.7);
-  background: rgba(255,255,255,0.05);
-  border: 1px solid rgba(255,255,255,0.08);
-  padding: 3px 8px; border-radius: 4px;
-}
-.chip--bad { color: #ff6b78; background: rgba(255,71,87,0.08); border-color: rgba(255,71,87,0.2); }
-.chip-remove {
-  background: none; border: none; cursor: pointer;
-  color: inherit; opacity: 0.45; padding: 0; font-size: 13px; line-height: 1;
-  transition: opacity 0.15s;
-}
-.chip-remove:hover { opacity: 1; }
-
-/* ── Add source ──────────────────────────────────────────── */
-.add-source-row { display: flex; gap: 6px; }
-.add-input {
-  flex: 1; background: rgba(255,255,255,0.03);
-  border: 1px solid rgba(255,255,255,0.07);
-  border-radius: 5px; padding: 6px 10px;
-  font-family: 'DM Sans', sans-serif; font-size: 12px;
-  color: rgba(255,255,255,0.7); outline: none;
-  transition: border-color 0.15s;
-}
-.add-input:focus { border-color: rgba(0,212,170,0.35); }
-.add-input::placeholder { color: rgba(255,255,255,0.15); }
-.add-btn {
-  background: rgba(0,212,170,0.1); border: 1px solid rgba(0,212,170,0.2);
-  border-radius: 5px; padding: 6px 12px;
-  font-family: 'Space Grotesk', sans-serif; font-size: 11px; font-weight: 700;
-  color: #00d4aa; cursor: pointer; transition: background 0.15s;
-}
-.add-btn:hover { background: rgba(0,212,170,0.18); }
-
-/* ── Output column ───────────────────────────────────────── */
-.output-col {
-  position: sticky;
-  top: 88px;
-  max-height: calc(100vh - 104px);
-  overflow-y: auto;
-  scrollbar-width: none;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-.output-col::-webkit-scrollbar { display: none; }
-
-.output-card {
-  background: #0c0c12; border: 1px solid rgba(255,255,255,0.06);
-  border-radius: 12px; overflow: hidden;
-}
-.output-header {
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 13px 18px; border-bottom: 1px solid rgba(255,255,255,0.04);
-}
-
-/* Output title row with colored dot */
-.output-title-row {
-  display: flex; align-items: center; gap: 8px;
-}
-.output-dot {
-  width: 7px; height: 7px; border-radius: 50%;
-  background: #00d4aa;
-  box-shadow: 0 0 6px rgba(0,212,170,0.5);
-  flex-shrink: 0;
-}
-.output-dot--dim {
-  background: rgba(0,212,170,0.35);
-  box-shadow: none;
-}
-.output-dot--pro {
-  background: #ec3586;
-  box-shadow: 0 0 6px rgba(236,53,134,0.4);
-}
-
-.output-label {
-  font-family: 'Space Grotesk', sans-serif; font-size: 10px; font-weight: 700;
-  letter-spacing: 0.14em; text-transform: uppercase;
-  color: rgba(255,255,255,0.45); margin: 0;
-}
-.output-code {
-  font-family: 'Fira Mono', monospace; font-size: 11px;
-  color: rgba(255,255,255,0.7); line-height: 1.7;
-  padding: 16px 18px; margin: 0; white-space: pre-wrap; word-break: break-all;
-}
-.output-code--dim { color: rgba(255,255,255,0.4); }
-
-.copy-btn {
-  display: inline-flex; align-items: center; gap: 5px;
-  font-family: 'Space Grotesk', sans-serif; font-size: 11px; font-weight: 700;
-  color: #00d4aa; background: rgba(0,212,170,0.08);
-  border: 1px solid rgba(0,212,170,0.2);
-  border-radius: 4px; padding: 5px 10px; cursor: pointer; transition: background 0.15s;
-}
-.copy-btn:hover { background: rgba(0,212,170,0.16); }
-
-.pro-badge {
-  font-family: 'Space Grotesk', sans-serif; font-size: 8px; font-weight: 700;
-  letter-spacing: 0.12em; text-transform: uppercase;
-  color: #ec3586; background: rgba(236,53,134,0.1);
-  border: 1px solid rgba(236,53,134,0.2); padding: 3px 8px; border-radius: 3px;
-}
-
-.pro-placeholder { padding: 20px; display: flex; flex-direction: column; gap: 14px; }
-.preset-row { display: flex; gap: 8px; flex-wrap: wrap; }
-.preset-btn {
-  font-family: 'Space Grotesk', sans-serif; font-size: 11px; font-weight: 600;
-  padding: 6px 14px; border-radius: 5px;
-  background: rgba(255,255,255,0.04);
-  border: 1px solid rgba(255,255,255,0.08);
-  color: rgba(255,255,255,0.25); cursor: default;
-}
-.platform-tabs-mock { display: flex; gap: 4px; flex-wrap: wrap; }
-.ptab {
-  font-family: 'Space Grotesk', sans-serif; font-size: 11px; font-weight: 600;
-  padding: 6px 12px; border-radius: 5px;
-  background: rgba(255,255,255,0.04); color: rgba(255,255,255,0.2);
-}
-.ptab--active { background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.4); }
+/* ── Buttons (override tool layout) ──────────────────────────── */
+:global(.btn) { display: inline-flex; align-items: center; gap: 8px; padding: 12px 18px; border-radius: 9px; font-family: var(--font-display); font-weight: 600; font-size: 14px; letter-spacing: -0.01em; border: 1px solid transparent; cursor: pointer; transition: transform 0.15s ease, background 0.2s ease, border-color 0.2s ease; text-decoration: none; }
+:global(.btn:active) { transform: scale(0.98); }
+:global(.btn-primary) { background: var(--brand); color: #fff; box-shadow: 0 0 24px rgba(236,53,134,0.28), inset 0 1px 0 rgba(255,255,255,0.2); }
+:global(.btn-primary:hover) { background: #f14b95; }
+:global(.btn-ghost) { background: transparent; color: var(--text); border-color: var(--border-strong); }
+:global(.btn-ghost:hover) { border-color: rgba(255,255,255,0.25); background: rgba(255,255,255,0.03); }
 </style>
