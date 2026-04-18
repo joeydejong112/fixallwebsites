@@ -9,6 +9,14 @@ export default defineNuxtConfig({
         // Preconnect for Google Fonts — eliminates render-blocking DNS + TLS round trips
         { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
         { rel: 'preconnect', href: 'https://fonts.gstatic.com', crossorigin: '' },
+        // Preload critical body font — DM Sans 400 (all other fonts use font-display:swap)
+        {
+          rel: 'preload',
+          as: 'font',
+          crossorigin: '',
+          href: 'https://fonts.gstatic.com/s/dmsans/v15/rP2Yp2ywxg089UriI5-g4vlH9VoD8Cmcqbu0-K4.woff2',
+          type: 'font/woff2',
+        },
         { rel: 'dns-prefetch', href: 'https://fonts.googleapis.com' },
         // DNS prefetch for Convex cloud (exact subdomain varies per project)
         { rel: 'dns-prefetch', href: 'https://convex.cloud' },
