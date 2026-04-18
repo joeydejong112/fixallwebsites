@@ -194,4 +194,15 @@ const clerkAppearance = useClerkAppearance()
   transition: transform 0.15s ease;
   flex-shrink: 0;
 }
+
+@media (prefers-reduced-motion: reduce) {
+  .scan-sweep { animation: none; }
+  .live-ring::before { animation: none; }
+  .nav-link { transition: none; }
+  .nav-icon { transition: none; }
+  .scan-btn { transition: none; }
+  .scan-btn:hover { transform: none; }
+  .btn-arrow { transition: none; }
+  .scan-btn:hover .btn-arrow { transform: none; }
+}
 </style>

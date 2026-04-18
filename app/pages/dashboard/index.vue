@@ -24,6 +24,11 @@ const ringEl = ref<HTMLElement | null>(null)
 const ringScore = ref(0)
 onMounted(async () => {
   await nextTick()
+  const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  if (prefersReducedMotion) {
+    ringScore.value = scanData.overall
+    return
+  }
   const anime = (await import('animejs')).default
   anime({ targets: { t: 0 }, t: scanData.overall, duration: 900, easing: 'cubic-bezier(0.16, 1, 0.3, 1)', update: (a: { progress: number }) => { ringScore.value = Math.round((a.progress / 100) * scanData.overall) } })
 })

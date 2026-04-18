@@ -173,4 +173,13 @@ const getPillar = (toolPillar: string): typeof PILLARS[0] | undefined =>
 .fade-leave-active { transition: opacity 0.15s; }
 .fade-enter-from { opacity: 0; transform: translateY(6px); }
 .fade-leave-to   { opacity: 0; }
+
+@media (prefers-reduced-motion: reduce) {
+  .rest-card {
+    animation: none;
+  }
+  .fade-enter-active { transition: none; }
+  .fade-leave-active { transition: none; }
+  .fade-enter-from { transform: none; }
+}
 </style>

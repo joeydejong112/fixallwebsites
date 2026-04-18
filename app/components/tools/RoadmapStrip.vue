@@ -81,4 +81,16 @@ const upcoming = [
 .roadmap-cta:hover span {
   transform: translateX(3px);
 }
+
+@media (prefers-reduced-motion: reduce) {
+  .roadmap-cta {
+    transition: none;
+  }
+  .roadmap-cta span {
+    transition: none;
+  }
+  .roadmap-cta:hover span {
+    transform: none;
+  }
+}
 </style>

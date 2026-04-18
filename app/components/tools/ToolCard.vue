@@ -243,4 +243,11 @@ const fixesLabel = computed(() =>
   gap: 5px;
   transition: color 0.2s ease;
 }
+
+@media (prefers-reduced-motion: reduce) {
+  .chip--anim { animation: none; }
+  .pulse-dot { animation: none; }
+  .pulse-dot::after { animation: none; }
+  .open-cta { transition: none; }
+}
 </style>

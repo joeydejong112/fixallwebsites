@@ -115,4 +115,10 @@ const shouldAnimate = computed(() => props.animate !== false)
   0%, 30%, 100% { opacity: 0; transform: scale(0.6); }
   45%, 65%      { opacity: 1; transform: scale(1);   }
 }
+
+@media (prefers-reduced-motion: reduce) {
+  .logo-brackets { animation: none; }
+  .logo-pulse { animation: none; }
+  .logo-dot { animation: none; }
+}
 </style>

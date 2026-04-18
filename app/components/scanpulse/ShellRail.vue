@@ -178,4 +178,10 @@ const RailIcon = defineComponent({
   font-size: 11px;
   color: #fff;
 }
+
+@media (prefers-reduced-motion: reduce) {
+  .rail-btn {
+    transition: none;
+  }
+}
 </style>

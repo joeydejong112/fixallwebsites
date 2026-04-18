@@ -184,5 +184,29 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  * { animation: none !important; transition: none !important; }
+  .scan-beam { animation: none; }
+  .float { animation: none; }
+  .pulse-ring { animation: none; }
+  .spin-slow { animation: none; }
+
+  .btn-primary,
+  .btn-secondary,
+  .btn-ghost {
+    transition: none;
+  }
+
+  .card-interactive {
+    transition: none;
+  }
+  .card-interactive:hover {
+    transform: none;
+  }
+
+  .input-field {
+    transition: none;
+  }
+
+  .btn:active {
+    transform: none;
+  }
 }

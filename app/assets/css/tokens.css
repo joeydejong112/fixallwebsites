@@ -235,6 +235,31 @@ html, body {
 .lift:hover { transform: translateY(-2px) scale(1.005); }
 .lift { transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease; }
 
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .marquee-up {
+    animation: none;
+  }
+  .ring-fill {
+    animation: none;
+  }
+  .chev-bounce {
+    animation: none;
+  }
+  .pulse-dot {
+    animation: none;
+  }
+  .pulse-dot::after {
+    animation: none;
+  }
+  .lift {
+    transition: none;
+  }
+  .lift:hover {
+    transform: none;
+  }
+}
+
 /* Scrollbar */
 ::-webkit-scrollbar { width: 10px; height: 10px; }
 ::-webkit-scrollbar-track { background: var(--canvas); }

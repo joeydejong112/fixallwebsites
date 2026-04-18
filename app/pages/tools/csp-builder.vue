@@ -253,4 +253,14 @@ function isUnsafe(src: string) { return UNSAFE.includes(src) }
 :global(.btn-primary:hover) { background: #f14b95; }
 :global(.btn-ghost) { background: transparent; color: var(--text); border-color: var(--border-strong); }
 :global(.btn-ghost:hover) { border-color: rgba(255,255,255,0.25); background: rgba(255,255,255,0.03); }
+
+@media (prefers-reduced-motion: reduce) {
+  .bc-link { transition: none; }
+  :global(.btn) { transition: none; }
+  :global(.btn:active) { transform: none; }
+  .input-field { transition: none; }
+  .copy-btn { transition: none; }
+  .download-btn { transition: none; }
+  .policy-btn { transition: none; }
+}
 </style>

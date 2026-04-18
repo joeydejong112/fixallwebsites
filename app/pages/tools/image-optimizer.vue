@@ -760,4 +760,11 @@ async function copySnippet() {
   font-weight: 700;
   letter-spacing: 0.04em;
 }
+
+@media (prefers-reduced-motion: reduce) {
+  .converting-spin { animation: none; }
+  .download-btn { transition: none; }
+  .download-btn:hover { transform: none; }
+  .copy-btn { transition: none; }
+}
 </style>

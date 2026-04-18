@@ -157,4 +157,10 @@ watch(() => props.directives.map(d => d.sources.length), (lens) => {
 .add-input::placeholder { color: var(--text-faint); }
 
 .add-btn { height: 32px; padding: 0 12px; font-size: 12px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .chip--anim { animation: none; }
+  .chip-remove { transition: none; }
+  .add-input { transition: none; }
+}
 </style>

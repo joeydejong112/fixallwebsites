@@ -146,4 +146,10 @@ function handleScan() {
   0%, 100% { transform: translateX(-50%) translateY(0); }
   50%       { transform: translateX(-50%) translateY(6px); }
 }
+
+@media (prefers-reduced-motion: reduce) {
+  [style*="chev-bounce"] {
+    animation: none;
+  }
+}
 </style>

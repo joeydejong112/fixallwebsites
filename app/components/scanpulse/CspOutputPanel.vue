@@ -278,4 +278,14 @@ const activeSnippet = computed(() => INSTALL_SNIPPETS[installOpen.value]?.build(
 :global(.btn:active) { transform: scale(0.98); }
 :global(.btn-primary) { background: var(--brand); color: #fff; box-shadow: 0 0 24px rgba(236,53,134,0.28), inset 0 1px 0 rgba(255,255,255,0.2); }
 :global(.btn-primary:hover) { background: #f14b95; }
+
+@media (prefers-reduced-motion: reduce) {
+  :global(.pulse-dot) { animation: none; }
+  :global(.pulse-dot)::after { animation: none; }
+  .copy-btn { transition: none; }
+  .score-to { transition: none; }
+  .arrow-animate { transition: none; }
+  .chevron { transition: none; }
+  .chevron--open { transform: none; }
+}
 </style>

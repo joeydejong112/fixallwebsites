@@ -111,6 +111,8 @@ function handleOpenTool(toolId: string) {
 // ─── Skeleton animation ────────────────────────────────────────────────────
 const skeletonProgress = ref(0)
 onMounted(async () => {
+  const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  if (prefersReducedMotion) return
   const anime = (await import('animejs')).default
   anime({
     targets: skeletonProgress,
@@ -323,5 +325,12 @@ onMounted(async () => {
 @keyframes shimmer {
   0% { background-position: 200% 0; }
   100% { background-position: -200% 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton-line {
+    animation: none;
+    background: var(--elevated-2);
+  }
 }
 </style>

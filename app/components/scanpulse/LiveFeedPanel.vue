@@ -121,4 +121,13 @@ const statusColor = (status: string) =>
 .live-pulse {
   animation: livePulse 1.5s ease-in-out infinite;
 }
+
+@media (prefers-reduced-motion: reduce) {
+  .marquee-container {
+    animation: none;
+  }
+  .live-pulse {
+    animation: none;
+  }
+}
 </style>
