@@ -1,0 +1,3435 @@
+<!DOCTYPE html>
+
+<!--
+════════════════════════════════════════════════════════════════════════════════
+  SCANPULSE — DESIGN REFERENCE FILE
+  Single-file, self-contained hi-fi design reference for AI coding agents.
+════════════════════════════════════════════════════════════════════════════════
+
+  ▌ WHAT THIS IS
+  ──────────────────────────────────────────────────────────────────────────────
+  ScanPulse is a website-health scanner. Users enter a domain, get an overall
+  score (0–100) plus per-pillar scores across 7 pillars (Security, Performance,
+  SEO, Accessibility, AI Readiness, DNS & Email, Trust). Each finding can be
+  auto-fixed via a matching Tool (CSP Builder, Image Optimizer, etc.).
+
+  This file is a self-contained design reference containing:
+    • 5 fully-mocked screens (Landing, Dashboard, Scan Result, Tools, CSP Builder)
+    • All design tokens (colors, type, spacing, shadows, motion)
+    • All primitive components (ScoreRing, PillarChip, StatusIcon, Favicon, …)
+    • All mock data (pillars, issues, tools, feed, recent scans)
+
+  ▌ HOW TO USE THIS FILE AS AN AI AGENT
+  ──────────────────────────────────────────────────────────────────────────────
+  1. OPEN this file in a browser to see every screen rendered. Use the bottom
+     nav strip to switch between: landing → dashboard → result → tools → csp.
+  2. READ the DESIGN_TOKENS, PRIMITIVES and SCREEN_MAP blocks below for exact
+     values, component contracts, and screen→route mapping.
+  3. PORT screens into the target project by:
+       a. Copy the token block (below, inside <style id="tokens-css">) into
+          the project's global CSS. Map ScanPulse vars to the project's
+          existing theme variables if one already exists — do NOT introduce a
+          duplicate palette.
+       b. Recreate primitives (ScoreRing, PillarChip, StatusIcon, etc.) as
+          real framework components (React/Vue/Svelte). Source JSX is inlined
+          below in <script id="primitives-jsx">; keep prop contracts identical.
+       c. Wire screens to real data. Replace the mock PILLARS/TOOLS/SCAN/
+          ISSUES/FEED/RECENT constants (in <script id="data-jsx">) with API
+          calls. Shape must match exactly — see DATA_CONTRACTS below.
+  4. DO NOT ship the in-browser Babel setup to production. Use the target
+     project's real build pipeline. Babel-in-browser is ONLY for this preview.
+
+  ▌ DESIGN_TOKENS  (src: <style id="tokens-css">)
+  ──────────────────────────────────────────────────────────────────────────────
+  Canvas      #07070a   (app background)
+  Surface     #0f0f14   (cards, panels)
+  Elevated    #16161e   (raised cards)
+  Elevated-2  #1c1c26   (hover / emphasized)
+  Border      rgba(255,255,255,0.07)   Border-strong rgba(255,255,255,0.12)
+  Brand       #ec3586 (pink)  Brand-glow rgba(236,53,134,.35)
+  Text        #f5f5f7   Muted rgba(255,255,255,.45)   Faint rgba(255,255,255,.28)
+
+  Pillar colors (THE information architecture — do not change):
+    Security #00d4aa   Performance #ffaa00   SEO #6c5ce7
+    Accessibility #a29bfe   AI #ff7675   DNS #74b9ff   Trust #fd79a8
+
+  Status colors:
+    Pass #00d4aa   Warn #ffaa00   Crit #ff4757
+
+  Type:
+    Display  "Space Grotesk"  (headings, numerals, chips — tabular-nums)
+    Body     "DM Sans"        (paragraphs)
+    Mono     "JetBrains Mono" (code, keys, route stamps)
+
+  Radii: buttons 9px · chips 999px · cards 16px
+
+  ▌ PRIMITIVES  (src: <script id="primitives-jsx">)
+  ──────────────────────────────────────────────────────────────────────────────
+  <ScoreRing score size stroke color label delta />
+  <PillarIcon name={"shield"|"zap"|"search"|"a11y"|"spark"|"globe"|"heart"} />
+  <StatusIcon status={"pass"|"warn"|"crit"} />
+  <PillarChip pillar compact? />
+  <StatusChip status />
+  <Favicon host size bg? />
+  <PillarSparkline values={[n*7]} />
+  <ScoreChip score />
+  <Arrow size stroke />
+
+  ▌ SCREEN_MAP  (map to your project routes)
+  ──────────────────────────────────────────────────────────────────────────────
+    Screen         | Implement at       | Key responsibilities
+    ---------------|--------------------|-------------------------------------
+    01 Landing     | /                  | Hero, domain input, live feed
+    02 Dashboard   | /dashboard         | Overall score, pillars grid, recent
+    03 Scan Result | /scan/:host        | Per-pillar issues + "Fix with <Tool>"
+    04 Tools       | /tools             | Grid of fix-tools by pillar
+    05 CSP Builder | /tools/csp         | Representative tool interior
+
+  ▌ DATA_CONTRACTS  (src: <script id="data-jsx">)
+  ──────────────────────────────────────────────────────────────────────────────
+    Pillar   { key, label, color, icon, score, count, desc }
+    Tool     { id, name, pillar, fixes, blurb, kind }
+    Scan     { host, scheme, favicon, faviconBg, when, overall, trend, pillars[] }
+    Issue    { status:"pass"|"warn"|"crit", title, blurb, tool:toolId|null }
+    QuickWin { pillar, impact, title, blurb, tool, toolLabel }
+    FeedItem { host, pillar, status, msg }
+    Recent   { host, overall, delta, pillars[7], when }
+
+  ▌ INTERACTION & MOTION
+  ──────────────────────────────────────────────────────────────────────────────
+  • Score rings animate stroke-dashoffset 0.8s cubic-bezier(.16,1,.3,1).
+  • Live feed = vertical marquee; duplicate items + translate -50% for loop.
+  • Cards .lift hover → translateY(-2px) scale(1.005).
+  • Pulse dot = 1.5s opacity pulse + expanding ring.
+  • No emoji. All glyphs are inline SVG in PillarIcon/StatusIcon.
+
+  ▌ DO / DON'T
+  ──────────────────────────────────────────────────────────────────────────────
+  DO    Preserve the 7-pillar color mapping — it IS the IA.
+  DO    Keep Space Grotesk for numerals & chips.
+  DO    Reuse primitives; they encode the visual language.
+  DON'T Introduce new pillar/status colors or new typography.
+  DON'T Swap to light mode without a full re-theme pass.
+  DON'T Replace line glyphs with emoji or filled icon sets.
+
+  ▌ FILE LAYOUT (in order, inlined below)
+  ──────────────────────────────────────────────────────────────────────────────
+    <style id="fonts-css">         @font-face declarations (Google Fonts)
+    <style id="tokens-css">        design tokens + base styles
+    <script id="data-jsx">         PILLARS, TOOLS, SCAN, ISSUES, FEED, …
+    <script id="primitives-jsx">   ScoreRing, PillarIcon, StatusIcon, …
+    <script id="shell-jsx">        app rail + top strip
+    <script id="landing-jsx">      Screen 01
+    <script id="dashboard-jsx">    Screen 02
+    <script id="result-jsx">       Screen 03
+    <script id="tools-jsx">        Screen 04
+    <script id="csp-jsx">          Screen 05
+    React + ReactDOM + Babel CDN   (preview only — REMOVE in production)
+    <script id="mount-jsx">        screen router + bottom nav strip
+
+════════════════════════════════════════════════════════════════════════════════
+-->
+
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ScanPulse — Design Reference</title>
+
+  <style id="fonts-css">
+/* latin-ext */
+@font-face {
+  font-family: 'DM Sans';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url(https://fonts.gstatic.com/s/dmsans/v17/rP2Yp2ywxg089UriI5-g4vlH9VoD8Cmcqbu6-K6h9Q.woff2) format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+/* latin */
+@font-face {
+  font-family: 'DM Sans';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url(https://fonts.gstatic.com/s/dmsans/v17/rP2Yp2ywxg089UriI5-g4vlH9VoD8Cmcqbu0-K4.woff2) format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+/* latin-ext */
+@font-face {
+  font-family: 'DM Sans';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url(https://fonts.gstatic.com/s/dmsans/v17/rP2Yp2ywxg089UriI5-g4vlH9VoD8Cmcqbu6-K6h9Q.woff2) format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+/* latin */
+@font-face {
+  font-family: 'DM Sans';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url(https://fonts.gstatic.com/s/dmsans/v17/rP2Yp2ywxg089UriI5-g4vlH9VoD8Cmcqbu0-K4.woff2) format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+/* latin-ext */
+@font-face {
+  font-family: 'DM Sans';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url(https://fonts.gstatic.com/s/dmsans/v17/rP2Yp2ywxg089UriI5-g4vlH9VoD8Cmcqbu6-K6h9Q.woff2) format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+/* latin */
+@font-face {
+  font-family: 'DM Sans';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url(https://fonts.gstatic.com/s/dmsans/v17/rP2Yp2ywxg089UriI5-g4vlH9VoD8Cmcqbu0-K4.woff2) format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+/* latin-ext */
+@font-face {
+  font-family: 'DM Sans';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url(https://fonts.gstatic.com/s/dmsans/v17/rP2Yp2ywxg089UriI5-g4vlH9VoD8Cmcqbu6-K6h9Q.woff2) format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+/* latin */
+@font-face {
+  font-family: 'DM Sans';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url(https://fonts.gstatic.com/s/dmsans/v17/rP2Yp2ywxg089UriI5-g4vlH9VoD8Cmcqbu0-K4.woff2) format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+/* cyrillic-ext */
+@font-face {
+  font-family: 'JetBrains Mono';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url(https://fonts.gstatic.com/s/jetbrainsmono/v24/tDbv2o-flEEny0FZhsfKu5WU4zr3E_BX0PnT8RD8yKwBNntkaToggR7BYRbKPx3cwhsk.woff2) format('woff2');
+  unicode-range: U+0460-052F, U+1C80-1C8A, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F;
+}
+/* cyrillic */
+@font-face {
+  font-family: 'JetBrains Mono';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url(https://fonts.gstatic.com/s/jetbrainsmono/v24/tDbv2o-flEEny0FZhsfKu5WU4zr3E_BX0PnT8RD8yKwBNntkaToggR7BYRbKPxTcwhsk.woff2) format('woff2');
+  unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+/* greek */
+@font-face {
+  font-family: 'JetBrains Mono';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url(https://fonts.gstatic.com/s/jetbrainsmono/v24/tDbv2o-flEEny0FZhsfKu5WU4zr3E_BX0PnT8RD8yKwBNntkaToggR7BYRbKPxPcwhsk.woff2) format('woff2');
+  unicode-range: U+0370-0377, U+037A-037F, U+0384-038A, U+038C, U+038E-03A1, U+03A3-03FF;
+}
+/* vietnamese */
+@font-face {
+  font-family: 'JetBrains Mono';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url(https://fonts.gstatic.com/s/jetbrainsmono/v24/tDbv2o-flEEny0FZhsfKu5WU4zr3E_BX0PnT8RD8yKwBNntkaToggR7BYRbKPx_cwhsk.woff2) format('woff2');
+  unicode-range: U+0102-0103, U+0110-0111, U+0128-0129, U+0168-0169, U+01A0-01A1, U+01AF-01B0, U+0300-0301, U+0303-0304, U+0308-0309, U+0323, U+0329, U+1EA0-1EF9, U+20AB;
+}
+/* latin-ext */
+@font-face {
+  font-family: 'JetBrains Mono';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url(https://fonts.gstatic.com/s/jetbrainsmono/v24/tDbv2o-flEEny0FZhsfKu5WU4zr3E_BX0PnT8RD8yKwBNntkaToggR7BYRbKPx7cwhsk.woff2) format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+/* latin */
+@font-face {
+  font-family: 'JetBrains Mono';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url(https://fonts.gstatic.com/s/jetbrainsmono/v24/tDbv2o-flEEny0FZhsfKu5WU4zr3E_BX0PnT8RD8yKwBNntkaToggR7BYRbKPxDcwg.woff2) format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+/* cyrillic-ext */
+@font-face {
+  font-family: 'JetBrains Mono';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url(https://fonts.gstatic.com/s/jetbrainsmono/v24/tDbv2o-flEEny0FZhsfKu5WU4zr3E_BX0PnT8RD8yKwBNntkaToggR7BYRbKPx3cwhsk.woff2) format('woff2');
+  unicode-range: U+0460-052F, U+1C80-1C8A, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F;
+}
+/* cyrillic */
+@font-face {
+  font-family: 'JetBrains Mono';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url(https://fonts.gstatic.com/s/jetbrainsmono/v24/tDbv2o-flEEny0FZhsfKu5WU4zr3E_BX0PnT8RD8yKwBNntkaToggR7BYRbKPxTcwhsk.woff2) format('woff2');
+  unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+/* greek */
+@font-face {
+  font-family: 'JetBrains Mono';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url(https://fonts.gstatic.com/s/jetbrainsmono/v24/tDbv2o-flEEny0FZhsfKu5WU4zr3E_BX0PnT8RD8yKwBNntkaToggR7BYRbKPxPcwhsk.woff2) format('woff2');
+  unicode-range: U+0370-0377, U+037A-037F, U+0384-038A, U+038C, U+038E-03A1, U+03A3-03FF;
+}
+/* vietnamese */
+@font-face {
+  font-family: 'JetBrains Mono';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url(https://fonts.gstatic.com/s/jetbrainsmono/v24/tDbv2o-flEEny0FZhsfKu5WU4zr3E_BX0PnT8RD8yKwBNntkaToggR7BYRbKPx_cwhsk.woff2) format('woff2');
+  unicode-range: U+0102-0103, U+0110-0111, U+0128-0129, U+0168-0169, U+01A0-01A1, U+01AF-01B0, U+0300-0301, U+0303-0304, U+0308-0309, U+0323, U+0329, U+1EA0-1EF9, U+20AB;
+}
+/* latin-ext */
+@font-face {
+  font-family: 'JetBrains Mono';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url(https://fonts.gstatic.com/s/jetbrainsmono/v24/tDbv2o-flEEny0FZhsfKu5WU4zr3E_BX0PnT8RD8yKwBNntkaToggR7BYRbKPx7cwhsk.woff2) format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+/* latin */
+@font-face {
+  font-family: 'JetBrains Mono';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url(https://fonts.gstatic.com/s/jetbrainsmono/v24/tDbv2o-flEEny0FZhsfKu5WU4zr3E_BX0PnT8RD8yKwBNntkaToggR7BYRbKPxDcwg.woff2) format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+/* vietnamese */
+@font-face {
+  font-family: 'Space Grotesk';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url(https://fonts.gstatic.com/s/spacegrotesk/v22/V8mDoQDjQSkFtoMM3T6r8E7mPb54C-s0.woff2) format('woff2');
+  unicode-range: U+0102-0103, U+0110-0111, U+0128-0129, U+0168-0169, U+01A0-01A1, U+01AF-01B0, U+0300-0301, U+0303-0304, U+0308-0309, U+0323, U+0329, U+1EA0-1EF9, U+20AB;
+}
+/* latin-ext */
+@font-face {
+  font-family: 'Space Grotesk';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url(https://fonts.gstatic.com/s/spacegrotesk/v22/V8mDoQDjQSkFtoMM3T6r8E7mPb94C-s0.woff2) format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+/* latin */
+@font-face {
+  font-family: 'Space Grotesk';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url(https://fonts.gstatic.com/s/spacegrotesk/v22/V8mDoQDjQSkFtoMM3T6r8E7mPbF4Cw.woff2) format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+/* vietnamese */
+@font-face {
+  font-family: 'Space Grotesk';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url(https://fonts.gstatic.com/s/spacegrotesk/v22/V8mDoQDjQSkFtoMM3T6r8E7mPb54C-s0.woff2) format('woff2');
+  unicode-range: U+0102-0103, U+0110-0111, U+0128-0129, U+0168-0169, U+01A0-01A1, U+01AF-01B0, U+0300-0301, U+0303-0304, U+0308-0309, U+0323, U+0329, U+1EA0-1EF9, U+20AB;
+}
+/* latin-ext */
+@font-face {
+  font-family: 'Space Grotesk';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url(https://fonts.gstatic.com/s/spacegrotesk/v22/V8mDoQDjQSkFtoMM3T6r8E7mPb94C-s0.woff2) format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+/* latin */
+@font-face {
+  font-family: 'Space Grotesk';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url(https://fonts.gstatic.com/s/spacegrotesk/v22/V8mDoQDjQSkFtoMM3T6r8E7mPbF4Cw.woff2) format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+/* vietnamese */
+@font-face {
+  font-family: 'Space Grotesk';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url(https://fonts.gstatic.com/s/spacegrotesk/v22/V8mDoQDjQSkFtoMM3T6r8E7mPb54C-s0.woff2) format('woff2');
+  unicode-range: U+0102-0103, U+0110-0111, U+0128-0129, U+0168-0169, U+01A0-01A1, U+01AF-01B0, U+0300-0301, U+0303-0304, U+0308-0309, U+0323, U+0329, U+1EA0-1EF9, U+20AB;
+}
+/* latin-ext */
+@font-face {
+  font-family: 'Space Grotesk';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url(https://fonts.gstatic.com/s/spacegrotesk/v22/V8mDoQDjQSkFtoMM3T6r8E7mPb94C-s0.woff2) format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+/* latin */
+@font-face {
+  font-family: 'Space Grotesk';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url(https://fonts.gstatic.com/s/spacegrotesk/v22/V8mDoQDjQSkFtoMM3T6r8E7mPbF4Cw.woff2) format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+/* vietnamese */
+@font-face {
+  font-family: 'Space Grotesk';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url(https://fonts.gstatic.com/s/spacegrotesk/v22/V8mDoQDjQSkFtoMM3T6r8E7mPb54C-s0.woff2) format('woff2');
+  unicode-range: U+0102-0103, U+0110-0111, U+0128-0129, U+0168-0169, U+01A0-01A1, U+01AF-01B0, U+0300-0301, U+0303-0304, U+0308-0309, U+0323, U+0329, U+1EA0-1EF9, U+20AB;
+}
+/* latin-ext */
+@font-face {
+  font-family: 'Space Grotesk';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url(https://fonts.gstatic.com/s/spacegrotesk/v22/V8mDoQDjQSkFtoMM3T6r8E7mPb94C-s0.woff2) format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+/* latin */
+@font-face {
+  font-family: 'Space Grotesk';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url(https://fonts.gstatic.com/s/spacegrotesk/v22/V8mDoQDjQSkFtoMM3T6r8E7mPbF4Cw.woff2) format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+  </style>
+
+  <style id="tokens-css">
+/* ScanPulse — Design Tokens */
+:root {
+  /* Base surfaces */
+  --canvas: #07070a;
+  --surface: #0f0f14;
+  --elevated: #16161e;
+  --elevated-2: #1c1c26;
+  --border: rgba(255, 255, 255, 0.07);
+  --border-strong: rgba(255, 255, 255, 0.12);
+
+  /* Brand */
+  --brand: #ec3586;
+  --brand-soft: rgba(236, 53, 134, 0.12);
+  --brand-glow: rgba(236, 53, 134, 0.35);
+
+  /* Text */
+  --text: #f5f5f7;
+  --text-muted: rgba(255, 255, 255, 0.45);
+  --text-faint: rgba(255, 255, 255, 0.28);
+
+  /* Pillars */
+  --p-security: #00d4aa;
+  --p-performance: #ffaa00;
+  --p-seo: #6c5ce7;
+  --p-accessibility: #a29bfe;
+  --p-ai: #ff7675;
+  --p-dns: #74b9ff;
+  --p-trust: #fd79a8;
+
+  /* Status */
+  --s-pass: #00d4aa;
+  --s-warn: #ffaa00;
+  --s-crit: #ff4757;
+
+  /* Type */
+  --font-display: "Space Grotesk", "Inter", sans-serif;
+  --font-body: "DM Sans", "Inter", sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--canvas);
+  color: var(--text);
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+  font-feature-settings: "ss01", "cv01";
+}
+
+/* Architectural grid — 64px lines */
+.grid-bg {
+  background-image:
+    linear-gradient(to right, rgba(255,255,255,0.018) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255,255,255,0.018) 1px, transparent 1px);
+  background-size: 64px 64px;
+}
+
+/* Eyebrow */
+.eyebrow {
+  font-family: var(--font-display);
+  font-size: 11px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  font-weight: 600;
+  color: var(--text-muted);
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+}
+.eyebrow::before {
+  content: "";
+  width: 28px;
+  height: 2px;
+  background: var(--brand);
+  display: inline-block;
+}
+
+.eyebrow-pillar {
+  font-family: var(--font-display);
+  font-size: 11px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* Display type */
+.display {
+  font-family: var(--font-display);
+  font-weight: 700;
+  letter-spacing: -0.04em;
+  line-height: 0.98;
+}
+
+.num {
+  font-family: var(--font-display);
+  font-weight: 700;
+  letter-spacing: -0.05em;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Buttons */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 18px;
+  border-radius: 9px;
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 14px;
+  letter-spacing: -0.01em;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: transform 0.15s ease, background 0.2s ease, border-color 0.2s ease;
+  text-decoration: none;
+}
+.btn:active { transform: scale(0.98); }
+
+.btn-primary {
+  background: var(--brand);
+  color: #fff;
+  box-shadow: 0 0 24px rgba(236, 53, 134, 0.28), inset 0 1px 0 rgba(255,255,255,0.2);
+}
+.btn-primary:hover { background: #f14b95; }
+
+.btn-ghost {
+  background: transparent;
+  color: var(--text);
+  border-color: var(--border-strong);
+}
+.btn-ghost:hover { border-color: rgba(255,255,255,0.25); background: rgba(255,255,255,0.03); }
+
+.btn-pink-ghost {
+  background: var(--brand-soft);
+  color: var(--brand);
+  border-color: rgba(236, 53, 134, 0.3);
+}
+.btn-pink-ghost:hover { background: rgba(236, 53, 134, 0.18); }
+
+/* Card */
+.card {
+  background: var(--elevated);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  position: relative;
+  overflow: hidden;
+}
+
+.card-accent-top {
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+}
+
+/* Chips */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  border-radius: 999px;
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  border: 1px solid var(--border);
+  background: rgba(255,255,255,0.02);
+}
+.chip .dot {
+  width: 6px; height: 6px; border-radius: 50%;
+}
+
+/* Pulsing dot */
+.pulse-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  animation: pulse 1.5s ease-in-out infinite;
+  position: relative;
+}
+.pulse-dot::after {
+  content: "";
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  border: 2px solid currentColor;
+  opacity: 0;
+  animation: pulsering 1.5s ease-in-out infinite;
+}
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+@keyframes pulsering {
+  0% { transform: scale(0.8); opacity: 0.6; }
+  100% { transform: scale(1.8); opacity: 0; }
+}
+
+/* Ghost numeral */
+.ghost-numeral {
+  position: absolute;
+  font-family: var(--font-display);
+  font-weight: 700;
+  letter-spacing: -0.06em;
+  color: rgba(255, 255, 255, 0.04);
+  pointer-events: none;
+  user-select: none;
+  line-height: 0.8;
+}
+
+/* Marquee */
+@keyframes marquee-up {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(-50%); }
+}
+
+/* Score ring animation */
+@keyframes ring-fill {
+  from { stroke-dashoffset: var(--ring-circ); }
+  to { stroke-dashoffset: var(--ring-target); }
+}
+
+/* Chevron bounce */
+@keyframes chev-bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(6px); }
+}
+
+/* Interactive hover */
+.lift:hover { transform: translateY(-2px) scale(1.005); }
+.lift { transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease; }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: var(--canvas); }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 999px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.15); }
+
+/* Atmosphere glow helpers */
+.atm-brand {
+  background: radial-gradient(ellipse at 70% 30%, rgba(236, 53, 134, 0.14), transparent 55%);
+}
+
+/* Divider dash */
+.dash-div {
+  border-top: 1px dashed rgba(255,255,255,0.1);
+}
+
+/* Utility */
+.sp-ring { color: var(--p-security); }
+.pe-ring { color: var(--p-performance); }
+.se-ring { color: var(--p-seo); }
+.ac-ring { color: var(--p-accessibility); }
+.ai-ring { color: var(--p-ai); }
+.dn-ring { color: var(--p-dns); }
+.tr-ring { color: var(--p-trust); }
+
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <!-- React + ReactDOM + Babel (PREVIEW ONLY — remove in production) -->
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+  <!-- ══ DATA ════════════════════════════════════════════════════════════ -->
+  <script id="data-jsx" type="text/babel" data-presets="react">
+// ScanPulse — Shared Data & Primitives
+// Pillars, mock scan, issues, tools.
+
+const PILLARS = [
+  { key: "security",      label: "Security",       color: "#00d4aa", icon: "shield", score: 78, count: 18, desc: "HTTPS, headers, CSP, CORS" },
+  { key: "performance",   label: "Performance",    color: "#ffaa00", icon: "zap",    score: 64, count: 12, desc: "TTFB, LCP, CLS, INP" },
+  { key: "seo",           label: "SEO",            color: "#6c5ce7", icon: "search", score: 82, count: 19, desc: "Meta, schema, canonical" },
+  { key: "accessibility", label: "Accessibility",  color: "#a29bfe", icon: "a11y",   score: 71, count: 14, desc: "WCAG AA contrast, aria" },
+  { key: "ai",            label: "AI Readiness",   color: "#ff7675", icon: "spark",  score: 45, count: 9,  desc: "llms.txt, structured data" },
+  { key: "dns",           label: "DNS & Email",    color: "#74b9ff", icon: "globe",  score: 88, count: 13, desc: "SPF, DKIM, DMARC, MX" },
+  { key: "trust",         label: "Trust",          color: "#fd79a8", icon: "heart",  score: 91, count: 9,  desc: "Privacy, terms, contact" },
+];
+
+const TOOLS = [
+  { id: "csp",        name: "CSP Builder",           pillar: "security",    fixes: 5, blurb: "Generate Content-Security-Policy headers directive by directive.", kind: "Builder" },
+  { id: "headers",    name: "Security Headers",      pillar: "security",    fixes: 7, blurb: "HSTS, X-Frame-Options, Referrer-Policy, Permissions-Policy.", kind: "Generator" },
+  { id: "cors",       name: "CORS Inspector",        pillar: "security",    fixes: 3, blurb: "Audit cross-origin policies and Access-Control headers.", kind: "Inspector" },
+  { id: "imgopt",     name: "Image Optimizer",       pillar: "performance", fixes: 6, blurb: "AVIF/WebP conversion, responsive srcsets, lazy hints.", kind: "Optimizer" },
+  { id: "meta",       name: "Meta Generator",        pillar: "seo",         fixes: 8, blurb: "Title, description, Open Graph, Twitter cards.", kind: "Generator" },
+  { id: "schema",     name: "Schema Generator",      pillar: "seo",         fixes: 4, blurb: "JSON-LD for Organization, Article, Product, FAQ.", kind: "Generator" },
+  { id: "robots",     name: "Robots.txt",            pillar: "seo",         fixes: 2, blurb: "Crawler rules, sitemap declaration, AI bot blocking.", kind: "Builder" },
+  { id: "favicon",    name: "Favicon Generator",     pillar: "seo",         fixes: 3, blurb: "Apple touch, Android, theme-color, multi-resolution.", kind: "Generator" },
+  { id: "contrast",   name: "Contrast Checker",      pillar: "accessibility", fixes: 5, blurb: "WCAG AA/AAA pairs, suggested remediation tokens.", kind: "Checker" },
+  { id: "email",      name: "Email Auth",            pillar: "dns",         fixes: 4, blurb: "SPF, DMARC, DKIM alignment and syntax.", kind: "Checker" },
+  { id: "llms",       name: "AI Optimizer",          pillar: "ai",          fixes: 6, blurb: "llms.txt, crawler allowlist, structured summaries.", kind: "Builder" },
+];
+
+// Mock "last scan" = acme.design
+const SCAN = {
+  host: "acme.design",
+  scheme: "https",
+  favicon: "A",
+  faviconBg: "#ec3586",
+  when: "12m ago",
+  overall: 74,
+  trend: "+6",
+  pillars: PILLARS,
+};
+
+// Quick wins — ordered by impact
+const QUICK_WINS = [
+  { pillar: "security",    impact: 12, title: "Missing Content-Security-Policy", blurb: "No CSP header found. Attackers can inject scripts via XSS.", tool: "csp",    toolLabel: "Fix with CSP Builder" },
+  { pillar: "performance", impact: 9,  title: "Unoptimized hero images",          blurb: "3.4 MB of JPEG where AVIF would ship under 400 KB.",        tool: "imgopt", toolLabel: "Fix with Image Optimizer" },
+  { pillar: "ai",          impact: 7,  title: "No llms.txt file",                 blurb: "AI crawlers have no curated summary of your site.",         tool: "llms",   toolLabel: "Fix with AI Optimizer" },
+];
+
+// Issues grouped by pillar, for the Scan Result detail screen
+const ISSUES = {
+  security: [
+    { status: "crit",  title: "Missing Content-Security-Policy",        blurb: "No CSP header found on any route.",                    tool: "csp" },
+    { status: "warn",  title: "Weak HSTS configuration",                 blurb: "max-age is 300s; recommended ≥ 1 year with preload.", tool: "headers" },
+    { status: "warn",  title: "Referrer-Policy not set",                 blurb: "Defaulting to no-referrer-when-downgrade.",            tool: "headers" },
+    { status: "pass",  title: "HTTPS enforced",                          blurb: "Port 80 redirects to 443.",                            tool: null },
+    { status: "pass",  title: "TLS 1.3 supported",                       blurb: "Negotiating modern ciphers.",                          tool: null },
+  ],
+  performance: [
+    { status: "crit",  title: "Largest Contentful Paint 4.1s",           blurb: "Hero image is render-blocking and un-preloaded.",       tool: "imgopt" },
+    { status: "warn",  title: "No image lazy-loading",                   blurb: "12 below-the-fold images load eagerly.",                tool: "imgopt" },
+    { status: "pass",  title: "Gzip/Brotli enabled",                     blurb: "Text assets compressed.",                               tool: null },
+  ],
+  seo: [
+    { status: "warn",  title: "Missing Open Graph image",                blurb: "Social shares will show a broken preview.",             tool: "meta" },
+    { status: "warn",  title: "No JSON-LD Organization schema",          blurb: "Knowledge-panel eligibility reduced.",                  tool: "schema" },
+    { status: "pass",  title: "Canonical tag present",                   blurb: "Preferred URL declared on every page.",                 tool: null },
+    { status: "pass",  title: "sitemap.xml discoverable",                blurb: "Listed in robots.txt.",                                 tool: null },
+  ],
+  accessibility: [
+    { status: "crit",  title: "Contrast ratio 2.7:1 on CTAs",            blurb: "Pink on pink fails WCAG AA for normal text.",           tool: "contrast" },
+    { status: "warn",  title: "3 images missing alt text",               blurb: "Screen readers will announce filenames.",               tool: null },
+    { status: "pass",  title: "Landmarks present",                       blurb: "main, nav, footer correctly used.",                     tool: null },
+  ],
+  ai: [
+    { status: "crit",  title: "No /llms.txt",                            blurb: "Provide a curated index for AI crawlers.",              tool: "llms" },
+    { status: "warn",  title: "Inconsistent product descriptions",       blurb: "Detected 3 contradictory summaries across pages.",      tool: "llms" },
+  ],
+  dns: [
+    { status: "warn",  title: "DMARC policy is p=none",                  blurb: "Monitoring only; spoofing not prevented.",              tool: "email" },
+    { status: "pass",  title: "SPF record valid",                        blurb: "Includes _spf.google.com.",                             tool: null },
+    { status: "pass",  title: "DKIM aligned on google._domainkey",       blurb: "Signing active.",                                       tool: null },
+  ],
+  trust: [
+    { status: "pass",  title: "Privacy policy linked in footer",         blurb: "Reachable from every page.",                            tool: null },
+    { status: "pass",  title: "Contact page present",                    blurb: "Email and physical address provided.",                  tool: null },
+  ],
+};
+
+// Live feed snippets for the landing hero
+const FEED = [
+  { host: "stripe.com",         pillar: "security",    status: "pass", msg: "CSP verified" },
+  { host: "nytimes.com",        pillar: "performance", status: "warn", msg: "LCP 3.2s" },
+  { host: "linear.app",         pillar: "seo",         status: "pass", msg: "Schema complete" },
+  { host: "github.com",         pillar: "accessibility", status: "warn", msg: "2 contrast issues" },
+  { host: "notion.so",          pillar: "ai",          status: "crit", msg: "No llms.txt" },
+  { host: "vercel.com",         pillar: "dns",         status: "pass", msg: "DMARC p=reject" },
+  { host: "cloudflare.com",     pillar: "trust",       status: "pass", msg: "All trust signals" },
+  { host: "raycast.com",        pillar: "security",    status: "pass", msg: "HSTS preload" },
+  { host: "figma.com",          pillar: "performance", status: "pass", msg: "LCP 1.1s" },
+  { host: "supabase.com",       pillar: "seo",         status: "pass", msg: "Open Graph set" },
+  { host: "railway.app",        pillar: "ai",          status: "warn", msg: "Partial llms.txt" },
+  { host: "posthog.com",        pillar: "accessibility", status: "pass", msg: "WCAG AA clear" },
+  { host: "planetscale.com",    pillar: "dns",         status: "warn", msg: "SPF too permissive" },
+  { host: "sentry.io",          pillar: "security",    status: "warn", msg: "HSTS max-age low" },
+  { host: "pitch.com",          pillar: "trust",       status: "pass", msg: "Privacy clear" },
+];
+
+// Recent scans table
+const RECENT = [
+  { host: "acme.design",      overall: 74, delta: "+6",  pillars: [78,64,82,71,45,88,91], when: "12m ago" },
+  { host: "proto.studio",     overall: 88, delta: "+2",  pillars: [92,85,90,88,72,95,94], when: "2h ago" },
+  { host: "lumen.co",         overall: 61, delta: "-3",  pillars: [55,48,72,68,40,80,72], when: "1d ago" },
+  { host: "meridian.work",    overall: 93, delta: "+1",  pillars: [96,90,94,92,88,97,95], when: "2d ago" },
+  { host: "harbor.build",     overall: 52, delta: "+12", pillars: [60,38,58,55,32,70,65], when: "3d ago" },
+  { host: "kindred.studio",   overall: 79, delta: "+4",  pillars: [82,72,85,78,58,90,88], when: "4d ago" },
+];
+
+// Trust avatars (initials, no real people)
+const AVATARS = [
+  { i: "KM", c: "#ec3586" },
+  { i: "AO", c: "#74b9ff" },
+  { i: "SR", c: "#ffaa00" },
+  { i: "JT", c: "#00d4aa" },
+  { i: "LN", c: "#a29bfe" },
+];
+
+Object.assign(window, {
+  PILLARS, TOOLS, SCAN, QUICK_WINS, ISSUES, FEED, RECENT, AVATARS
+});
+
+  </script>
+
+  <!-- ══ PRIMITIVES (ScoreRing, PillarIcon, …) ═══════════════════════════ -->
+  <script id="primitives-jsx" type="text/babel" data-presets="react">
+// ScanPulse — Primitives
+// ScoreRing, PillarIcon, StatusIcon, PillarChip, Favicon, Sparkline
+
+const { useState, useEffect, useRef, useMemo } = React;
+
+// ─────────────────────────────────────────────────────────────
+// ScoreRing — animated circular score with gradient stroke
+function ScoreRing({ score = 74, size = 220, stroke = 14, color = "#ec3586", label = "Overall", delta = null }) {
+  const r = (size - stroke) / 2;
+  const circ = 2 * Math.PI * r;
+  const [animated, setAnimated] = useState(0);
+
+  useEffect(() => {
+    const t = setTimeout(() => setAnimated(score), 120);
+    return () => clearTimeout(t);
+  }, [score]);
+
+  const offset = circ - (animated / 100) * circ;
+
+  return (
+    <div style={{ position: "relative", width: size, height: size }}>
+      <svg width={size} height={size} style={{ transform: "rotate(-90deg)" }}>
+        <defs>
+          <linearGradient id={`grad-${label}`} x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stopColor={color} stopOpacity="1" />
+            <stop offset="100%" stopColor={color} stopOpacity="0.55" />
+          </linearGradient>
+        </defs>
+        <circle
+          cx={size / 2} cy={size / 2} r={r}
+          stroke="rgba(255,255,255,0.06)" strokeWidth={stroke} fill="none"
+        />
+        <circle
+          cx={size / 2} cy={size / 2} r={r}
+          stroke={`url(#grad-${label})`}
+          strokeWidth={stroke} fill="none"
+          strokeLinecap="round"
+          strokeDasharray={circ}
+          strokeDashoffset={offset}
+          style={{ transition: "stroke-dashoffset 0.8s cubic-bezier(0.16, 1, 0.3, 1)" }}
+        />
+      </svg>
+      <div style={{
+        position: "absolute", inset: 0,
+        display: "flex", flexDirection: "column",
+        alignItems: "center", justifyContent: "center",
+        gap: 2,
+      }}>
+        <div className="num" style={{ fontSize: size * 0.36, lineHeight: 1, color: "#fff" }}>
+          {Math.round(animated)}
+        </div>
+        <div className="eyebrow" style={{ marginTop: 8, fontSize: 10, letterSpacing: "0.22em" }}>
+          {label}
+        </div>
+        {delta && (
+          <div style={{
+            fontFamily: "var(--font-display)",
+            fontSize: 12, fontWeight: 600,
+            color: delta.startsWith("+") ? "#00d4aa" : "#ff4757",
+            marginTop: 6,
+          }}>
+            {delta} since last scan
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
+// PillarIcon — minimal line glyphs, no emoji
+function PillarIcon({ name, size = 18, color = "currentColor", stroke = 1.6 }) {
+  const p = { width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: color, strokeWidth: stroke, strokeLinecap: "round", strokeLinejoin: "round" };
+  switch (name) {
+    case "shield":
+      return <svg {...p}><path d="M12 3l8 3v6c0 5-3.5 8.5-8 9-4.5-.5-8-4-8-9V6l8-3z"/><path d="M9 12l2 2 4-4"/></svg>;
+    case "zap":
+      return <svg {...p}><path d="M13 2L4 14h7l-1 8 9-12h-7l1-8z"/></svg>;
+    case "search":
+      return <svg {...p}><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>;
+    case "a11y":
+      return <svg {...p}><circle cx="12" cy="5" r="2"/><path d="M5 9h14M12 9v6M9 21l3-6 3 6"/></svg>;
+    case "spark":
+      return <svg {...p}><path d="M12 3v4M12 17v4M3 12h4M17 12h4M5.6 5.6l2.8 2.8M15.6 15.6l2.8 2.8M5.6 18.4l2.8-2.8M15.6 8.4l2.8-2.8"/></svg>;
+    case "globe":
+      return <svg {...p}><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 3 2.5 15 0 18M12 3c-2.5 3-2.5 15 0 18"/></svg>;
+    case "heart":
+      return <svg {...p}><path d="M12 20s-7-4.5-7-10a4 4 0 017-2.6A4 4 0 0119 10c0 5.5-7 10-7 10z"/></svg>;
+    default:
+      return <svg {...p}><circle cx="12" cy="12" r="9"/></svg>;
+  }
+}
+
+// ─────────────────────────────────────────────────────────────
+// StatusIcon — pass/warn/crit glyphs (no emoji)
+function StatusIcon({ status, size = 18 }) {
+  const color = status === "pass" ? "#00d4aa" : status === "warn" ? "#ffaa00" : "#ff4757";
+  const p = { width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: color, strokeWidth: 1.8, strokeLinecap: "round", strokeLinejoin: "round" };
+  if (status === "pass") return <svg {...p}><circle cx="12" cy="12" r="9"/><path d="M8 12l3 3 5-6"/></svg>;
+  if (status === "warn") return <svg {...p}><path d="M12 3l10 18H2z"/><path d="M12 10v5M12 18v.01"/></svg>;
+  return <svg {...p}><circle cx="12" cy="12" r="9"/><path d="M8 8l8 8M16 8l-8 8"/></svg>;
+}
+
+// ─────────────────────────────────────────────────────────────
+// PillarChip — small colored dot + label chip
+function PillarChip({ pillar, compact = false }) {
+  const p = PILLARS.find(x => x.key === pillar);
+  if (!p) return null;
+  return (
+    <span className="chip" style={{
+      borderColor: `${p.color}33`,
+      background: `${p.color}12`,
+      color: p.color,
+    }}>
+      <span className="dot" style={{ background: p.color }} />
+      {compact ? p.label.split(" ")[0] : p.label}
+    </span>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
+// StatusChip
+function StatusChip({ status }) {
+  const map = {
+    pass: { c: "#00d4aa", t: "Pass" },
+    warn: { c: "#ffaa00", t: "Warning" },
+    crit: { c: "#ff4757", t: "Critical" },
+  };
+  const s = map[status];
+  return (
+    <span className="chip" style={{
+      borderColor: `${s.c}40`,
+      background: `${s.c}14`,
+      color: s.c,
+    }}>
+      <span className="dot" style={{ background: s.c }} />
+      {s.t}
+    </span>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
+// Favicon — colored rounded square with initial
+function Favicon({ host, size = 24, bg = null }) {
+  const initial = host.replace(/^www\./, "")[0].toUpperCase();
+  // Deterministic color from host
+  const colors = ["#ec3586", "#00d4aa", "#ffaa00", "#6c5ce7", "#74b9ff", "#fd79a8", "#ff7675"];
+  const h = host.split("").reduce((a, c) => a + c.charCodeAt(0), 0);
+  const color = bg || colors[h % colors.length];
+  return (
+    <div style={{
+      width: size, height: size,
+      borderRadius: size * 0.22,
+      background: color,
+      display: "flex", alignItems: "center", justifyContent: "center",
+      fontFamily: "var(--font-display)",
+      fontWeight: 700,
+      fontSize: size * 0.5,
+      color: "#fff",
+      letterSpacing: "-0.04em",
+      flexShrink: 0,
+    }}>{initial}</div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
+// Sparkline — 7 colored micro bars for pillar breakdown
+function PillarSparkline({ values }) {
+  return (
+    <div style={{ display: "flex", gap: 3, alignItems: "flex-end", height: 22 }}>
+      {values.map((v, i) => (
+        <div key={i} style={{
+          width: 5,
+          height: `${Math.max(15, v) * 0.22}px`,
+          background: PILLARS[i].color,
+          borderRadius: 1,
+          opacity: 0.9,
+        }} />
+      ))}
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
+// Score chip (small overall score badge, colored by range)
+function ScoreChip({ score }) {
+  const c = score >= 85 ? "#00d4aa" : score >= 65 ? "#ffaa00" : "#ff4757";
+  return (
+    <span style={{
+      display: "inline-flex", alignItems: "center",
+      padding: "3px 10px", borderRadius: 6,
+      background: `${c}14`, color: c,
+      border: `1px solid ${c}30`,
+      fontFamily: "var(--font-display)",
+      fontWeight: 700, fontSize: 13,
+      fontVariantNumeric: "tabular-nums",
+    }}>{score}</span>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
+// Arrow (reusable inline arrow for CTAs)
+function Arrow({ size = 14, stroke = 2 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={stroke} strokeLinecap="round" strokeLinejoin="round">
+      <path d="M5 12h14M13 5l7 7-7 7" />
+    </svg>
+  );
+}
+
+Object.assign(window, {
+  ScoreRing, PillarIcon, StatusIcon, PillarChip, StatusChip, Favicon, PillarSparkline, ScoreChip, Arrow
+});
+
+  </script>
+
+  <!-- ══ APP SHELL (Rail + TopStrip) ═════════════════════════════════════ -->
+  <script id="shell-jsx" type="text/babel" data-presets="react">
+// ScanPulse — App Shell
+// Rail nav (left 56px) + Top strip + outlet for screens
+
+const SCREENS = [
+  { key: "landing",   label: "Landing",       icon: "home"    },
+  { key: "dashboard", label: "Dashboard",     icon: "grid"    },
+  { key: "result",    label: "Scan Result",   icon: "doc"     },
+  { key: "tools",     label: "Tools",         icon: "wrench"  },
+  { key: "csp",       label: "CSP Builder",   icon: "code"    },
+];
+
+function RailIcon({ name, size = 18 }) {
+  const p = { width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 1.7, strokeLinecap: "round", strokeLinejoin: "round" };
+  switch (name) {
+    case "home":   return <svg {...p}><path d="M4 11l8-7 8 7v9a1 1 0 01-1 1h-5v-6h-4v6H5a1 1 0 01-1-1v-9z"/></svg>;
+    case "grid":   return <svg {...p}><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>;
+    case "doc":    return <svg {...p}><path d="M6 3h9l5 5v13a1 1 0 01-1 1H6a1 1 0 01-1-1V4a1 1 0 011-1z"/><path d="M14 3v6h6M8 14h8M8 18h6"/></svg>;
+    case "wrench": return <svg {...p}><path d="M14 6a4 4 0 105 5l3 3-3 3-3-3a4 4 0 01-5-5L4 4l3-3 7 5z"/></svg>;
+    case "code":   return <svg {...p}><path d="M8 8l-5 4 5 4M16 8l5 4-5 4M14 4l-4 16"/></svg>;
+    case "monitor":return <svg {...p}><path d="M3 5h18v12H3zM8 21h8M12 17v4"/></svg>;
+    case "settings":return <svg {...p}><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 00.3 1.9l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.7 1.7 0 00-1.9-.3 1.7 1.7 0 00-1 1.5V21a2 2 0 01-4 0v-.1a1.7 1.7 0 00-1.1-1.5 1.7 1.7 0 00-1.9.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1a1.7 1.7 0 00.3-1.9 1.7 1.7 0 00-1.5-1H3a2 2 0 010-4h.1a1.7 1.7 0 001.5-1.1 1.7 1.7 0 00-.3-1.9l-.1-.1a2 2 0 112.8-2.8l.1.1a1.7 1.7 0 001.9.3H9a1.7 1.7 0 001-1.5V3a2 2 0 014 0v.1a1.7 1.7 0 001 1.5 1.7 1.7 0 001.9-.3l.1-.1a2 2 0 112.8 2.8l-.1.1a1.7 1.7 0 00-.3 1.9V9a1.7 1.7 0 001.5 1H21a2 2 0 010 4h-.1a1.7 1.7 0 00-1.5 1z"/></svg>;
+    default: return <svg {...p}><circle cx="12" cy="12" r="8"/></svg>;
+  }
+}
+
+// Logo — the pink pulse glyph
+function Logo({ size = 22 }) {
+  return (
+    <div style={{ display: "inline-flex", alignItems: "center", gap: 10 }}>
+      <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+        <circle cx="12" cy="12" r="10" stroke="#ec3586" strokeWidth="1.6" />
+        <path d="M3 12h4l2-5 3 10 2-6 2 3h5" stroke="#ec3586" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+      <span style={{
+        fontFamily: "var(--font-display)",
+        fontWeight: 700,
+        fontSize: size * 0.78,
+        letterSpacing: "-0.04em",
+      }}>scanpulse</span>
+    </div>
+  );
+}
+
+// Left 56px rail (used on all app screens, not landing)
+function Rail({ current, onGo }) {
+  return (
+    <aside style={{
+      width: 56,
+      background: "var(--surface)",
+      borderRight: "1px solid var(--border)",
+      display: "flex",
+      flexDirection: "column",
+      alignItems: "center",
+      paddingTop: 18,
+      gap: 4,
+      flexShrink: 0,
+      position: "sticky",
+      top: 0,
+      height: "100vh",
+      zIndex: 10,
+    }}>
+      <div style={{ marginBottom: 24 }}>
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+          <circle cx="12" cy="12" r="10" stroke="#ec3586" strokeWidth="1.6" />
+          <path d="M3 12h4l2-5 3 10 2-6 2 3h5" stroke="#ec3586" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      </div>
+      {SCREENS.slice(1).map(s => {
+        const active = current === s.key;
+        return (
+          <button key={s.key}
+            onClick={() => onGo(s.key)}
+            title={s.label}
+            style={{
+              width: 40, height: 40,
+              border: "none",
+              background: active ? "var(--brand-soft)" : "transparent",
+              color: active ? "var(--brand)" : "rgba(255,255,255,0.55)",
+              borderRadius: 9,
+              cursor: "pointer",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              position: "relative",
+              transition: "background 0.15s, color 0.15s",
+            }}
+            onMouseEnter={e => { if (!active) e.currentTarget.style.background = "rgba(255,255,255,0.04)"; }}
+            onMouseLeave={e => { if (!active) e.currentTarget.style.background = "transparent"; }}
+          >
+            {active && <span style={{ position: "absolute", left: -1, top: 8, bottom: 8, width: 2, background: "var(--brand)", borderRadius: 2 }} />}
+            <RailIcon name={s.icon} />
+          </button>
+        );
+      })}
+      <div style={{ flex: 1 }} />
+      <button style={{
+        width: 40, height: 40, border: "none", background: "transparent",
+        color: "rgba(255,255,255,0.55)", borderRadius: 9, cursor: "pointer",
+        display: "flex", alignItems: "center", justifyContent: "center",
+      }} title="Settings">
+        <RailIcon name="settings" />
+      </button>
+      <div style={{ marginBottom: 14, marginTop: 6,
+        width: 28, height: 28, borderRadius: "50%",
+        background: "linear-gradient(135deg, #ec3586, #6c5ce7)",
+        display: "flex", alignItems: "center", justifyContent: "center",
+        fontFamily: "var(--font-display)", fontWeight: 700, fontSize: 11, color: "#fff",
+      }}>KM</div>
+    </aside>
+  );
+}
+
+// Top strip with scan input
+function TopStrip({ current }) {
+  return (
+    <header style={{
+      height: 60,
+      borderBottom: "1px solid var(--border)",
+      background: "var(--surface)",
+      display: "flex",
+      alignItems: "center",
+      padding: "0 24px",
+      gap: 20,
+      position: "sticky",
+      top: 0,
+      zIndex: 9,
+    }}>
+      <Logo size={18} />
+      <div style={{ width: 1, height: 22, background: "var(--border)" }} />
+      <div style={{ display: "flex", alignItems: "center", gap: 6, color: "var(--text-muted)", fontSize: 13 }}>
+        <span style={{ fontFamily: "var(--font-display)", fontWeight: 500 }}>
+          {current === "dashboard" ? "Dashboard" : current === "result" ? "Scan · acme.design" : current === "tools" ? "Tools" : current === "csp" ? "Tools · CSP Builder" : "—"}
+        </span>
+      </div>
+
+      <div style={{ flex: 1, maxWidth: 520, marginLeft: 40 }}>
+        <div style={{
+          height: 38, borderRadius: 9,
+          background: "var(--elevated)",
+          border: "1px solid var(--border)",
+          display: "flex", alignItems: "center",
+          padding: "0 6px 0 14px",
+          gap: 10,
+        }}>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="2" strokeLinecap="round">
+            <circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/>
+          </svg>
+          <input
+            defaultValue="https://acme.design"
+            style={{
+              flex: 1, border: "none", background: "transparent",
+              color: "#fff", outline: "none",
+              fontFamily: "var(--font-mono)", fontSize: 13,
+            }}
+          />
+          <button className="btn btn-primary" style={{ height: 28, padding: "0 14px", fontSize: 12 }}>Scan</button>
+        </div>
+      </div>
+
+      <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 14 }}>
+        <span className="chip" style={{ borderColor: "rgba(236, 53, 134, 0.3)", background: "var(--brand-soft)", color: "var(--brand)" }}>
+          <span className="pulse-dot" style={{ background: "var(--brand)", color: "var(--brand)" }} />
+          Pro
+        </span>
+        <span style={{ fontFamily: "var(--font-display)", fontSize: 13, color: "var(--text-muted)" }}>142 / ∞ scans</span>
+        <div style={{
+          width: 32, height: 32, borderRadius: "50%",
+          background: "linear-gradient(135deg, #ec3586, #6c5ce7)",
+          display: "flex", alignItems: "center", justifyContent: "center",
+          fontFamily: "var(--font-display)", fontWeight: 700, fontSize: 12, color: "#fff",
+        }}>KM</div>
+      </div>
+    </header>
+  );
+}
+
+Object.assign(window, { SCREENS, RailIcon, Logo, Rail, TopStrip });
+
+  </script>
+
+  <!-- ══ SCREEN 01 · LANDING ═════════════════════════════════════════════ -->
+  <script id="landing-jsx" type="text/babel" data-presets="react">
+// ScanPulse — Screen 1: Landing page
+// 7 sections: hero, coverage, how it works, sample result, pricing, testimonials, FAQ
+
+const SECTIONS = [
+  { id: "hero",       label: "Hero" },
+  { id: "coverage",   label: "Coverage" },
+  { id: "how",        label: "How it works" },
+  { id: "sample",     label: "Sample result" },
+  { id: "pricing",    label: "Pricing" },
+  { id: "love",       label: "Testimonials" },
+  { id: "faq",        label: "FAQ" },
+];
+
+// ─────────────────────────────────────────────────────────────
+// Fixed left section-dot nav
+function SectionNav({ active, onGo }) {
+  return (
+    <nav style={{
+      position: "fixed",
+      left: 36,
+      top: "50%",
+      transform: "translateY(-50%)",
+      display: "flex",
+      flexDirection: "column",
+      gap: 14,
+      zIndex: 50,
+    }}>
+      <div style={{
+        position: "absolute",
+        left: 5, top: -14, bottom: -14,
+        width: 2,
+        background: "rgba(255,255,255,0.06)",
+      }}>
+        <div style={{
+          position: "absolute", top: 0, left: 0, right: 0,
+          height: `${(active + 1) / SECTIONS.length * 100}%`,
+          background: "var(--brand)",
+          transition: "height 0.5s cubic-bezier(0.16, 1, 0.3, 1)",
+          boxShadow: "0 0 10px var(--brand-glow)",
+        }} />
+      </div>
+      {SECTIONS.map((s, i) => (
+        <button key={s.id} onClick={() => onGo(i)}
+          style={{
+            width: 12, height: 12,
+            border: "none",
+            borderRadius: "50%",
+            background: i === active ? "var(--brand)" : "rgba(255,255,255,0.15)",
+            cursor: "pointer",
+            padding: 0,
+            marginLeft: 0,
+            transition: "background 0.2s",
+            boxShadow: i === active ? "0 0 12px var(--brand-glow)" : "none",
+            position: "relative",
+            zIndex: 1,
+          }}
+          title={s.label}
+        />
+      ))}
+    </nav>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
+// Section 1 — Hero
+function HeroSection() {
+  const [counts, setCounts] = useState({ checks: 0, scans: 0, pillars: 0 });
+  useEffect(() => {
+    const targets = { checks: 94, scans: 3847, pillars: 7 };
+    const dur = 1100;
+    const start = performance.now();
+    let raf;
+    const tick = (t) => {
+      const p = Math.min(1, (t - start) / dur);
+      const e = 1 - Math.pow(1 - p, 3);
+      setCounts({
+        checks: Math.round(targets.checks * e),
+        scans: Math.round(targets.scans * e),
+        pillars: Math.round(targets.pillars * e),
+      });
+      if (p < 1) raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, []);
+
+  return (
+    <section style={{
+      minHeight: "100vh",
+      padding: "90px 80px 60px 140px",
+      display: "grid",
+      gridTemplateColumns: "44% 56%",
+      position: "relative",
+      gap: 48,
+      alignItems: "center",
+    }} className="grid-bg">
+      <div style={{
+        position: "absolute", inset: 0,
+        background: "radial-gradient(ellipse at 75% 35%, rgba(236, 53, 134, 0.14), transparent 60%)",
+        pointerEvents: "none",
+      }} />
+
+      <div style={{ position: "relative" }}>
+        <div className="ghost-numeral" style={{ fontSize: 220, top: -40, left: -20 }}>94</div>
+        <div className="eyebrow">94 checks · 7 pillars</div>
+        <h1 className="display" style={{
+          fontSize: "clamp(3.4rem, 5.5vw, 5.6rem)",
+          margin: "28px 0 20px",
+        }}>
+          Every flaw on<br/>your site,<br/>
+          <span style={{ color: "var(--brand)" }}>one click</span> from fixed.
+        </h1>
+        <p style={{
+          fontSize: 18,
+          color: "var(--text-muted)",
+          lineHeight: 1.55,
+          maxWidth: 460,
+          margin: "0 0 36px",
+        }}>
+          ScanPulse audits any URL across 94 checks. Each issue links straight to the tool that repairs it — and shows the exact points you'll unlock on your next scan.
+        </p>
+
+        <div style={{ display: "flex", gap: 42, marginBottom: 40 }}>
+          <Stat num={counts.checks} label="Checks run per scan" />
+          <Stat num={counts.pillars} label="Pillars of health" />
+          <Stat num={counts.scans.toLocaleString()} label="Scans today" color="var(--brand)" />
+        </div>
+
+        <div style={{ display: "flex", gap: 12, alignItems: "center", marginBottom: 32 }}>
+          <button className="btn btn-primary" style={{ height: 48, padding: "0 24px", fontSize: 15 }}>
+            Scan your site free <Arrow size={16} />
+          </button>
+          <button className="btn btn-ghost" style={{ height: 48, padding: "0 20px", fontSize: 14 }}>
+            See a sample report
+          </button>
+        </div>
+
+        <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+          <div style={{ display: "flex" }}>
+            {AVATARS.map((a, i) => (
+              <div key={i} style={{
+                width: 30, height: 30, borderRadius: "50%",
+                background: a.c, color: "#fff",
+                fontFamily: "var(--font-display)", fontWeight: 700, fontSize: 11,
+                display: "flex", alignItems: "center", justifyContent: "center",
+                border: "2px solid var(--canvas)",
+                marginLeft: i === 0 ? 0 : -10,
+              }}>{a.i}</div>
+            ))}
+          </div>
+          <div style={{ fontSize: 13, color: "var(--text-muted)" }}>
+            <strong style={{ color: "#fff", fontFamily: "var(--font-display)" }}>1,284</strong> teams scanning this week
+          </div>
+        </div>
+      </div>
+
+      {/* Right — live feed */}
+      <LiveFeedPanel />
+
+      {/* Scroll chevron */}
+      <div style={{
+        position: "absolute",
+        bottom: 32,
+        left: "50%",
+        transform: "translateX(-50%)",
+        animation: "chev-bounce 2s infinite ease-in-out",
+        color: "var(--text-faint)",
+        display: "flex", flexDirection: "column", alignItems: "center", gap: 4,
+      }}>
+        <span style={{ fontFamily: "var(--font-display)", fontSize: 10, letterSpacing: "0.2em", textTransform: "uppercase" }}>Scroll</span>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M6 9l6 6 6-6"/>
+        </svg>
+      </div>
+    </section>
+  );
+}
+
+function Stat({ num, label, color = "#fff" }) {
+  return (
+    <div>
+      <div className="num" style={{ fontSize: 42, color, marginBottom: 4 }}>{num}</div>
+      <div style={{ fontSize: 12, color: "var(--text-muted)", letterSpacing: "0.02em", maxWidth: 110 }}>{label}</div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
+// Live feed panel (scrolling marquee up)
+function LiveFeedPanel() {
+  const all = [...FEED, ...FEED, ...FEED]; // triple for seamless loop
+  return (
+    <div style={{ position: "relative" }}>
+      <div className="card" style={{
+        padding: 0,
+        height: 560,
+        overflow: "hidden",
+        borderRadius: 20,
+        boxShadow: "0 40px 80px rgba(0,0,0,0.4)",
+      }}>
+        <div className="card-accent-top" style={{ background: "linear-gradient(to right, var(--brand), transparent)" }} />
+
+        {/* header */}
+        <div style={{
+          padding: "18px 22px",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          borderBottom: "1px solid var(--border)",
+        }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <span className="pulse-dot" style={{ background: "var(--brand)", color: "var(--brand)" }} />
+            <span className="eyebrow" style={{ fontSize: 10 }}>Live feed</span>
+          </div>
+          <span style={{ fontFamily: "var(--font-display)", fontSize: 13, color: "#fff", fontWeight: 600 }}>
+            <span style={{ color: "var(--brand)" }}>3,847</span> scans today
+          </span>
+        </div>
+
+        {/* scroll content */}
+        <div style={{ height: "calc(100% - 57px)", overflow: "hidden", position: "relative" }}>
+          {/* Fade masks */}
+          <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 60, background: "linear-gradient(to bottom, var(--elevated), transparent)", zIndex: 2, pointerEvents: "none" }} />
+          <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: 60, background: "linear-gradient(to top, var(--elevated), transparent)", zIndex: 2, pointerEvents: "none" }} />
+
+          <div style={{
+            animation: "marquee-up 28s linear infinite",
+          }}>
+            {all.map((f, i) => (
+              <FeedRow key={i} f={f} />
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function FeedRow({ f }) {
+  const pillar = PILLARS.find(p => p.key === f.pillar);
+  const statusColor = f.status === "pass" ? "#00d4aa" : f.status === "warn" ? "#ffaa00" : "#ff4757";
+  return (
+    <div style={{
+      padding: "14px 22px",
+      display: "grid",
+      gridTemplateColumns: "auto 1fr auto",
+      gap: 14,
+      alignItems: "center",
+      borderBottom: "1px solid var(--border)",
+      borderLeft: `2px solid ${pillar.color}`,
+    }}>
+      <Favicon host={f.host} size={28} />
+      <div style={{ minWidth: 0 }}>
+        <div style={{ fontFamily: "var(--font-mono)", fontSize: 13, color: "#fff", marginBottom: 2 }}>{f.host}</div>
+        <div style={{ fontSize: 12, color: "var(--text-muted)" }}>
+          <span style={{ color: pillar.color, fontFamily: "var(--font-display)", fontWeight: 600 }}>{pillar.label}</span>
+          {" · "}{f.msg}
+        </div>
+      </div>
+      <StatusIcon status={f.status} size={16} />
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
+// Section 2 — Coverage (4x2 bento of pillars)
+function CoverageSection() {
+  return (
+    <section style={{ padding: "120px 80px 120px 140px", position: "relative" }} className="grid-bg">
+      <div style={{ maxWidth: 720, marginBottom: 60 }}>
+        <div className="eyebrow">Coverage</div>
+        <h2 className="display" style={{ fontSize: 64, margin: "20px 0 16px" }}>
+          Seven pillars.<br/>
+          Ninety-four checks.
+        </h2>
+        <p style={{ fontSize: 17, color: "var(--text-muted)", maxWidth: 520, lineHeight: 1.6 }}>
+          Every ScanPulse report groups findings into seven canonical pillars. Each pillar owns a color. You'll see that color on the issue, the fix, and the score uplift — a visual map of your site's health.
+        </p>
+      </div>
+
+      <div style={{
+        display: "grid",
+        gridTemplateColumns: "repeat(4, 1fr)",
+        gap: 20,
+      }}>
+        {PILLARS.map(p => (
+          <PillarBentoCard key={p.key} p={p} />
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function PillarBentoCard({ p }) {
+  const checks = {
+    security:      ["HTTPS & HSTS", "CSP present", "Secure cookies", "CORS scoped", "Mixed content"],
+    performance:   ["LCP under 2.5s", "CLS under 0.1", "INP under 200ms", "Image formats", "Compression"],
+    seo:           ["Canonical", "Open Graph", "JSON-LD", "Meta description", "Sitemap"],
+    accessibility: ["Alt text", "Contrast AA", "Landmarks", "Focus states", "Form labels"],
+    ai:            ["llms.txt", "Consistent summaries", "Structured data", "Allowed bots", "Entity schema"],
+    dns:           ["SPF valid", "DMARC ≥ quarantine", "DKIM aligned", "MX present", "Reverse DNS"],
+    trust:         ["Privacy policy", "Terms of service", "Contact page", "Physical address", "Disclosure"],
+  };
+  return (
+    <div className="card lift" style={{ padding: "24px 22px 22px", position: "relative", minHeight: 260 }}>
+      <div className="card-accent-top" style={{ background: `linear-gradient(to right, ${p.color}, transparent)` }} />
+      <div className="ghost-numeral" style={{ fontSize: 120, top: -10, right: -10, color: `${p.color}12` }}>
+        {String(p.count).padStart(2, "0")}
+      </div>
+      <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 22 }}>
+        <div style={{
+          width: 34, height: 34, borderRadius: 8,
+          background: `${p.color}1a`,
+          display: "flex", alignItems: "center", justifyContent: "center",
+          color: p.color,
+        }}>
+          <PillarIcon name={p.icon} size={18} />
+        </div>
+        <span className="eyebrow-pillar" style={{ color: p.color }}>
+          <span style={{ width: 28, height: 2, background: p.color, display: "inline-block", marginRight: 4 }} />
+          {p.label}
+        </span>
+      </div>
+      <div className="num" style={{ fontSize: 40, color: p.color, marginBottom: 14, position: "relative" }}>
+        {p.count}<span style={{ fontSize: 14, color: "var(--text-muted)", marginLeft: 6 }}>checks</span>
+      </div>
+      <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: 7 }}>
+        {checks[p.key].map((c, i) => (
+          <li key={i} style={{ fontSize: 13, color: "var(--text-muted)", display: "flex", alignItems: "center", gap: 8 }}>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={p.color} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M4 12l5 5L20 7"/>
+            </svg>
+            {c}
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
+// Section 3 — How it works (diagnose → fix → verify)
+function HowSection() {
+  const steps = [
+    { n: "01", title: "Diagnose", color: "#74b9ff", desc: "Enter a URL. In under 12 seconds, ScanPulse runs 94 checks and assigns an overall score plus seven pillar scores." },
+    { n: "02", title: "Fix",      color: "#ec3586", desc: "Every fixable issue links directly to the tool that repairs it — CSP Builder, Image Optimizer, Schema Generator, and eight more." },
+    { n: "03", title: "Verify",   color: "#00d4aa", desc: "Rescan. The previously-failing checks turn green. The score ring fills. Monitoring keeps the win in place." },
+  ];
+  return (
+    <section style={{ padding: "120px 80px 120px 140px", position: "relative" }} className="grid-bg">
+      <div style={{ maxWidth: 720, marginBottom: 72 }}>
+        <div className="eyebrow">The loop</div>
+        <h2 className="display" style={{ fontSize: 64, margin: "20px 0 16px" }}>
+          Diagnose. Fix. Verify.
+        </h2>
+        <p style={{ fontSize: 17, color: "var(--text-muted)", maxWidth: 560, lineHeight: 1.6 }}>
+          Most tools stop at the report. ScanPulse closes the loop.
+        </p>
+      </div>
+
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 24 }}>
+        {steps.map((s, i) => (
+          <div key={i} className="card lift" style={{ padding: "32px 28px", position: "relative", minHeight: 280 }}>
+            <div className="card-accent-top" style={{ background: `linear-gradient(to right, ${s.color}, transparent)` }} />
+            <div className="ghost-numeral" style={{ fontSize: 160, top: 60, right: 10, color: `${s.color}10` }}>{s.n}</div>
+            <div style={{ fontFamily: "var(--font-display)", fontSize: 11, letterSpacing: "0.2em", color: s.color, fontWeight: 700, marginBottom: 18, textTransform: "uppercase" }}>
+              Step {s.n}
+            </div>
+            <h3 className="display" style={{ fontSize: 44, margin: "0 0 16px", color: s.color }}>{s.title}</h3>
+            <p style={{ fontSize: 15, color: "rgba(255,255,255,0.7)", lineHeight: 1.6, margin: 0 }}>{s.desc}</p>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
+// Section 4 — Sample result (browser chrome with mini dashboard inside)
+function SampleSection() {
+  return (
+    <section style={{ padding: "120px 80px 120px 140px", position: "relative" }} className="grid-bg">
+      <div style={{
+        position: "absolute", inset: 0,
+        background: "radial-gradient(ellipse at 50% 50%, rgba(236, 53, 134, 0.08), transparent 60%)",
+        pointerEvents: "none",
+      }} />
+
+      <div style={{ maxWidth: 720, marginBottom: 60, position: "relative" }}>
+        <div className="eyebrow">Sample result</div>
+        <h2 className="display" style={{ fontSize: 64, margin: "20px 0 16px" }}>
+          The money shot.
+        </h2>
+        <p style={{ fontSize: 17, color: "var(--text-muted)", maxWidth: 560, lineHeight: 1.6 }}>
+          This is exactly what you'll see after your first scan. Score ring, pillar breakdown, and an issue list where every fix is a click away.
+        </p>
+      </div>
+
+      <SampleBrowserMock />
+    </section>
+  );
+}
+
+function SampleBrowserMock() {
+  return (
+    <div style={{
+      borderRadius: 16,
+      overflow: "hidden",
+      border: "1px solid var(--border-strong)",
+      background: "var(--elevated)",
+      boxShadow: "0 60px 120px rgba(0,0,0,0.5), 0 0 100px rgba(236,53,134,0.12)",
+      position: "relative",
+    }}>
+      {/* Browser chrome */}
+      <div style={{
+        height: 40,
+        background: "#0a0a10",
+        borderBottom: "1px solid var(--border)",
+        display: "flex",
+        alignItems: "center",
+        padding: "0 14px",
+        gap: 10,
+      }}>
+        <div style={{ display: "flex", gap: 7 }}>
+          <div style={{ width: 11, height: 11, borderRadius: "50%", background: "#ff5f57" }} />
+          <div style={{ width: 11, height: 11, borderRadius: "50%", background: "#febc2e" }} />
+          <div style={{ width: 11, height: 11, borderRadius: "50%", background: "#28c840" }} />
+        </div>
+        <div style={{
+          flex: 1, margin: "0 80px",
+          height: 24, borderRadius: 6,
+          background: "rgba(255,255,255,0.04)",
+          border: "1px solid var(--border)",
+          display: "flex", alignItems: "center",
+          padding: "0 12px",
+          fontFamily: "var(--font-mono)", fontSize: 11,
+          color: "var(--text-muted)",
+          gap: 8,
+        }}>
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#00d4aa" strokeWidth="2.5"><path d="M12 3l8 3v6c0 5-3.5 8.5-8 9-4.5-.5-8-4-8-9V6l8-3z"/></svg>
+          app.scanpulse.io/scan/acme.design
+        </div>
+      </div>
+
+      {/* Mock dashboard interior */}
+      <div style={{ padding: 36, background: "var(--canvas)", display: "grid", gridTemplateColumns: "360px 1fr", gap: 36 }}>
+        {/* Left — score ring + pillar bars */}
+        <div>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 20 }}>
+            <Favicon host="acme.design" size={24} bg="#ec3586" />
+            <div style={{ fontFamily: "var(--font-mono)", fontSize: 14, color: "#fff" }}>acme.design</div>
+          </div>
+          <div style={{ display: "flex", justifyContent: "center", marginBottom: 24 }}>
+            <ScoreRing score={74} delta="+6" />
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            {PILLARS.map(p => (
+              <div key={p.key} style={{ display: "grid", gridTemplateColumns: "110px 1fr 34px", gap: 10, alignItems: "center" }}>
+                <div style={{ fontFamily: "var(--font-display)", fontSize: 11, letterSpacing: "0.08em", textTransform: "uppercase", color: p.color, fontWeight: 600 }}>
+                  {p.label}
+                </div>
+                <div style={{ height: 6, background: "rgba(255,255,255,0.05)", borderRadius: 999, overflow: "hidden" }}>
+                  <div style={{
+                    height: "100%",
+                    width: `${p.score}%`,
+                    background: p.color,
+                    boxShadow: `0 0 10px ${p.color}55`,
+                    borderRadius: 999,
+                  }} />
+                </div>
+                <div className="num" style={{ fontSize: 14, color: "#fff", textAlign: "right" }}>{p.score}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Right — issue list */}
+        <div>
+          <div className="eyebrow" style={{ marginBottom: 14 }}>Top issues · ranked by impact</div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            {QUICK_WINS.map((q, i) => {
+              const p = PILLARS.find(x => x.key === q.pillar);
+              return (
+                <div key={i} style={{
+                  padding: "16px 18px",
+                  borderRadius: 12,
+                  background: "var(--elevated)",
+                  border: "1px solid var(--border)",
+                  borderLeft: `2px solid ${p.color}`,
+                  display: "grid",
+                  gridTemplateColumns: "1fr auto",
+                  gap: 20,
+                  alignItems: "center",
+                }}>
+                  <div>
+                    <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
+                      <span className="eyebrow-pillar" style={{ color: p.color }}>
+                        <span style={{ width: 22, height: 2, background: p.color, display: "inline-block", marginRight: 6 }} />
+                        {p.label}
+                      </span>
+                      <span className="num" style={{ fontSize: 13, color: "#00d4aa", marginLeft: "auto" }}>+{q.impact} pts</span>
+                    </div>
+                    <div style={{ fontFamily: "var(--font-display)", fontSize: 16, fontWeight: 600, color: "#fff", marginBottom: 4 }}>{q.title}</div>
+                    <div style={{ fontSize: 13, color: "var(--text-muted)", lineHeight: 1.5 }}>{q.blurb}</div>
+                  </div>
+                  <button className="btn btn-pink-ghost" style={{ whiteSpace: "nowrap" }}>
+                    {q.toolLabel} <Arrow size={13} />
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
+// Section 5 — Pricing
+function PricingSection() {
+  const tiers = [
+    {
+      name: "Free",
+      price: "$0",
+      tag: "Always free",
+      blurb: "Kick the tires. One full scan per URL. No credit card.",
+      features: ["1 scan per URL", "All 94 checks", "Full pillar breakdown", "Export as PDF"],
+      cta: "Start scanning",
+      primary: false,
+    },
+    {
+      name: "Pro",
+      price: "$15",
+      per: "/ month",
+      tag: "Most teams",
+      blurb: "Unlimited scans, all 10 fix tools, monitoring, bulk, API.",
+      features: ["Unlimited scans", "All 10 fix tools", "24h monitoring + alerts", "Bulk scan up to 500 URLs", "Full API access", "Score history, 12mo"],
+      cta: "Start 14-day trial",
+      primary: true,
+    },
+    {
+      name: "Agency",
+      price: "$59",
+      per: "/ month",
+      tag: "Consultants & studios",
+      blurb: "Everything in Pro, plus white-label reports and 25 seats.",
+      features: ["Everything in Pro", "White-label PDF reports", "25 team seats", "Priority support", "SSO + SAML", "Audit log"],
+      cta: "Talk to us",
+      primary: false,
+    },
+  ];
+  return (
+    <section style={{ padding: "120px 80px 120px 140px", position: "relative" }} className="grid-bg">
+      <div style={{ maxWidth: 720, marginBottom: 60 }}>
+        <div className="eyebrow">Pricing</div>
+        <h2 className="display" style={{ fontSize: 64, margin: "20px 0 16px" }}>
+          One plan does it.
+        </h2>
+        <p style={{ fontSize: 17, color: "var(--text-muted)", maxWidth: 560, lineHeight: 1.6 }}>
+          Free for a single scan. Fifteen dollars unlocks everything — tools, monitoring, bulk, API.
+        </p>
+      </div>
+
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 20, alignItems: "stretch" }}>
+        {tiers.map(t => (
+          <div key={t.name} className="card lift" style={{
+            padding: "30px 28px",
+            position: "relative",
+            border: t.primary ? "1px solid rgba(236, 53, 134, 0.35)" : "1px solid var(--border)",
+            background: t.primary ? "linear-gradient(180deg, rgba(236, 53, 134, 0.06), transparent 60%), var(--elevated)" : "var(--elevated)",
+            boxShadow: t.primary ? "0 0 60px rgba(236, 53, 134, 0.12)" : "none",
+          }}>
+            {t.primary && <div className="card-accent-top" style={{ background: "var(--brand)", height: 2 }} />}
+
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 18 }}>
+              <div style={{ fontFamily: "var(--font-display)", fontSize: 14, fontWeight: 600, color: "#fff" }}>{t.name}</div>
+              <span className="chip" style={{
+                borderColor: t.primary ? "rgba(236, 53, 134, 0.3)" : "var(--border)",
+                background: t.primary ? "var(--brand-soft)" : "rgba(255,255,255,0.03)",
+                color: t.primary ? "var(--brand)" : "var(--text-muted)",
+              }}>{t.tag}</span>
+            </div>
+
+            <div style={{ display: "flex", alignItems: "baseline", gap: 6, marginBottom: 10 }}>
+              <span className="num" style={{ fontSize: 56 }}>{t.price}</span>
+              {t.per && <span style={{ color: "var(--text-muted)", fontSize: 15 }}>{t.per}</span>}
+            </div>
+
+            <p style={{ fontSize: 14, color: "var(--text-muted)", lineHeight: 1.5, margin: "0 0 24px" }}>{t.blurb}</p>
+
+            <button className={t.primary ? "btn btn-primary" : "btn btn-ghost"} style={{ width: "100%", justifyContent: "center", height: 42, marginBottom: 24 }}>
+              {t.cta} {t.primary && <Arrow size={14} />}
+            </button>
+
+            <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: 10 }}>
+              {t.features.map((f, i) => (
+                <li key={i} style={{ fontSize: 13, color: "rgba(255,255,255,0.72)", display: "flex", alignItems: "center", gap: 10 }}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--brand)" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M4 12l5 5L20 7"/>
+                  </svg>
+                  {f}
+                </li>
+              ))}
+            </ul>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
+// Section 6 — Testimonials
+function LoveSection() {
+  const quotes = [
+    { by: "Kira M.", role: "Head of Platform, orbital.studio", color: "#ec3586", q: "We fixed 38 points of security score in a Wednesday afternoon. The CSP Builder alone paid for the year." },
+    { by: "Ana O.",  role: "Staff Engineer, harbor.build",      color: "#74b9ff", q: "Every other audit tool hands me a PDF to cry over. ScanPulse hands me the file I paste into nginx." },
+    { by: "Sam R.",  role: "SEO Lead, meridian.work",            color: "#6c5ce7", q: "The per-pillar color coding is the actual product. I can scan a client in 10 seconds and know exactly who to loop in." },
+    { by: "Jess T.", role: "Founder, kindred.studio",            color: "#00d4aa", q: "Monitoring emailed me about a regressed HSTS header before the deploy finished rolling out. Saved us a week." },
+  ];
+  return (
+    <section style={{ padding: "120px 80px 120px 140px", position: "relative" }} className="grid-bg">
+      <div style={{ maxWidth: 720, marginBottom: 60 }}>
+        <div className="eyebrow">Teams on ScanPulse</div>
+        <h2 className="display" style={{ fontSize: 64, margin: "20px 0 16px" }}>
+          Scores, up and to the right.
+        </h2>
+      </div>
+
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 20 }}>
+        {quotes.map((q, i) => (
+          <div key={i} className="card lift" style={{ padding: "30px 30px 28px", borderLeft: `2px solid ${q.color}`, position: "relative" }}>
+            <svg width="28" height="28" viewBox="0 0 24 24" fill={q.color} opacity="0.15" style={{ position: "absolute", top: 22, right: 24 }}>
+              <path d="M8 6C5 6 3 8 3 11v7h7v-7H7c0-1.5 1-2.5 2.5-3L8 6zm9 0c-3 0-5 2-5 5v7h7v-7h-3c0-1.5 1-2.5 2.5-3L17 6z"/>
+            </svg>
+            <p style={{ fontFamily: "var(--font-display)", fontSize: 20, fontWeight: 500, lineHeight: 1.45, margin: "0 0 22px", letterSpacing: "-0.02em" }}>
+              "{q.q}"
+            </p>
+            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+              <div style={{
+                width: 34, height: 34, borderRadius: "50%",
+                background: q.color, color: "#fff",
+                fontFamily: "var(--font-display)", fontWeight: 700, fontSize: 12,
+                display: "flex", alignItems: "center", justifyContent: "center",
+              }}>{q.by.split(" ").map(s => s[0]).join("")}</div>
+              <div>
+                <div style={{ fontFamily: "var(--font-display)", fontSize: 14, fontWeight: 600, color: "#fff" }}>{q.by}</div>
+                <div style={{ fontSize: 12, color: "var(--text-muted)" }}>{q.role}</div>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
+// Section 7 — FAQ
+function FAQSection() {
+  const faqs = [
+    { q: "How fast is a scan?", a: "Under 12 seconds for most sites. The page loads, 94 checks run in parallel, and the report renders with an animated score ring." },
+    { q: "Do you store my site's content?", a: "No HTML or screenshots are retained. We store the check results (pass/warn/crit) and the derived scores. Pro users can opt in to 12 months of score history." },
+    { q: "Can I scan a staging URL behind basic auth?", a: "Yes — Pro supports basic auth and custom headers per scan. Use the API or the Advanced toggle in the scan input." },
+    { q: "What's included in the Free plan?", a: "One full scan per URL, all 94 checks, the full pillar breakdown, and a PDF export. Upgrading unlocks unlimited scans, monitoring, bulk, and the 10 fix tools." },
+    { q: "Is there an API?", a: "Yes — REST and webhook. Pro gets 1,000 scans/mo via API; Agency is unmetered." },
+  ];
+  const [open, setOpen] = useState(0);
+  return (
+    <section style={{ padding: "120px 80px 160px 140px", position: "relative" }} className="grid-bg">
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1.4fr", gap: 80 }}>
+        <div>
+          <div className="eyebrow">FAQ</div>
+          <h2 className="display" style={{ fontSize: 56, margin: "20px 0 16px" }}>
+            Questions.
+          </h2>
+          <p style={{ color: "var(--text-muted)", fontSize: 16, lineHeight: 1.6, marginBottom: 28 }}>
+            Can't find yours? Email <a href="#" style={{ color: "var(--brand)", textDecoration: "none" }}>hi@scanpulse.io</a> — a human replies within a day.
+          </p>
+          <button className="btn btn-primary">Scan your site <Arrow size={14}/></button>
+        </div>
+
+        <div style={{ display: "flex", flexDirection: "column" }}>
+          {faqs.map((f, i) => (
+            <div key={i} style={{ borderBottom: "1px solid var(--border)" }}>
+              <button onClick={() => setOpen(open === i ? -1 : i)}
+                style={{
+                  width: "100%",
+                  padding: "24px 0",
+                  background: "transparent",
+                  border: "none",
+                  color: "#fff",
+                  fontFamily: "var(--font-display)",
+                  fontSize: 20, fontWeight: 600,
+                  textAlign: "left",
+                  letterSpacing: "-0.02em",
+                  cursor: "pointer",
+                  display: "flex", justifyContent: "space-between", alignItems: "center",
+                }}>
+                {f.q}
+                <span style={{
+                  width: 28, height: 28, borderRadius: "50%",
+                  border: "1px solid var(--border-strong)",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  color: open === i ? "var(--brand)" : "var(--text-muted)",
+                  transition: "transform 0.25s",
+                  transform: open === i ? "rotate(45deg)" : "rotate(0)",
+                }}>
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M12 5v14M5 12h14"/></svg>
+                </span>
+              </button>
+              <div style={{
+                maxHeight: open === i ? 200 : 0,
+                overflow: "hidden",
+                transition: "max-height 0.35s cubic-bezier(0.16, 1, 0.3, 1)",
+              }}>
+                <p style={{ fontSize: 15, color: "var(--text-muted)", lineHeight: 1.65, margin: "0 0 24px", maxWidth: 560 }}>{f.a}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
+// Landing — compose all 7
+function LandingScreen() {
+  const [active, setActive] = useState(0);
+  const sectionRefs = useRef([]);
+  const scrollerRef = useRef(null);
+
+  useEffect(() => {
+    const scroller = scrollerRef.current;
+    if (!scroller) return;
+    const io = new IntersectionObserver((entries) => {
+      entries.forEach(e => {
+        if (e.isIntersecting) {
+          const i = sectionRefs.current.indexOf(e.target);
+          if (i >= 0) setActive(i);
+        }
+      });
+    }, { root: scroller, threshold: 0.4 });
+    sectionRefs.current.forEach(el => el && io.observe(el));
+    return () => io.disconnect();
+  }, []);
+
+  const goTo = (i) => {
+    sectionRefs.current[i]?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+
+  // landing has its own topbar (different from app)
+  return (
+    <div ref={scrollerRef} style={{ height: "100%", overflowY: "auto", background: "var(--canvas)", position: "relative" }}>
+      <LandingTopbar onCta={goTo} />
+      <SectionNav active={active} onGo={goTo} />
+
+      <div ref={el => sectionRefs.current[0] = el}><HeroSection /></div>
+      <div ref={el => sectionRefs.current[1] = el}><CoverageSection /></div>
+      <div ref={el => sectionRefs.current[2] = el}><HowSection /></div>
+      <div ref={el => sectionRefs.current[3] = el}><SampleSection /></div>
+      <div ref={el => sectionRefs.current[4] = el}><PricingSection /></div>
+      <div ref={el => sectionRefs.current[5] = el}><LoveSection /></div>
+      <div ref={el => sectionRefs.current[6] = el}><FAQSection /></div>
+
+      <footer style={{ padding: "40px 80px 50px 140px", borderTop: "1px solid var(--border)", background: "var(--surface)" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <Logo size={20} />
+          <div style={{ color: "var(--text-muted)", fontSize: 13 }}>© 2026 ScanPulse · <a href="#" style={{ color: "var(--text-muted)", textDecoration: "none" }}>Privacy</a> · <a href="#" style={{ color: "var(--text-muted)", textDecoration: "none" }}>Terms</a></div>
+        </div>
+      </footer>
+    </div>
+  );
+}
+
+function LandingTopbar({ onCta }) {
+  return (
+    <header style={{
+      position: "sticky", top: 0, zIndex: 40,
+      padding: "18px 80px 18px 140px",
+      display: "flex", alignItems: "center", justifyContent: "space-between",
+      background: "rgba(7, 7, 10, 0.75)",
+      backdropFilter: "blur(16px)",
+      borderBottom: "1px solid rgba(255,255,255,0.04)",
+    }}>
+      <Logo size={20} />
+      <nav style={{ display: "flex", alignItems: "center", gap: 28 }}>
+        <a onClick={() => onCta(1)} style={NavLink}>Coverage</a>
+        <a onClick={() => onCta(2)} style={NavLink}>How it works</a>
+        <a onClick={() => onCta(4)} style={NavLink}>Pricing</a>
+        <a onClick={() => onCta(6)} style={NavLink}>FAQ</a>
+        <a style={NavLink}>Sign in</a>
+        <button className="btn btn-primary" style={{ height: 38 }}>Start free <Arrow size={13}/></button>
+      </nav>
+    </header>
+  );
+}
+const NavLink = { color: "rgba(255,255,255,0.7)", fontSize: 14, cursor: "pointer", fontFamily: "var(--font-display)", fontWeight: 500, textDecoration: "none" };
+
+Object.assign(window, { LandingScreen });
+
+  </script>
+
+  <!-- ══ SCREEN 02 · DASHBOARD ═══════════════════════════════════════════ -->
+  <script id="dashboard-jsx" type="text/babel" data-presets="react">
+// ScanPulse — Screen 2: Dashboard Overview
+// Hero panel (score ring + pillar bars) · Quick Wins · Trend chart · Recent scans
+
+function DashboardScreen({ onGo }) {
+  return (
+    <main style={{ flex: 1, padding: "32px 40px 60px", background: "var(--canvas)", position: "relative", overflow: "hidden" }}>
+      <div style={{ position: "absolute", inset: 0, opacity: 0.5 }} className="grid-bg" />
+      <div style={{ position: "absolute", top: -100, right: -100, width: 600, height: 600, background: "radial-gradient(circle, rgba(236, 53, 134, 0.08), transparent 60%)", pointerEvents: "none" }} />
+
+      <div style={{ position: "relative", display: "flex", flexDirection: "column", gap: 24 }}>
+        <DashboardHeader />
+        <HeroScanPanel onGo={onGo} />
+        <QuickWinsRow onGo={onGo} />
+        <div style={{ display: "grid", gridTemplateColumns: "1.4fr 1fr", gap: 24 }}>
+          <TrendChart />
+          <MonitorPanel />
+        </div>
+        <RecentScansTable onGo={onGo} />
+      </div>
+    </main>
+  );
+}
+
+function DashboardHeader() {
+  return (
+    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end" }}>
+      <div>
+        <div className="eyebrow">Overview · April 18</div>
+        <h1 className="display" style={{ fontSize: 44, margin: "14px 0 0" }}>Good morning, Kira.</h1>
+        <p style={{ color: "var(--text-muted)", fontSize: 15, margin: "8px 0 0" }}>
+          3 sites are monitored. 1 regressed overnight. <a style={{ color: "var(--brand)", cursor: "pointer" }}>Review →</a>
+        </p>
+      </div>
+      <div style={{ display: "flex", gap: 10 }}>
+        <button className="btn btn-ghost"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M12 5v14M5 12h14"/></svg>New scan</button>
+        <button className="btn btn-ghost">Bulk upload</button>
+        <button className="btn btn-primary">Export report <Arrow size={13}/></button>
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
+// Hero — the last-scanned site (score ring + pillar breakdown)
+function HeroScanPanel({ onGo }) {
+  return (
+    <div className="card" style={{ padding: "32px 36px", position: "relative" }}>
+      <div className="card-accent-top" style={{ background: "linear-gradient(to right, var(--brand), transparent)" }} />
+      <div className="ghost-numeral" style={{ fontSize: 260, top: -30, right: 20, color: "rgba(236, 53, 134, 0.05)" }}>74</div>
+
+      <div style={{ display: "grid", gridTemplateColumns: "auto 1fr auto", gap: 48, alignItems: "center", position: "relative" }}>
+        {/* Ring */}
+        <div>
+          <ScoreRing score={74} delta="+6" />
+        </div>
+
+        {/* Pillar breakdown */}
+        <div>
+          <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 22 }}>
+            <Favicon host="acme.design" size={32} bg="#ec3586" />
+            <div>
+              <div style={{ fontFamily: "var(--font-mono)", fontSize: 20, color: "#fff", marginBottom: 2 }}>acme.design</div>
+              <div style={{ fontSize: 13, color: "var(--text-muted)" }}>Last scanned 12m ago · <a style={{ color: "var(--brand)", cursor: "pointer" }}>View full report →</a></div>
+            </div>
+            <span className="chip" style={{ marginLeft: "auto", borderColor: "rgba(0, 212, 170, 0.3)", background: "rgba(0, 212, 170, 0.1)", color: "var(--p-security)" }}>
+              <span className="pulse-dot" style={{ background: "var(--p-security)", color: "var(--p-security)" }} />
+              Monitoring on
+            </span>
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px 40px" }}>
+            {PILLARS.map(p => (
+              <div key={p.key} style={{ display: "grid", gridTemplateColumns: "110px 1fr 34px", gap: 12, alignItems: "center" }}>
+                <div style={{ fontFamily: "var(--font-display)", fontSize: 11, letterSpacing: "0.1em", textTransform: "uppercase", color: p.color, fontWeight: 600 }}>
+                  {p.label}
+                </div>
+                <div style={{ height: 6, background: "rgba(255,255,255,0.05)", borderRadius: 999, overflow: "hidden" }}>
+                  <div style={{
+                    height: "100%",
+                    width: `${p.score}%`,
+                    background: p.color,
+                    boxShadow: `0 0 10px ${p.color}55`,
+                    borderRadius: 999,
+                    transition: "width 0.8s cubic-bezier(0.16, 1, 0.3, 1)",
+                  }} />
+                </div>
+                <div className="num" style={{ fontSize: 14, color: "#fff", textAlign: "right" }}>{p.score}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Actions */}
+        <div style={{ display: "flex", flexDirection: "column", gap: 10, minWidth: 180 }}>
+          <button className="btn btn-pink-ghost" style={{ justifyContent: "center", height: 40 }}>
+            Rescan site
+          </button>
+          <button className="btn btn-ghost" style={{ justifyContent: "center", height: 40 }} onClick={() => onGo("result")}>
+            See all 94 checks <Arrow size={13}/>
+          </button>
+          <div style={{ borderTop: "1px solid var(--border)", paddingTop: 12, marginTop: 4 }}>
+            <div style={{ fontSize: 11, color: "var(--text-faint)", letterSpacing: "0.15em", textTransform: "uppercase", marginBottom: 6 }}>Potential uplift</div>
+            <div className="num" style={{ fontSize: 28, color: "var(--p-security)" }}>+28 pts</div>
+            <div style={{ fontSize: 12, color: "var(--text-muted)" }}>by fixing 3 quick wins</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
+// Quick Wins — THE feature
+function QuickWinsRow({ onGo }) {
+  return (
+    <section>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 16 }}>
+        <div>
+          <div className="eyebrow">Quick wins · ranked by score impact</div>
+          <h2 className="display" style={{ fontSize: 28, margin: "10px 0 0" }}>Fix three things. Unlock 28 points.</h2>
+        </div>
+        <a style={{ color: "var(--text-muted)", fontSize: 13, cursor: "pointer", fontFamily: "var(--font-display)" }}>
+          Show all issues →
+        </a>
+      </div>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 18 }}>
+        {QUICK_WINS.map((q, i) => (
+          <QuickWinCard key={i} q={q} onGo={onGo} />
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function QuickWinCard({ q, onGo }) {
+  const p = PILLARS.find(x => x.key === q.pillar);
+  return (
+    <div className="card lift" style={{
+      padding: "24px 24px 22px",
+      position: "relative",
+      borderLeft: `2px solid ${p.color}`,
+      minHeight: 220,
+      cursor: "pointer",
+    }}
+      onClick={() => onGo(q.tool === "csp" ? "csp" : "tools")}
+      onMouseEnter={e => { e.currentTarget.style.boxShadow = `0 0 30px ${p.color}25`; e.currentTarget.style.borderColor = `${p.color}40`; }}
+      onMouseLeave={e => { e.currentTarget.style.boxShadow = "none"; e.currentTarget.style.borderLeftColor = p.color; e.currentTarget.style.borderTopColor = "var(--border)"; e.currentTarget.style.borderRightColor = "var(--border)"; e.currentTarget.style.borderBottomColor = "var(--border)"; }}
+    >
+      <div className="card-accent-top" style={{ background: `linear-gradient(to right, ${p.color}, transparent)` }} />
+
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 16 }}>
+        <span className="eyebrow-pillar" style={{ color: p.color }}>
+          <span style={{ width: 22, height: 2, background: p.color, display: "inline-block", marginRight: 6 }} />
+          {p.label}
+        </span>
+        <div style={{ textAlign: "right" }}>
+          <div className="num" style={{ fontSize: 26, color: "var(--p-security)", lineHeight: 1 }}>+{q.impact}</div>
+          <div style={{ fontSize: 10, color: "var(--text-muted)", letterSpacing: "0.12em", textTransform: "uppercase", marginTop: 3 }}>pts potential</div>
+        </div>
+      </div>
+
+      <h3 className="display" style={{ fontSize: 20, margin: "0 0 8px", letterSpacing: "-0.02em" }}>{q.title}</h3>
+      <p style={{ fontSize: 13.5, color: "var(--text-muted)", lineHeight: 1.55, margin: "0 0 20px" }}>{q.blurb}</p>
+
+      <button className="btn btn-pink-ghost" style={{ width: "100%", justifyContent: "center" }}>
+        {q.toolLabel} <Arrow size={13}/>
+      </button>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
+// Trend chart — line with pink gradient fill
+function TrendChart() {
+  const points = [
+    { x: 0,  acme: 52, proto: 80 },
+    { x: 1,  acme: 55, proto: 82 },
+    { x: 2,  acme: 58, proto: 83 },
+    { x: 3,  acme: 62, proto: 85 },
+    { x: 4,  acme: 60, proto: 84 },
+    { x: 5,  acme: 65, proto: 86 },
+    { x: 6,  acme: 68, proto: 87 },
+    { x: 7,  acme: 68, proto: 88 },
+    { x: 8,  acme: 70, proto: 88 },
+    { x: 9,  acme: 72, proto: 90 },
+    { x: 10, acme: 73, proto: 91 },
+    { x: 11, acme: 74, proto: 88 },
+  ];
+
+  const W = 640, H = 260, pad = 32;
+  const xScale = (x) => pad + (x / 11) * (W - pad * 2);
+  const yScale = (y) => pad + (1 - (y - 40) / 60) * (H - pad * 2 - 20);
+
+  const linePath = (key) => points.map((p, i) => `${i === 0 ? "M" : "L"}${xScale(p.x)},${yScale(p[key])}`).join(" ");
+  const areaPath = `${linePath("acme")} L${xScale(11)},${H - pad} L${xScale(0)},${H - pad} Z`;
+
+  return (
+    <div className="card" style={{ padding: 28, position: "relative", height: 340 }}>
+      <div className="card-accent-top" style={{ background: "linear-gradient(to right, var(--brand), transparent)" }} />
+
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 24 }}>
+        <div>
+          <div className="eyebrow">Score history · 12 weeks</div>
+          <div style={{ display: "flex", alignItems: "baseline", gap: 14, marginTop: 14 }}>
+            <div className="num" style={{ fontSize: 44 }}>74</div>
+            <div style={{ color: "var(--p-security)", fontFamily: "var(--font-display)", fontSize: 14, fontWeight: 600 }}>+22 since start</div>
+          </div>
+        </div>
+        <div style={{ display: "flex", gap: 14, alignItems: "center" }}>
+          <LegendDot color="#ec3586" label="acme.design" />
+          <LegendDot color="rgba(255,255,255,0.35)" label="proto.studio" />
+        </div>
+      </div>
+
+      <svg width="100%" viewBox={`0 0 ${W} ${H}`} style={{ display: "block" }}>
+        <defs>
+          <linearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#ec3586" stopOpacity="0.25" />
+            <stop offset="100%" stopColor="#ec3586" stopOpacity="0" />
+          </linearGradient>
+        </defs>
+        {/* grid */}
+        {[50, 60, 70, 80, 90].map(v => (
+          <g key={v}>
+            <line x1={pad} x2={W - pad} y1={yScale(v)} y2={yScale(v)} stroke="rgba(255,255,255,0.05)" strokeDasharray="2 4" />
+            <text x={8} y={yScale(v) + 3} fill="rgba(255,255,255,0.3)" fontSize="10" fontFamily="var(--font-mono)">{v}</text>
+          </g>
+        ))}
+        {/* proto (ghost) */}
+        <path d={linePath("proto")} fill="none" stroke="rgba(255,255,255,0.35)" strokeWidth="1.5" strokeDasharray="4 4" />
+        {/* acme area */}
+        <path d={areaPath} fill="url(#areaGrad)" />
+        {/* acme line */}
+        <path d={linePath("acme")} fill="none" stroke="#ec3586" strokeWidth="2.2" />
+        {/* last point */}
+        <circle cx={xScale(11)} cy={yScale(74)} r="5" fill="#ec3586" />
+        <circle cx={xScale(11)} cy={yScale(74)} r="10" fill="#ec3586" opacity="0.2" />
+      </svg>
+    </div>
+  );
+}
+
+function LegendDot({ color, label }) {
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12, color: "var(--text-muted)", fontFamily: "var(--font-mono)" }}>
+      <span style={{ width: 12, height: 2, background: color, display: "inline-block" }} />
+      {label}
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
+// Monitor Panel — live status
+function MonitorPanel() {
+  const events = [
+    { when: "04:12", host: "harbor.build",    msg: "HSTS header restored",             status: "pass", pillar: "security" },
+    { when: "03:57", host: "acme.design",     msg: "New scan completed",                status: "pass", pillar: "performance" },
+    { when: "02:21", host: "lumen.co",        msg: "LCP regressed to 4.1s",              status: "warn", pillar: "performance" },
+    { when: "01:03", host: "lumen.co",        msg: "CSP header removed on /pricing",     status: "crit", pillar: "security" },
+    { when: "00:44", host: "proto.studio",    msg: "Weekly scan scheduled",              status: "pass", pillar: "dns" },
+  ];
+  return (
+    <div className="card" style={{ padding: 28, position: "relative", height: 340, overflow: "hidden" }}>
+      <div className="card-accent-top" style={{ background: "linear-gradient(to right, #74b9ff, transparent)" }} />
+
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 18 }}>
+        <div>
+          <div className="eyebrow">Monitoring</div>
+          <div style={{ fontFamily: "var(--font-display)", fontSize: 18, fontWeight: 600, marginTop: 12 }}>Last 24 hours</div>
+        </div>
+        <span className="chip" style={{ borderColor: "rgba(0, 212, 170, 0.3)", background: "rgba(0, 212, 170, 0.1)", color: "var(--p-security)" }}>
+          <span className="pulse-dot" style={{ background: "var(--p-security)", color: "var(--p-security)" }} />
+          Live
+        </span>
+      </div>
+
+      <div style={{ display: "flex", flexDirection: "column" }}>
+        {events.map((e, i) => {
+          const p = PILLARS.find(x => x.key === e.pillar);
+          return (
+            <div key={i} style={{
+              padding: "12px 0 12px 14px",
+              borderLeft: `2px solid ${e.status === "crit" ? "#ff4757" : e.status === "warn" ? "#ffaa00" : p.color}`,
+              borderBottom: i < events.length - 1 ? "1px solid var(--border)" : "none",
+              display: "grid",
+              gridTemplateColumns: "48px 1fr auto",
+              gap: 12,
+              alignItems: "center",
+            }}>
+              <span style={{ fontFamily: "var(--font-mono)", fontSize: 11, color: "var(--text-faint)" }}>{e.when}</span>
+              <div>
+                <div style={{ fontSize: 13, color: "#fff", marginBottom: 2 }}>
+                  <span style={{ fontFamily: "var(--font-mono)" }}>{e.host}</span>
+                  <span style={{ color: "var(--text-muted)" }}> · {e.msg}</span>
+                </div>
+              </div>
+              <StatusIcon status={e.status} size={14} />
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
+// Recent scans table
+function RecentScansTable({ onGo }) {
+  return (
+    <div className="card" style={{ padding: 0, overflow: "hidden" }}>
+      <div style={{ padding: "20px 28px 16px", display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px solid var(--border)" }}>
+        <div>
+          <div className="eyebrow">Recent scans</div>
+        </div>
+        <div style={{ display: "flex", gap: 8 }}>
+          <button className="btn btn-ghost" style={{ height: 32, fontSize: 12, padding: "0 12px" }}>Filter</button>
+          <button className="btn btn-ghost" style={{ height: 32, fontSize: 12, padding: "0 12px" }}>Export CSV</button>
+        </div>
+      </div>
+
+      <div>
+        <div style={{
+          display: "grid",
+          gridTemplateColumns: "2.4fr 0.8fr 1.8fr 1fr 0.7fr",
+          padding: "12px 28px",
+          fontSize: 10,
+          letterSpacing: "0.15em",
+          textTransform: "uppercase",
+          color: "var(--text-faint)",
+          fontFamily: "var(--font-display)",
+          fontWeight: 600,
+          borderBottom: "1px solid var(--border)",
+        }}>
+          <div>Site</div>
+          <div>Score</div>
+          <div>Pillars (SEC · PERF · SEO · A11Y · AI · DNS · TRUST)</div>
+          <div>When</div>
+          <div />
+        </div>
+        {RECENT.map((r, i) => (
+          <div key={i} style={{
+            display: "grid",
+            gridTemplateColumns: "2.4fr 0.8fr 1.8fr 1fr 0.7fr",
+            padding: "16px 28px",
+            alignItems: "center",
+            borderBottom: i < RECENT.length - 1 ? "1px solid var(--border)" : "none",
+            cursor: "pointer",
+            transition: "background 0.15s",
+          }}
+          onClick={() => onGo("result")}
+          onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.015)"}
+          onMouseLeave={e => e.currentTarget.style.background = "transparent"}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+              <Favicon host={r.host} size={28} />
+              <div>
+                <div style={{ fontFamily: "var(--font-mono)", fontSize: 14, color: "#fff" }}>{r.host}</div>
+                <div style={{ fontSize: 11, color: "var(--text-faint)", marginTop: 2 }}>{r.delta.startsWith("+") ? <span style={{ color: "#00d4aa" }}>▲ {r.delta.slice(1)}</span> : <span style={{ color: "#ff4757" }}>▼ {r.delta.slice(1)}</span>} since last scan</div>
+              </div>
+            </div>
+            <div><ScoreChip score={r.overall} /></div>
+            <div><PillarSparkline values={r.pillars} /></div>
+            <div style={{ fontSize: 12, color: "var(--text-muted)", fontFamily: "var(--font-mono)" }}>{r.when}</div>
+            <div style={{ textAlign: "right", color: "var(--text-muted)" }}><Arrow size={14}/></div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+Object.assign(window, { DashboardScreen });
+
+  </script>
+
+  <!-- ══ SCREEN 03 · SCAN RESULT ═════════════════════════════════════════ -->
+  <script id="result-jsx" type="text/babel" data-presets="react">
+// ScanPulse — Screen 3: Scan Result detail
+// Hero strip · filter toolbar · accordion rows grouped by pillar with colored left rail
+
+function ResultScreen({ onGo }) {
+  const [filter, setFilter] = useState("all");
+  const [pillarFilter, setPillarFilter] = useState(null);
+
+  return (
+    <main style={{ flex: 1, padding: "32px 40px 60px", background: "var(--canvas)", overflow: "hidden", position: "relative" }}>
+      <div style={{ position: "absolute", inset: 0, opacity: 0.4 }} className="grid-bg" />
+
+      <div style={{ position: "relative", display: "flex", flexDirection: "column", gap: 24 }}>
+        <ResultHero />
+        <FilterToolbar filter={filter} setFilter={setFilter} pillarFilter={pillarFilter} setPillarFilter={setPillarFilter} />
+        <IssueList filter={filter} pillarFilter={pillarFilter} onGo={onGo} />
+      </div>
+    </main>
+  );
+}
+
+function ResultHero() {
+  const criticals = Object.values(ISSUES).flat().filter(i => i.status === "crit").length;
+  const warnings = Object.values(ISSUES).flat().filter(i => i.status === "warn").length;
+  const passes = Object.values(ISSUES).flat().filter(i => i.status === "pass").length;
+
+  return (
+    <div className="card" style={{ padding: "28px 32px", position: "relative" }}>
+      <div className="card-accent-top" style={{ background: "linear-gradient(to right, var(--brand), transparent)" }} />
+
+      <div style={{ display: "grid", gridTemplateColumns: "auto 1fr auto", gap: 36, alignItems: "center" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 18 }}>
+          <ScoreRing score={74} size={140} stroke={10} delta="+6" />
+          <div>
+            <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6 }}>
+              <Favicon host="acme.design" size={24} bg="#ec3586" />
+              <div style={{ fontFamily: "var(--font-mono)", fontSize: 18, color: "#fff" }}>acme.design</div>
+            </div>
+            <div className="eyebrow" style={{ fontSize: 10 }}>Scanned 12m ago · 94 checks</div>
+            <div style={{ marginTop: 16, display: "flex", gap: 18 }}>
+              <Stat2 num={criticals} label="Critical" color="#ff4757" />
+              <Stat2 num={warnings} label="Warning" color="#ffaa00" />
+              <Stat2 num={passes} label="Pass" color="#00d4aa" />
+            </div>
+          </div>
+        </div>
+
+        {/* Pillar score bubbles */}
+        <div style={{ display: "flex", gap: 10, justifyContent: "center", flexWrap: "wrap" }}>
+          {PILLARS.map(p => (
+            <div key={p.key} style={{
+              padding: "10px 14px",
+              background: `${p.color}10`,
+              border: `1px solid ${p.color}26`,
+              borderRadius: 12,
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              gap: 3,
+              minWidth: 82,
+            }}>
+              <div style={{ fontSize: 9, letterSpacing: "0.15em", textTransform: "uppercase", color: p.color, fontFamily: "var(--font-display)", fontWeight: 700 }}>
+                {p.label.split(" ")[0]}
+              </div>
+              <div className="num" style={{ fontSize: 22, color: p.color }}>{p.score}</div>
+            </div>
+          ))}
+        </div>
+
+        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          <button className="btn btn-primary">Rescan now <Arrow size={13}/></button>
+          <button className="btn btn-ghost" style={{ justifyContent: "center" }}>Share report</button>
+          <button className="btn btn-ghost" style={{ justifyContent: "center" }}>Export PDF</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function Stat2({ num, label, color }) {
+  return (
+    <div>
+      <div className="num" style={{ fontSize: 22, color }}>{num}</div>
+      <div style={{ fontSize: 10, letterSpacing: "0.15em", textTransform: "uppercase", color: "var(--text-muted)", marginTop: 2 }}>{label}</div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
+// Filter toolbar
+function FilterToolbar({ filter, setFilter, pillarFilter, setPillarFilter }) {
+  const statuses = [
+    { key: "all",  label: "All checks" },
+    { key: "crit", label: "Critical", color: "#ff4757" },
+    { key: "warn", label: "Warning",  color: "#ffaa00" },
+    { key: "pass", label: "Pass",     color: "#00d4aa" },
+  ];
+  return (
+    <div style={{
+      display: "flex",
+      justifyContent: "space-between",
+      alignItems: "center",
+      gap: 20,
+      padding: "16px 20px",
+      background: "var(--surface)",
+      border: "1px solid var(--border)",
+      borderRadius: 12,
+      position: "sticky",
+      top: 68,
+      zIndex: 5,
+      backdropFilter: "blur(16px)",
+    }}>
+      <div style={{ display: "flex", gap: 4 }}>
+        {statuses.map(s => (
+          <button key={s.key} onClick={() => setFilter(s.key)} style={{
+            padding: "8px 14px",
+            borderRadius: 7,
+            border: "none",
+            background: filter === s.key ? "var(--elevated-2)" : "transparent",
+            color: filter === s.key ? (s.color || "#fff") : "var(--text-muted)",
+            fontFamily: "var(--font-display)",
+            fontSize: 13, fontWeight: 600,
+            cursor: "pointer",
+            display: "flex", alignItems: "center", gap: 8,
+          }}>
+            {s.color && <span style={{ width: 7, height: 7, borderRadius: "50%", background: s.color }} />}
+            {s.label}
+          </button>
+        ))}
+      </div>
+      <div style={{ width: 1, height: 20, background: "var(--border)" }} />
+      <div style={{ display: "flex", gap: 6, flexWrap: "wrap", flex: 1 }}>
+        {PILLARS.map(p => (
+          <button key={p.key} onClick={() => setPillarFilter(pillarFilter === p.key ? null : p.key)} style={{
+            padding: "6px 12px",
+            borderRadius: 999,
+            border: `1px solid ${pillarFilter === p.key ? p.color : `${p.color}26`}`,
+            background: pillarFilter === p.key ? `${p.color}22` : `${p.color}0a`,
+            color: p.color,
+            fontFamily: "var(--font-display)",
+            fontSize: 11, fontWeight: 600,
+            letterSpacing: "0.04em",
+            textTransform: "uppercase",
+            cursor: "pointer",
+            display: "flex", alignItems: "center", gap: 6,
+          }}>
+            <span style={{ width: 6, height: 6, borderRadius: "50%", background: p.color }} />
+            {p.label.split(" ")[0]}
+          </button>
+        ))}
+      </div>
+      <div style={{ color: "var(--text-muted)", fontSize: 12, fontFamily: "var(--font-mono)" }}>94 checks total</div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
+function IssueList({ filter, pillarFilter, onGo }) {
+  const activePillars = pillarFilter ? PILLARS.filter(p => p.key === pillarFilter) : PILLARS;
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+      {activePillars.map(p => {
+        let issues = ISSUES[p.key] || [];
+        if (filter !== "all") issues = issues.filter(i => i.status === filter);
+        if (!issues.length) return null;
+        return <PillarGroup key={p.key} p={p} issues={issues} onGo={onGo} />;
+      })}
+    </div>
+  );
+}
+
+function PillarGroup({ p, issues, onGo }) {
+  const [open, setOpen] = useState(true);
+  return (
+    <div style={{ position: "relative" }}>
+      {/* Colored left rail running down the group */}
+      <div style={{
+        position: "absolute",
+        top: 44, bottom: 0,
+        left: 0, width: 2,
+        background: p.color,
+        borderRadius: 2,
+        opacity: open ? 0.6 : 0.2,
+      }} />
+
+      {/* Group header */}
+      <div style={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        padding: "8px 12px 12px 20px",
+        marginBottom: 10,
+      }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+          <button onClick={() => setOpen(!open)} style={{
+            width: 22, height: 22,
+            border: "none",
+            background: "transparent",
+            color: p.color,
+            cursor: "pointer",
+            transform: open ? "rotate(90deg)" : "rotate(0)",
+            transition: "transform 0.2s",
+          }}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M9 6l6 6-6 6"/></svg>
+          </button>
+          <span className="eyebrow-pillar" style={{ color: p.color, fontSize: 12 }}>
+            <span style={{ width: 28, height: 2, background: p.color, display: "inline-block" }} />
+            {p.label}
+          </span>
+          <div className="num" style={{ fontSize: 22, color: p.color }}>{p.score}</div>
+          <div style={{ color: "var(--text-muted)", fontSize: 12, fontFamily: "var(--font-mono)" }}>
+            {issues.filter(i => i.status === "crit").length} critical · {issues.filter(i => i.status === "warn").length} warning · {issues.filter(i => i.status === "pass").length} pass
+          </div>
+        </div>
+      </div>
+
+      {/* Issue rows */}
+      {open && (
+        <div style={{ display: "flex", flexDirection: "column", gap: 8, marginLeft: 20 }}>
+          {issues.map((iss, i) => (
+            <IssueRow key={i} iss={iss} pillar={p} onGo={onGo} />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function IssueRow({ iss, pillar, onGo }) {
+  const statusColor = iss.status === "crit" ? "#ff4757" : iss.status === "warn" ? "#ffaa00" : "#00d4aa";
+  const statusLabel = iss.status === "crit" ? "CRITICAL" : iss.status === "warn" ? "WARNING" : "PASS";
+  const tool = iss.tool ? TOOLS.find(t => t.id === iss.tool) : null;
+
+  return (
+    <div className="card lift" style={{
+      padding: "18px 22px",
+      display: "grid",
+      gridTemplateColumns: "110px 1fr auto",
+      gap: 20,
+      alignItems: "center",
+      borderLeft: `2px solid ${statusColor}`,
+      borderRadius: 10,
+    }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+        <StatusIcon status={iss.status} size={14} />
+        <span style={{
+          fontFamily: "var(--font-display)",
+          fontSize: 11,
+          letterSpacing: "0.12em",
+          fontWeight: 700,
+          color: statusColor,
+        }}>{statusLabel}</span>
+      </div>
+      <div>
+        <div style={{ fontFamily: "var(--font-display)", fontSize: 15, fontWeight: 600, color: "#fff", marginBottom: 3 }}>{iss.title}</div>
+        <div style={{ fontSize: 13, color: "var(--text-muted)", lineHeight: 1.5 }}>{iss.blurb}</div>
+      </div>
+      <div>
+        {tool ? (
+          <button className="btn btn-pink-ghost" onClick={() => onGo(tool.id === "csp" ? "csp" : "tools")}>
+            Open in {tool.name} <Arrow size={13}/>
+          </button>
+        ) : iss.status === "pass" ? (
+          <span style={{ color: "var(--text-faint)", fontSize: 12, fontFamily: "var(--font-mono)" }}>✓ verified</span>
+        ) : (
+          <a style={{ color: "var(--text-muted)", fontSize: 13, cursor: "pointer", fontFamily: "var(--font-display)" }}>Learn more →</a>
+        )}
+      </div>
+    </div>
+  );
+}
+
+Object.assign(window, { ResultScreen });
+
+  </script>
+
+  <!-- ══ SCREEN 04 · TOOLS INDEX ═════════════════════════════════════════ -->
+  <script id="tools-jsx" type="text/babel" data-presets="react">
+// ScanPulse — Screen 4: Tools Index
+// Filter tabs · grid of 10 tool cards, colored top accent by pillar
+
+function ToolsScreen({ onGo }) {
+  const [active, setActive] = useState("all");
+
+  const counts = PILLARS.reduce((acc, p) => {
+    acc[p.key] = TOOLS.filter(t => t.pillar === p.key).length;
+    return acc;
+  }, {});
+
+  const filtered = active === "all" ? TOOLS : TOOLS.filter(t => t.pillar === active);
+
+  return (
+    <main style={{ flex: 1, padding: "32px 40px 80px", background: "var(--canvas)", position: "relative", overflow: "hidden" }}>
+      <div style={{ position: "absolute", inset: 0, opacity: 0.4 }} className="grid-bg" />
+      <div style={{ position: "absolute", top: -100, left: -100, width: 500, height: 500, background: "radial-gradient(circle, rgba(108, 92, 231, 0.08), transparent 60%)", pointerEvents: "none" }} />
+
+      <div style={{ position: "relative", display: "flex", flexDirection: "column", gap: 28 }}>
+        <div>
+          <div className="eyebrow">Tools · the fix library</div>
+          <h1 className="display" style={{ fontSize: 56, margin: "16px 0 10px" }}>
+            Ten tools. One job: <span style={{ color: "var(--brand)" }}>close the loop.</span>
+          </h1>
+          <p style={{ fontSize: 16, color: "var(--text-muted)", maxWidth: 640, lineHeight: 1.6 }}>
+            Every tool generates a fix file you paste into your stack, then rescans to verify. Each shows the exact score uplift it'll produce.
+          </p>
+        </div>
+
+        {/* Filter tabs */}
+        <div style={{ display: "flex", gap: 6, flexWrap: "wrap", padding: "4px 0", borderBottom: "1px solid var(--border)", paddingBottom: 14 }}>
+          <TabBtn active={active === "all"} onClick={() => setActive("all")} label={`All tools`} count={TOOLS.length} color="#fff" />
+          {PILLARS.filter(p => counts[p.key] > 0).map(p => (
+            <TabBtn key={p.key} active={active === p.key} onClick={() => setActive(p.key)} label={p.label} count={counts[p.key]} color={p.color} />
+          ))}
+        </div>
+
+        {/* Grid */}
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 20 }}>
+          {filtered.map(t => <ToolCard key={t.id} t={t} onGo={onGo} />)}
+        </div>
+
+        {/* Roadmap strip */}
+        <div style={{
+          marginTop: 20,
+          padding: "24px 28px",
+          background: "var(--surface)",
+          border: "1px dashed var(--border)",
+          borderRadius: 12,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+        }}>
+          <div>
+            <div className="eyebrow">Shipping next</div>
+            <div style={{ fontFamily: "var(--font-display)", fontSize: 17, fontWeight: 600, marginTop: 8 }}>Cookie Policy Builder · Sitemap Diff · Core Web Vitals Fixer</div>
+          </div>
+          <a style={{ color: "var(--brand)", fontFamily: "var(--font-display)", fontSize: 13, cursor: "pointer" }}>Vote on next tools →</a>
+        </div>
+      </div>
+    </main>
+  );
+}
+
+function TabBtn({ active, onClick, label, count, color }) {
+  return (
+    <button onClick={onClick} style={{
+      padding: "9px 14px",
+      borderRadius: 8,
+      border: `1px solid ${active ? color : "transparent"}`,
+      background: active ? `${color}14` : "transparent",
+      color: active ? color : "var(--text-muted)",
+      fontFamily: "var(--font-display)",
+      fontSize: 13, fontWeight: 600,
+      cursor: "pointer",
+      display: "flex", alignItems: "center", gap: 8,
+    }}>
+      {label}
+      <span style={{
+        padding: "1px 7px",
+        borderRadius: 999,
+        background: active ? `${color}22` : "rgba(255,255,255,0.05)",
+        color: active ? color : "var(--text-faint)",
+        fontSize: 11,
+        fontVariantNumeric: "tabular-nums",
+      }}>{count}</span>
+    </button>
+  );
+}
+
+function ToolCard({ t, onGo }) {
+  const p = PILLARS.find(x => x.key === t.pillar);
+  const isCSP = t.id === "csp";
+  const [hover, setHover] = useState(false);
+
+  return (
+    <div className="card lift" style={{
+      padding: "26px 24px 22px",
+      position: "relative",
+      minHeight: 210,
+      cursor: "pointer",
+      boxShadow: hover ? `0 0 30px ${p.color}30` : "none",
+      borderColor: hover ? `${p.color}35` : "var(--border)",
+    }}
+      onMouseEnter={() => setHover(true)}
+      onMouseLeave={() => setHover(false)}
+      onClick={() => isCSP && onGo("csp")}
+    >
+      <div className="card-accent-top" style={{
+        background: p.color,
+        height: hover ? 3 : 2,
+        transition: "height 0.2s",
+      }} />
+
+      <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 18 }}>
+        <div style={{
+          width: 42, height: 42,
+          borderRadius: 10,
+          background: `${p.color}1f`,
+          display: "flex", alignItems: "center", justifyContent: "center",
+          color: p.color,
+        }}>
+          <PillarIcon name={p.icon} size={20} stroke={1.8} />
+        </div>
+        <div>
+          <span className="eyebrow-pillar" style={{ color: p.color, fontSize: 10 }}>
+            {p.label}
+          </span>
+          <div style={{ fontFamily: "var(--font-mono)", fontSize: 10, color: "var(--text-faint)", marginTop: 2 }}>{t.kind}</div>
+        </div>
+      </div>
+
+      <h3 className="display" style={{ fontSize: 22, margin: "0 0 8px", letterSpacing: "-0.02em" }}>{t.name}</h3>
+      <p style={{ fontSize: 13.5, color: "var(--text-muted)", lineHeight: 1.55, margin: "0 0 18px" }}>{t.blurb}</p>
+
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <span style={{
+          padding: "4px 10px",
+          borderRadius: 999,
+          background: `${p.color}14`,
+          color: p.color,
+          fontFamily: "var(--font-display)",
+          fontSize: 11,
+          fontWeight: 600,
+          letterSpacing: "0.04em",
+        }}>
+          Fixes {t.fixes} {t.fixes === 1 ? "issue" : "issues"}
+        </span>
+        <a style={{ color: hover ? p.color : "var(--text-muted)", fontSize: 13, fontFamily: "var(--font-display)", fontWeight: 600, display: "flex", alignItems: "center", gap: 6, transition: "color 0.2s" }}>
+          Open <Arrow size={12}/>
+        </a>
+      </div>
+    </div>
+  );
+}
+
+Object.assign(window, { ToolsScreen });
+
+  </script>
+
+  <!-- ══ SCREEN 05 · CSP BUILDER (representative tool) ═══════════════════ -->
+  <script id="csp-jsx" type="text/babel" data-presets="react">
+// ScanPulse — Screen 5: CSP Builder tool
+// Left 40% inputs · Right 60% output code + impact preview + install instructions
+
+const DEFAULT_DIRECTIVES = [
+  { name: "default-src", values: ["'self'"] },
+  { name: "script-src",  values: ["'self'", "https://cdn.acme.design", "https://plausible.io"] },
+  { name: "style-src",   values: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"] },
+  { name: "img-src",     values: ["'self'", "data:", "https://*.acme.design"] },
+  { name: "connect-src", values: ["'self'", "https://api.acme.design"] },
+  { name: "font-src",    values: ["'self'", "https://fonts.gstatic.com"] },
+  { name: "frame-src",   values: ["'none'"] },
+];
+
+const UNSAFE_VALUES = ["'unsafe-inline'", "'unsafe-eval'", "*", "data:"];
+
+function CSPScreen() {
+  const [directives, setDirectives] = useState(DEFAULT_DIRECTIVES);
+  const [copied, setCopied] = useState(false);
+  const [installOpen, setInstallOpen] = useState("nginx");
+
+  const header = useMemo(() => {
+    return directives
+      .filter(d => d.values.length > 0)
+      .map(d => `${d.name} ${d.values.join(" ")}`)
+      .join("; ");
+  }, [directives]);
+
+  const hasUnsafe = directives.some(d => d.values.some(v => UNSAFE_VALUES.includes(v)));
+  const uplift = hasUnsafe ? 9 : 12;
+
+  const removeValue = (dIdx, vIdx) => {
+    setDirectives(ds => ds.map((d, i) => i === dIdx ? { ...d, values: d.values.filter((_, j) => j !== vIdx) } : d));
+  };
+  const addValue = (dIdx, val) => {
+    setDirectives(ds => ds.map((d, i) => i === dIdx ? { ...d, values: [...d.values, val] } : d));
+  };
+
+  const copy = () => {
+    navigator.clipboard?.writeText(`Content-Security-Policy: ${header}`);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1600);
+  };
+
+  return (
+    <main style={{ flex: 1, background: "var(--canvas)", position: "relative", overflow: "hidden", display: "flex", flexDirection: "column" }}>
+      <div style={{ position: "absolute", inset: 0, opacity: 0.35 }} className="grid-bg" />
+      <div style={{ position: "absolute", top: -100, right: -100, width: 600, height: 600, background: "radial-gradient(circle, rgba(0, 212, 170, 0.06), transparent 60%)", pointerEvents: "none" }} />
+
+      <CSPHeader uplift={uplift} />
+
+      <div style={{ flex: 1, display: "grid", gridTemplateColumns: "40% 60%", position: "relative", borderTop: "1px solid var(--border)" }}>
+        {/* LEFT — inputs */}
+        <div style={{
+          padding: "32px 32px 60px",
+          borderRight: "1px solid var(--border)",
+          overflowY: "auto",
+          height: "calc(100vh - 60px - 140px)",
+        }}>
+          <div className="eyebrow">Directive editor</div>
+          <p style={{ color: "var(--text-muted)", fontSize: 14, margin: "10px 0 24px", lineHeight: 1.55 }}>
+            Add allowed sources per directive. Tags with a warning icon weaken protection — remove them where possible.
+          </p>
+
+          <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+            {directives.map((d, i) => (
+              <DirectiveRow key={d.name} d={d} dIdx={i} onRemove={removeValue} onAdd={addValue} />
+            ))}
+          </div>
+        </div>
+
+        {/* RIGHT — output */}
+        <div style={{
+          padding: "32px 32px 60px",
+          overflowY: "auto",
+          height: "calc(100vh - 60px - 140px)",
+          display: "flex",
+          flexDirection: "column",
+          gap: 22,
+        }}>
+          {/* Live output */}
+          <div>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
+              <div className="eyebrow">Generated header · live</div>
+              <span className="chip" style={{ borderColor: "rgba(0, 212, 170, 0.3)", background: "rgba(0, 212, 170, 0.08)", color: "var(--p-security)" }}>
+                <span className="pulse-dot" style={{ background: "var(--p-security)", color: "var(--p-security)" }} />
+                Updating as you edit
+              </span>
+            </div>
+            <div style={{
+              background: "var(--elevated)",
+              border: "1px solid var(--border)",
+              borderLeft: "2px solid var(--p-security)",
+              borderRadius: 10,
+              padding: "20px 22px",
+              position: "relative",
+              fontFamily: "var(--font-mono)",
+              fontSize: 13,
+              lineHeight: 1.75,
+              color: "rgba(255, 255, 255, 0.85)",
+              wordBreak: "break-all",
+            }}>
+              <button onClick={copy} style={{
+                position: "absolute", top: 12, right: 12,
+                padding: "6px 12px",
+                borderRadius: 7,
+                background: copied ? "var(--p-security)" : "var(--brand)",
+                color: "#fff",
+                border: "none",
+                fontFamily: "var(--font-display)",
+                fontSize: 12, fontWeight: 600,
+                cursor: "pointer",
+                display: "flex", alignItems: "center", gap: 6,
+                boxShadow: copied ? "0 0 20px rgba(0, 212, 170, 0.5)" : "0 0 20px rgba(236, 53, 134, 0.3)",
+              }}>
+                {copied ? "✓ Copied" : "Copy"}
+              </button>
+              <div style={{ color: "var(--text-faint)", fontSize: 11, marginBottom: 8 }}>HTTP response header</div>
+              <div>
+                <span style={{ color: "var(--p-security)" }}>Content-Security-Policy:</span>{" "}
+                <HeaderValue directives={directives} />
+              </div>
+            </div>
+          </div>
+
+          {/* Impact preview */}
+          <ImpactPreview uplift={uplift} hasUnsafe={hasUnsafe} />
+
+          {/* Install accordion */}
+          <div>
+            <div className="eyebrow" style={{ marginBottom: 14 }}>How to install</div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 2, borderRadius: 10, overflow: "hidden", border: "1px solid var(--border)" }}>
+              {["nginx", "apache", "cloudflare", "nextjs", "vercel"].map(k => (
+                <InstallRow key={k} k={k} header={header} open={installOpen === k} setOpen={() => setInstallOpen(installOpen === k ? null : k)} />
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
+function CSPHeader({ uplift }) {
+  return (
+    <div style={{ padding: "22px 32px", background: "var(--surface)", position: "relative" }}>
+      <div className="card-accent-top" style={{ background: "linear-gradient(to right, var(--p-security), transparent)", top: 0 }} />
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <div>
+          {/* Breadcrumb */}
+          <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, color: "var(--text-muted)", marginBottom: 10, fontFamily: "var(--font-display)" }}>
+            <span style={{ cursor: "pointer" }}>Dashboard</span>
+            <span>/</span>
+            <span style={{ cursor: "pointer" }}>Tools</span>
+            <span>/</span>
+            <span style={{ color: "#fff" }}>CSP Builder</span>
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+            <div style={{
+              width: 42, height: 42,
+              borderRadius: 10,
+              background: "rgba(0, 212, 170, 0.15)",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              color: "var(--p-security)",
+            }}>
+              <PillarIcon name="shield" size={20} stroke={1.8} />
+            </div>
+            <div>
+              <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 3 }}>
+                <span className="eyebrow-pillar" style={{ color: "var(--p-security)", fontSize: 11 }}>
+                  <span style={{ width: 22, height: 2, background: "var(--p-security)", display: "inline-block", marginRight: 4 }} />
+                  Security · Builder
+                </span>
+              </div>
+              <h1 className="display" style={{ fontSize: 30, margin: 0, letterSpacing: "-0.03em" }}>Content Security Policy</h1>
+              <div style={{ color: "var(--text-muted)", fontSize: 13, marginTop: 4 }}>
+                Construct the CSP header that tells browsers which sources are allowed to load your scripts, styles, images and frames.
+              </div>
+            </div>
+          </div>
+        </div>
+        <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+          <div style={{ textAlign: "right" }}>
+            <div style={{ fontSize: 10, letterSpacing: "0.15em", textTransform: "uppercase", color: "var(--text-faint)", marginBottom: 4 }}>Score uplift</div>
+            <div className="num" style={{ fontSize: 30, color: "var(--p-security)" }}>+{uplift}</div>
+          </div>
+          <button className="btn btn-ghost" style={{ height: 40 }}>Reset</button>
+          <button className="btn btn-primary" style={{ height: 40 }}>Save & rescan <Arrow size={13}/></button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
+function DirectiveRow({ d, dIdx, onRemove, onAdd }) {
+  const [input, setInput] = useState("");
+  const hasUnsafe = d.values.some(v => UNSAFE_VALUES.includes(v));
+
+  const submit = () => {
+    const v = input.trim();
+    if (v) {
+      onAdd(dIdx, v.startsWith("'") || v.includes(":") || v.startsWith("http") ? v : v);
+      setInput("");
+    }
+  };
+
+  return (
+    <div style={{
+      background: "var(--elevated)",
+      border: "1px solid var(--border)",
+      borderRadius: 10,
+      padding: "16px 18px",
+    }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
+        <div style={{ fontFamily: "var(--font-mono)", fontSize: 14, color: "var(--p-security)", fontWeight: 600 }}>{d.name}</div>
+        {hasUnsafe && (
+          <span className="chip" style={{ borderColor: "rgba(255, 170, 0, 0.3)", background: "rgba(255, 170, 0, 0.1)", color: "#ffaa00" }}>
+            <span className="dot" style={{ background: "#ffaa00" }} />
+            Weakens protection
+          </span>
+        )}
+      </div>
+
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 10 }}>
+        {d.values.map((v, i) => {
+          const unsafe = UNSAFE_VALUES.includes(v);
+          return (
+            <div key={i} style={{
+              padding: "5px 5px 5px 10px",
+              borderRadius: 6,
+              background: unsafe ? "rgba(255, 170, 0, 0.1)" : "rgba(255,255,255,0.04)",
+              border: `1px solid ${unsafe ? "rgba(255,170,0,0.3)" : "var(--border)"}`,
+              fontFamily: "var(--font-mono)",
+              fontSize: 12,
+              color: unsafe ? "#ffaa00" : "#fff",
+              display: "flex", alignItems: "center", gap: 6,
+            }}>
+              {v}
+              <button onClick={() => onRemove(dIdx, i)} style={{
+                width: 18, height: 18,
+                border: "none",
+                background: "rgba(255,255,255,0.06)",
+                color: "var(--text-muted)",
+                borderRadius: 4, cursor: "pointer",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                padding: 0,
+              }}>
+                <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+              </button>
+            </div>
+          );
+        })}
+      </div>
+
+      <div style={{ display: "flex", gap: 6 }}>
+        <input
+          value={input}
+          onChange={e => setInput(e.target.value)}
+          onKeyDown={e => e.key === "Enter" && submit()}
+          placeholder="+ Add source (e.g. https://cdn.example.com)"
+          style={{
+            flex: 1,
+            padding: "8px 12px",
+            borderRadius: 6,
+            background: "rgba(255,255,255,0.02)",
+            border: "1px solid var(--border)",
+            color: "#fff",
+            fontFamily: "var(--font-mono)",
+            fontSize: 12,
+            outline: "none",
+          }}
+        />
+        <button onClick={submit} className="btn btn-ghost" style={{ height: 32, padding: "0 12px", fontSize: 12 }}>Add</button>
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
+function HeaderValue({ directives }) {
+  return (
+    <span>
+      {directives.filter(d => d.values.length > 0).map((d, i) => (
+        <span key={d.name}>
+          {i > 0 && <span style={{ color: "var(--text-muted)" }}>; </span>}
+          <span style={{ color: "var(--p-security)" }}>{d.name}</span>{" "}
+          {d.values.map((v, j) => {
+            const unsafe = UNSAFE_VALUES.includes(v);
+            return (
+              <span key={j} style={{ color: unsafe ? "#ffaa00" : "rgba(255,255,255,0.85)" }}>
+                {v}{j < d.values.length - 1 ? " " : ""}
+              </span>
+            );
+          })}
+        </span>
+      ))}
+    </span>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
+function ImpactPreview({ uplift, hasUnsafe }) {
+  const [animate, setAnimate] = useState(false);
+  useEffect(() => { setAnimate(false); const t = setTimeout(() => setAnimate(true), 100); return () => clearTimeout(t); }, [uplift]);
+
+  return (
+    <div className="card" style={{
+      padding: "22px 24px",
+      position: "relative",
+      border: "1px solid rgba(0, 212, 170, 0.25)",
+      background: "linear-gradient(180deg, rgba(0, 212, 170, 0.05), transparent 80%), var(--elevated)",
+      boxShadow: "0 0 40px rgba(0, 212, 170, 0.08)",
+    }}>
+      <div className="card-accent-top" style={{ background: "linear-gradient(to right, var(--p-security), transparent)" }} />
+      <div className="eyebrow" style={{ marginBottom: 16 }}>Projected score impact</div>
+
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24, marginBottom: 20 }}>
+        <ScoreDelta label="Security"        from={78} to={78 + uplift} color="var(--p-security)" animate={animate} />
+        <ScoreDelta label="Overall"         from={74} to={74 + Math.round(uplift * 0.4)} color="var(--brand)" animate={animate} />
+      </div>
+
+      {hasUnsafe && (
+        <div style={{
+          padding: "10px 14px",
+          borderRadius: 8,
+          background: "rgba(255, 170, 0, 0.08)",
+          border: "1px solid rgba(255, 170, 0, 0.2)",
+          color: "#ffaa00",
+          fontSize: 12,
+          marginBottom: 16,
+          display: "flex",
+          alignItems: "center",
+          gap: 8,
+          fontFamily: "var(--font-mono)",
+        }}>
+          <StatusIcon status="warn" size={14} />
+          Remove 'unsafe-inline' from style-src to unlock the full +12 uplift.
+        </div>
+      )}
+
+      <button className="btn btn-primary" style={{ width: "100%", justifyContent: "center", height: 44 }}>
+        Rescan your site to verify
+        <span style={{ marginLeft: 4, display: "inline-flex", transition: "transform 0.25s" }} className="arrow-animate">
+          <Arrow size={14} stroke={2.2} />
+        </span>
+      </button>
+    </div>
+  );
+}
+
+function ScoreDelta({ label, from, to, color, animate }) {
+  return (
+    <div>
+      <div style={{ fontSize: 11, color: "var(--text-muted)", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 8, fontFamily: "var(--font-display)", fontWeight: 600 }}>{label}</div>
+      <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
+        <span className="num" style={{ fontSize: 28, color: "var(--text-muted)" }}>{from}</span>
+        <svg width="18" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text-faint)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+        <span className="num" style={{
+          fontSize: 32, color: color,
+          textShadow: animate ? `0 0 20px ${color}66` : "none",
+          transition: "text-shadow 0.4s",
+        }}>{to}</span>
+        <span style={{ fontFamily: "var(--font-display)", fontSize: 14, color: color, fontWeight: 700 }}>+{to - from}</span>
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
+const INSTALL_SNIPPETS = {
+  nginx:      { label: "Nginx",       build: (h) => `# /etc/nginx/conf.d/acme.conf\nadd_header Content-Security-Policy "${h}" always;` },
+  apache:     { label: "Apache",      build: (h) => `# .htaccess\n<IfModule mod_headers.c>\n  Header set Content-Security-Policy "${h}"\n</IfModule>` },
+  cloudflare: { label: "Cloudflare Workers", build: (h) => `// worker.js\nexport default {\n  async fetch(req) {\n    const res = await fetch(req);\n    const out = new Response(res.body, res);\n    out.headers.set("Content-Security-Policy", "${h}");\n    return out;\n  }\n}` },
+  nextjs:     { label: "Next.js",     build: (h) => `// next.config.js\nmodule.exports = {\n  async headers() {\n    return [{\n      source: "/:path*",\n      headers: [{ key: "Content-Security-Policy", value: "${h}" }]\n    }];\n  }\n};` },
+  vercel:     { label: "Vercel",      build: (h) => `// vercel.json\n{\n  "headers": [{\n    "source": "/(.*)",\n    "headers": [{ "key": "Content-Security-Policy", "value": "${h}" }]\n  }]\n}` },
+};
+
+function InstallRow({ k, header, open, setOpen }) {
+  const s = INSTALL_SNIPPETS[k];
+  const snippet = s.build(header);
+  return (
+    <div style={{ background: "var(--elevated)" }}>
+      <button onClick={setOpen} style={{
+        width: "100%",
+        padding: "14px 18px",
+        background: "transparent",
+        border: "none",
+        color: "#fff",
+        fontFamily: "var(--font-display)",
+        fontSize: 14,
+        fontWeight: 600,
+        textAlign: "left",
+        cursor: "pointer",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        borderBottom: open ? "1px solid var(--border)" : "none",
+      }}>
+        <span style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <span style={{ width: 6, height: 6, borderRadius: "50%", background: open ? "var(--brand)" : "var(--text-faint)" }} />
+          {s.label}
+        </span>
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" style={{ transform: open ? "rotate(180deg)" : "none", transition: "transform 0.2s" }}><path d="M6 9l6 6 6-6"/></svg>
+      </button>
+      {open && (
+        <pre style={{
+          margin: 0,
+          padding: "16px 18px",
+          background: "var(--canvas)",
+          fontFamily: "var(--font-mono)",
+          fontSize: 12,
+          color: "rgba(255,255,255,0.8)",
+          lineHeight: 1.65,
+          overflow: "auto",
+          whiteSpace: "pre-wrap",
+          wordBreak: "break-all",
+        }}>{snippet}</pre>
+      )}
+    </div>
+  );
+}
+
+Object.assign(window, { CSPScreen });
+
+  </script>
+
+  <!-- ══ MOUNT (preview router — replace with your framework's router) ══ -->
+  <script id="mount-jsx" type="text/babel" data-presets="react">
+
+  // ScanPulse — Screen Router (preview only; replace with your framework's router)
+  // (useState/useEffect already destructured in primitives script above)
+
+  const SCREEN_LABELS = {
+    landing:   "01 Landing",
+    dashboard: "02 Dashboard",
+    result:    "03 Scan Result",
+    tools:     "04 Tools Index",
+    csp:       "05 CSP Builder",
+  };
+
+  function App() {
+    const [screen, setScreenState] = useState(() => {
+      try { return localStorage.getItem("scanpulse:screen") || "landing"; }
+      catch (_unused) { return "landing"; }
+    });
+    const setScreen = (s) => {
+      setScreenState(s);
+      try { localStorage.setItem("scanpulse:screen", s); } catch (_unused2) {}
+    };
+
+    // Keyboard shortcuts: 1..5
+    useEffect(() => {
+      const keys = { "1":"landing", "2":"dashboard", "3":"result", "4":"tools", "5":"csp" };
+      const h = (e) => {
+        if (e.target && (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA")) return;
+        if (keys[e.key]) setScreen(keys[e.key]);
+      };
+      window.addEventListener("keydown", h);
+      return () => window.removeEventListener("keydown", h);
+    }, []);
+
+    const isApp = screen !== "landing";
+    return (
+      <div data-screen-label={SCREEN_LABELS[screen]} style={{
+        minHeight: "100vh", height: "100vh", background: "var(--canvas)",
+        display: "flex", flexDirection: "column", overflow: "hidden",
+      }}>
+        <ScreenSwitcher current={screen} onGo={setScreen} />
+        {screen === "landing" && <LandingScreen onGo={setScreen} />}
+        {isApp && (
+          <div style={{display:"flex", flex:1, minHeight:0}}>
+            <Rail current={screen} onGo={setScreen} />
+            <div style={{flex:1, display:"flex", flexDirection:"column", minWidth:0}}>
+              <TopStrip screen={screen} />
+              <div style={{flex:1, overflowY:"auto"}}>
+                {screen === "dashboard" && <DashboardScreen onGo={setScreen} />}
+                {screen === "result"    && <ResultScreen    onGo={setScreen} />}
+                {screen === "tools"     && <ToolsScreen     onGo={setScreen} />}
+                {screen === "csp"       && <CSPScreen       onGo={setScreen} />}
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  function ScreenSwitcher({ current, onGo }) {
+    const screens = [
+      {key:"landing",   label:"Landing"},
+      {key:"dashboard", label:"Dashboard"},
+      {key:"result",    label:"Result"},
+      {key:"tools",     label:"Tools"},
+      {key:"csp",       label:"CSP"},
+    ];
+    return (
+      <div style={{
+        position:"fixed", bottom:22, left:"50%", transform:"translateX(-50%)", zIndex:100,
+        background:"rgba(15,15,20,0.85)", border:"1px solid var(--border-strong)",
+        borderRadius:999, padding:5, display:"flex", gap:2,
+        backdropFilter:"blur(20px)",
+        boxShadow:"0 20px 50px rgba(0,0,0,0.5), 0 0 60px rgba(236,53,134,0.1)",
+      }}>
+        {screens.map((s, i) => (
+          <button key={s.key} onClick={() => onGo(s.key)} style={{
+            padding:"8px 16px", borderRadius:999, border:"none",
+            background: current === s.key ? "var(--brand)" : "transparent",
+            color: current === s.key ? "#fff" : "var(--text-muted)",
+            fontFamily:"var(--font-display)", fontSize:12, fontWeight:600,
+            letterSpacing:"-0.01em", cursor:"pointer",
+            display:"flex", alignItems:"center", gap:7,
+            transition:"background 0.2s, color 0.2s",
+          }}>
+            <span style={{
+              fontFamily:"var(--font-mono)", fontSize:10,
+              opacity: current === s.key ? 0.85 : 0.5,
+            }}>0{i+1}</span>
+            {s.label}
+          </button>
+        ))}
+      </div>
+    );
+  }
+
+  const root = ReactDOM.createRoot(document.getElementById("root"));
+  root.render(<App />);
+
+  </script>
+
+
+<style>
+  #__scanpulse_ref_badge {
+    position: fixed; left: 16px; bottom: 16px; z-index: 99999;
+    font-family: "JetBrains Mono", ui-monospace, monospace;
+    font-size: 11px; line-height: 1.5;
+    background: rgba(15,15,20,0.95); color: #f5f5f7;
+    border: 1px solid rgba(255,255,255,0.12); border-radius: 10px;
+    backdrop-filter: blur(8px);
+    max-width: 320px;
+  }
+  #__scanpulse_ref_badge summary {
+    list-style: none; cursor: pointer; padding: 10px 14px;
+    display: flex; align-items: center; gap: 8px;
+    font-weight: 600; color: #ec3586; letter-spacing: 0.06em;
+    text-transform: uppercase; font-size: 10px;
+  }
+  #__scanpulse_ref_badge summary::-webkit-details-marker { display: none; }
+  #__scanpulse_ref_badge summary::before {
+    content: ""; width: 6px; height: 6px; border-radius: 50%;
+    background: #ec3586; box-shadow: 0 0 10px #ec3586;
+  }
+  #__scanpulse_ref_badge[open] summary { border-bottom: 1px solid rgba(255,255,255,0.08); }
+  #__scanpulse_ref_badge .body { padding: 12px 14px; color: rgba(255,255,255,0.75); }
+  #__scanpulse_ref_badge .body b { color: #fff; font-weight: 600; }
+  #__scanpulse_ref_badge .body code {
+    background: rgba(255,255,255,0.06); padding: 1px 5px; border-radius: 4px;
+    color: #ffaa00;
+  }
+  #__scanpulse_ref_badge .body p { margin: 0 0 8px 0; }
+  #__scanpulse_ref_badge .body p:last-child { margin-bottom: 0; }
+  #__scanpulse_ref_badge kbd {
+    background: rgba(255,255,255,0.1); padding: 1px 5px; border-radius: 3px;
+    border: 1px solid rgba(255,255,255,0.15); font-size: 10px;
+  }
+</style>
+<details id="__scanpulse_ref_badge">
+  <summary>ScanPulse · Design Reference</summary>
+  <div class="body">
+    <p><b>For AI agents:</b> read the large <code>&lt;!-- --&gt;</code> block at the top of this file's source. It documents tokens, primitives, screen→route mapping, and data contracts.</p>
+    <p><b>For humans:</b> click the bottom pill-nav to change screens, or press <kbd>1</kbd>–<kbd>5</kbd>.</p>
+    <p><b>Do not ship</b> the in-browser Babel setup to production — transpile at build time.</p>
+  </div>
+</details>
+
+</body>
+</html>
