@@ -2,85 +2,85 @@
 definePageMeta({ layout: 'app' })
 
 useSeoMeta({
-  title: 'Free Web Tools — ScanPulse',
-  description: 'Free tools to fix every issue ScanPulse flags. Generate security headers, build a CSP, check WCAG contrast, create robots.txt, generate schema markup, and more.',
-  ogTitle: 'Free Web Tools — ScanPulse',
-  ogDescription: 'Generate security headers, meta tags, robots.txt, schema markup, favicon, and more — all free.',
+  title: 'Tools — ScanPulse',
+  description: 'Free browser-based tools to fix every issue ScanPulse flags. CSP Builder, Security Headers, CORS Inspector, Image Optimizer, Meta Generator, and more.',
+  ogTitle: 'Tools — ScanPulse',
+  ogDescription: 'Ten tools. One job: close the loop.',
   ogType: 'website',
 })
-const _siteUrl = useRequestURL()
-useHead({ link: [{ rel: 'canonical', href: _siteUrl.origin + _siteUrl.pathname }] })
+
+const activeFilter = ref('all')
 </script>
 
 <template>
-  <div class="tools-page">
-    <!-- Atmosphere glow -->
-    <div class="atm-glow" />
+  <div class="page">
+    <!-- Background grid atmosphere -->
+    <div class="bg-grid" aria-hidden="true" />
 
-    <!-- Hero -->
-    <div class="hero">
-      <p class="eyebrow">Tools &middot; the fix library</p>
-      <h1 class="hero-title">
-        Ten tools. One job:<br>
-        <span class="brand-accent">close the loop.</span>
-      </h1>
-      <p class="hero-sub">
-        Every tool generates a fix file you paste into your stack, then rescans to verify.
-        Each shows the exact score uplift it&#8217;ll produce.
-      </p>
+    <!-- Page header -->
+    <div class="page-header">
+      <div class="header-inner">
+        <p class="eyebrow">Tools · the fix library</p>
+        <h1 class="display-heading">
+          Ten tools. One job:<br>
+          <span class="brand-accent">close the loop.</span>
+        </h1>
+        <p class="header-sub">
+          Every tool generates a fix file you paste into your stack, then rescans to verify.
+          Each shows the exact score uplift it'll produce.
+        </p>
+      </div>
     </div>
 
-    <!-- Tools grid + filter tabs -->
-    <ToolsGrid />
-
-    <!-- Roadmap strip -->
-    <div class="roadmap">
-      <div class="roadmap-inner">
-        <div class="roadmap-left">
-          <p class="roadmap-eyebrow">Shipping next</p>
-          <p class="roadmap-title">Cookie Policy Builder &middot; Sitemap Diff &middot; Core Web Vitals Fixer</p>
-        </div>
-        <a class="roadmap-cta" href="#vote" @click.prevent>
-          Vote on next tools
-          <Arrow :size="13" />
-        </a>
+    <!-- Filter tabs -->
+    <div class="tabs-section">
+      <div class="tabs-inner">
+        <ToolFilterTabs v-model="activeFilter" />
       </div>
+    </div>
+
+    <!-- Tool grid + roadmap -->
+    <div class="content-shell">
+      <ToolGrid :filter="activeFilter" />
+      <RoadmapStrip />
     </div>
   </div>
 </template>
 
 <style scoped>
-.tools-page {
-  padding: 100px 64px 120px;
-  display: flex;
-  flex-direction: column;
-  gap: 0;
-  position: relative;
+.page {
   min-height: 100vh;
+  background: var(--canvas);
+  position: relative;
+  padding-bottom: 80px;
 }
 
-/* ── Atmosphere ─────────────────────────────────────────────── */
-.atm-glow {
+.bg-grid {
   position: fixed;
-  top: -100px;
-  left: -100px;
-  width: 500px;
-  height: 500px;
-  background: radial-gradient(circle, rgba(108, 92, 231, 0.08), transparent 60%);
+  inset: 0;
   pointer-events: none;
   z-index: 0;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.025) 1px, transparent 1px);
+  background-size: 48px 48px;
+  mask-image: radial-gradient(ellipse at 50% 0%, black 0%, transparent 70%);
 }
 
-/* ── Hero ───────────────────────────────────────────────────── */
-.hero {
+.page-header {
   position: relative;
   z-index: 1;
-  margin-bottom: 40px;
+  padding: 80px 64px 32px;
+}
+
+.header-inner {
+  max-width: 1400px;
+  margin: 0 auto;
 }
 
 .eyebrow {
   font-family: var(--font-display);
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.22em;
   text-transform: uppercase;
@@ -88,12 +88,12 @@ useHead({ link: [{ rel: 'canonical', href: _siteUrl.origin + _siteUrl.pathname }
   margin-bottom: 16px;
 }
 
-.hero-title {
+.display-heading {
   font-family: var(--font-display);
-  font-size: clamp(2.8rem, 5vw, 4.5rem);
+  font-size: clamp(2.5rem, 5vw, 4.5rem);
   font-weight: 900;
-  color: white;
-  letter-spacing: -0.045em;
+  color: var(--text);
+  letter-spacing: -0.04em;
   line-height: 1.0;
   margin: 0 0 16px;
 }
@@ -102,79 +102,44 @@ useHead({ link: [{ rel: 'canonical', href: _siteUrl.origin + _siteUrl.pathname }
   color: var(--brand);
 }
 
-.hero-sub {
+.header-sub {
   font-family: var(--font-body);
   font-size: 15px;
   color: var(--text-muted);
-  max-width: 560px;
+  max-width: 580px;
   line-height: 1.65;
   margin: 0;
 }
 
-/* ── Roadmap strip ──────────────────────────────────────────── */
-.roadmap {
+.tabs-section {
   position: relative;
   z-index: 1;
-  margin-top: 32px;
-  padding: 24px 28px;
-  background: var(--elevated);
-  border: 1px dashed var(--border-strong);
-  border-radius: 14px;
+  border-bottom: 1px solid var(--border);
 }
 
-.roadmap-inner {
+.tabs-inner {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 64px;
+}
+
+.content-shell {
+  position: relative;
+  z-index: 1;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 32px 64px 0;
   display: flex;
-  align-items: center;
-  justify-content: space-between;
+  flex-direction: column;
   gap: 20px;
 }
 
-.roadmap-eyebrow {
-  font-family: var(--font-display);
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
-  color: var(--text-faint);
-  margin: 0 0 6px;
-}
-
-.roadmap-title {
-  font-family: var(--font-display);
-  font-size: 15px;
-  font-weight: 600;
-  color: rgba(255, 255, 255, 0.75);
-  margin: 0;
-  letter-spacing: -0.01em;
-}
-
-.roadmap-cta {
-  font-family: var(--font-display);
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--brand);
-  text-decoration: none;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  white-space: nowrap;
-  cursor: pointer;
-  transition: gap 0.15s ease;
-}
-
-.roadmap-cta:hover {
-  gap: 10px;
-}
-
-/* ── Responsive ────────────────────────────────────────────── */
 @media (max-width: 768px) {
-  .tools-page {
-    padding: 80px 20px 80px;
-  }
-
-  .roadmap-inner {
-    flex-direction: column;
-    align-items: flex-start;
+  .page-header,
+  .tabs-inner,
+  .content-shell {
+    padding-left: 20px;
+    padding-right: 20px;
   }
 }
 </style>
