@@ -1,12 +1,34 @@
 <script setup lang="ts">
-import { useScoreFormat } from '~/composables/dashboard/useScoreFormat'
-import { useScoreTrend } from '~/composables/dashboard/useScoreFormat'
+import { useScoreFormat, useScoreTrend } from '~/composables/dashboard/useScoreFormat'
+
+interface Scan {
+  _id: string
+  _creationTime: number
+  url: string
+  status: string
+  overallScore?: number
+  securityScore?: number
+  performanceScore?: number
+  seoScore?: number
+  accessibilityScore?: number
+  aiScore?: number
+  dnsScore?: number
+  trustScore?: number
+}
+
+interface Monitor {
+  _id: string
+  url: string
+  lastScore?: number
+  lastRunTime?: number
+  frequency: string
+}
 
 const props = defineProps<{
-  scans: any[]
-  doneScans: any[]
-  monitors: any[]
-  bulkScans: any[]
+  scans: Scan[]
+  doneScans: Scan[]
+  monitors: Monitor[]
+  bulkScans: { length: number }[]
   avgScore: number | null
   bestScore: number | null
   openScanByUrl: (url: string) => void
@@ -15,12 +37,48 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   (e: 'set-view', v: string): void
-  (e: 'open-scan', scan: any): void
+  (e: 'open-scan', scan: Scan): void
 }>()
 
 const { scoreBg, hostname, relativeTime, faviconUrl, scoreColor, trendColor } = useScoreFormat()
 const doneScansRef = computed(() => props.doneScans)
 const { scoreTrend } = useScoreTrend(doneScansRef)
+
+const latestScan = computed(() => props.doneScans[0])
+
+const monitorTrends = computed(() => {
+  const map = new Map<string, number>()
+  for (const m of props.monitors) {
+    map.set(m.url, scoreTrend(m.url))
+  }
+  return map
+})
+
+// Design token colors for pillar scores
+const PILLAR_COLORS = {
+  security: '#00d4aa',
+  performance: '#ffaa00',
+  seo: '#6c5ce7',
+  accessibility: '#a29bfe',
+  ai: '#ff7675',
+  dns: '#74b9ff',
+  trust: '#fd79a8',
+} as const
+
+const pillarRows = computed(() => [
+  ['Security',      latestScan.value?.securityScore,      PILLAR_COLORS.security],
+  ['Performance',   latestScan.value?.performanceScore,  PILLAR_COLORS.performance],
+  ['SEO',           latestScan.value?.seoScore,           PILLAR_COLORS.seo],
+  ['Accessibility', latestScan.value?.accessibilityScore, PILLAR_COLORS.accessibility],
+  ['AI Readiness',  latestScan.value?.aiScore,            PILLAR_COLORS.ai],
+  ['DNS & Email',   latestScan.value?.dnsScore,           PILLAR_COLORS.dns],
+  ['Trust',         latestScan.value?.trustScore,         PILLAR_COLORS.trust],
+] as const)
+
+const lowScoreCount = computed(() =>
+  props.doneScans.filter(s => (s.overallScore ?? 100) < 60).length +
+  props.scans.filter(s => s.status === 'error').length
+)
 </script>
 
 <template>
@@ -28,22 +86,22 @@ const { scoreTrend } = useScoreTrend(doneScansRef)
     <div class="grid grid-cols-4 gap-3.5">
       <div class="ds-stat-card">
         <div class="ds-stat-label">Total Scans</div>
-        <div class="ds-stat-value" style="color:#ec3586">{{ scans.length }}</div>
+        <div class="ds-stat-value text-primary">{{ scans.length }}</div>
         <div class="ds-stat-delta">Across all sites</div>
       </div>
       <div class="ds-stat-card">
         <div class="ds-stat-label">Avg Score</div>
-        <div class="ds-stat-value" :style="{ color: avgScore != null ? scoreBg(avgScore) : 'rgba(255,255,255,0.2)' }">{{ avgScore ?? '—' }}</div>
+        <div class="ds-stat-value" :style="{ color: avgScore !== null ? scoreBg(avgScore) : 'rgba(255,255,255,0.2)' }">{{ avgScore ?? '—' }}</div>
         <div class="ds-stat-delta">{{ doneScans.length }} completed</div>
       </div>
       <div class="ds-stat-card">
         <div class="ds-stat-label">Low Score Sites</div>
-        <div class="ds-stat-value" style="color:#ff4757">{{ doneScans.filter(s => (s.overallScore ?? 100) < 60).length + scans.filter(s => s.status === 'error').length }}</div>
-        <div class="ds-stat-delta" style="color:rgba(255,71,87,0.6)">Score below 60</div>
+        <div class="ds-stat-value text-danger">{{ lowScoreCount }}</div>
+        <div class="ds-stat-delta text-danger/60">Score below 60</div>
       </div>
       <div class="ds-stat-card">
         <div class="ds-stat-label">Monitored Sites</div>
-        <div class="ds-stat-value" style="color:#ffaa00">{{ monitors.length }}</div>
+        <div class="ds-stat-value text-performance">{{ monitors.length }}</div>
         <div class="ds-stat-delta"><button class="ds-stat-link" @click="emit('set-view', 'bulk')">{{ bulkScans.length }} bulk scan{{ bulkScans.length !== 1 ? 's' : '' }}</button></div>
       </div>
     </div>
@@ -52,7 +110,7 @@ const { scoreTrend } = useScoreTrend(doneScansRef)
       <div class="ds-card">
         <div class="ds-card-header">
           <div class="ds-card-title">Pillar Scores</div>
-          <button v-if="doneScans[0]" @click="emit('open-scan', doneScans[0])" class="ds-card-action">{{ hostname(doneScans[0].url) }} →</button>
+          <button v-if="latestScan" @click="emit('open-scan', latestScan)" class="ds-card-action">{{ hostname(latestScan.url) }} →</button>
           <span v-else class="ds-card-sub">Most recent scan</span>
         </div>
         <div v-if="!doneScans.length" class="ds-empty-state">
@@ -60,15 +118,7 @@ const { scoreTrend } = useScoreTrend(doneScansRef)
           <p>Scan a site to see pillar scores</p>
         </div>
         <div v-else class="ds-pillars-grid">
-          <div v-for="[name, val, color] in [
-            ['Security',      doneScans[0].securityScore,      '#00d4aa'],
-            ['Performance',   doneScans[0].performanceScore,   '#ffaa00'],
-            ['SEO',           doneScans[0].seoScore,           '#6c5ce7'],
-            ['Accessibility', doneScans[0].accessibilityScore, '#a29bfe'],
-            ['AI Readiness',  doneScans[0].aiScore,            '#ff7675'],
-            ['DNS & Email',   doneScans[0].dnsScore,           '#74b9ff'],
-            ['Trust',         doneScans[0].trustScore,         '#fd79a8'],
-          ]" :key="String(name)" class="ds-pillar-row">
+          <div v-for="[name, val, color] in pillarRows" :key="String(name)" class="ds-pillar-row">
             <div class="ds-pillar-dot" :style="{ background: String(color) }"></div>
             <div class="ds-pillar-name">{{ name }}</div>
             <div class="ds-pillar-bar-bg"><div class="ds-pillar-bar" :style="{ width: (Number(val) || 0) + '%', background: String(color) }"></div></div>
@@ -95,7 +145,7 @@ const { scoreTrend } = useScoreTrend(doneScansRef)
             </div>
             <div class="ds-scan-right">
               <span v-if="scan.status === 'running'" class="ds-scan-running">●</span>
-              <span v-else-if="scan.status === 'error'" class="ds-scan-score" style="color:#ff4757;font-size:16px;">!</span>
+              <span v-else-if="scan.status === 'error'" class="ds-scan-score text-danger text-base">!</span>
               <span v-else class="ds-scan-score" :style="{ color: scoreBg(scan.overallScore) }">{{ scan.overallScore ?? '—' }}</span>
             </div>
           </button>
@@ -122,7 +172,7 @@ const { scoreTrend } = useScoreTrend(doneScansRef)
             </div>
             <div class="ds-monitor-score" :style="{ color: scoreBg(m.lastScore) }">
               {{ m.lastScore ?? '—' }}
-              <span v-if="scoreTrend(m.url)" :style="{ color: trendColor(scoreTrend(m.url)) }">{{ scoreTrend(m.url) }}</span>
+              <template v-if="monitorTrends.get(m.url)"><span :style="{ color: trendColor(monitorTrends.get(m.url)) }">{{ monitorTrends.get(m.url) }}</span></template>
             </div>
             <div class="ds-monitor-actions">
               <button @click="openScanByUrl(m.url)" class="ds-monitor-link">View →</button>
@@ -135,7 +185,7 @@ const { scoreTrend } = useScoreTrend(doneScansRef)
       <div class="ds-card">
         <div class="ds-card-header">
           <div class="ds-card-title">Activity Feed</div>
-          <span class="ds-card-sub" :style="{ color: scans.some(s => s.status === 'running') ? '#ec3586' : '#6b7280' }">{{ scans.some(s => s.status === 'running') ? '● Live' : 'Recent' }}</span>
+          <span class="ds-card-sub" :class="scans.some(s => s.status === 'running') ? 'text-primary' : 'text-muted'">{{ scans.some(s => s.status === 'running') ? '● Live' : 'Recent' }}</span>
         </div>
         <div v-if="!scans.length" class="ds-empty-state"><p>No activity yet</p></div>
         <div v-else class="ds-activity-list">
@@ -164,6 +214,11 @@ const { scoreTrend } = useScoreTrend(doneScansRef)
 .ds-stat-card { @apply bg-[#0f0f14] border border-[#1e1e28] rounded-xl p-4; }
 .ds-stat-label { @apply text-[10px] text-[#6b7280] uppercase tracking-[.06em] mb-2 font-display; }
 .ds-stat-value { @apply font-display text-[28px] font-bold leading-none; }
+.ds-stat-value.text-primary { color: #ec3586; }
+.ds-stat-value.text-danger { color: #ff4757; }
+.ds-stat-value.text-performance { color: #ffaa00; }
+.ds-stat-delta.text-danger\/60 { color: rgba(255,71,87,0.6); }
+.ds-scan-score.text-danger.text-base { color: #ff4757; font-size: 1rem; }
 .ds-stat-delta { @apply text-[11px] text-[#6b7280] mt-1.5; }
 .ds-stat-link { @apply text-primary bg-none border-none cursor-pointer text-[11px] p-0 hover:opacity-80; }
 
@@ -176,6 +231,8 @@ const { scoreTrend } = useScoreTrend(doneScansRef)
 .ds-card-header { @apply flex justify-between items-center mb-3; }
 .ds-card-title { @apply text-[13px] font-semibold text-white/70; }
 .ds-card-action { @apply text-[12px] text-[#9898b0] bg-none border-none cursor-pointer transition-colors duration-100 hover:text-white; }
+.ds-card-sub.text-primary { color: #ec3586; }
+.ds-card-sub.text-muted { color: #6b7280; }
 .ds-card-sub { @apply text-[12px] text-white/30; }
 
 /* Empty state chain (3+) */

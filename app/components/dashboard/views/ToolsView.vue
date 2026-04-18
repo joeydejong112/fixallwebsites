@@ -1,7 +1,8 @@
 <script setup lang="ts">
+// Icons from ~/lib/dashboard/tools are static — v-html is safe here
 import { allTools, toolPillars } from '~/lib/dashboard/tools'
 
-const emit = defineEmits<{
+defineEmits<{
   (e: 'open-tool', slug: string): void
 }>()
 
@@ -11,12 +12,13 @@ const toolsFiltered = computed(() =>
 )
 const toolsFeatured = computed(() => toolsFiltered.value[0] ?? null)
 const toolsRest = computed(() => toolsFiltered.value.slice(1))
-const toolsPillarCount = (key: string) =>
-  key === 'all' ? allTools.length : allTools.filter(t => t.pillar === key).length
-
-function openTool(slug: string) {
-  emit('open-tool', slug)
-}
+const pillarCounts = computed(() => {
+  const m = new Map<string, number>()
+  for (const p of toolPillars) {
+    m.set(p.key, p.key === 'all' ? allTools.length : allTools.filter(t => t.pillar === p.key).length)
+  }
+  return m
+})
 </script>
 
 <template>
@@ -33,7 +35,7 @@ function openTool(slug: string) {
       >
         <span v-if="p.key !== 'all'" class="w-[5px] h-[5px] rounded-full shrink-0" :style="`background:${p.color}`" />
         {{ p.label }}
-        <span class="font-display text-[9px] bg-white/6 rounded px-[5px] py-px text-white/[0.22]">{{ toolsPillarCount(p.key) }}</span>
+        <span class="font-display text-[9px] bg-white/6 rounded px-[5px] py-px text-white/[0.22]">{{ pillarCounts.get(p.key) }}</span>
       </button>
     </div>
 
@@ -44,7 +46,10 @@ function openTool(slug: string) {
         :key="'feat-' + toolsFeatured.slug"
         class="relative overflow-hidden flex items-stretch rounded-[14px] bg-[#0e0e13] border border-white/7 text-decoration-none min-h-[200px] transition-all duration-200 hover:border-[var(--pc)] hover:translate-y-[-2px] hover:shadow-xl"
         :style="`--pc:${toolsFeatured.color}`"
-        @click="openTool(toolsFeatured.slug)"
+        role="button"
+        tabindex="0"
+        @click="$emit('open-tool', toolsFeatured.slug)"
+        @keydown.enter="$emit('open-tool', toolsFeatured.slug)"
       >
         <div class="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[var(--pc)] to-transparent opacity-0 transition-opacity duration-300 hover:opacity-100" />
         <div class="absolute inset-0 pointer-events-none" :style="`background:radial-gradient(ellipse at 75% 50%, ${toolsFeatured.color}1a 0%, transparent 65%)`" />
@@ -79,8 +84,11 @@ function openTool(slug: string) {
           v-for="(t, i) in toolsRest"
           :key="t.slug"
           class="relative flex overflow-hidden rounded-[12px] bg-[#0e0e13] border border-white/[0.055] text-decoration-none transition-all duration-200 hover:border-[var(--pc)] hover:translate-y-[-2px] hover:shadow-[0_10px_30px_rgba(0,0,0,0.4),0_0_0_1px_var(--pc)] animate-[tl-card-in_0.3s_ease_both]"
-          :style="`--pc:${t.color};--i:${i}`"
-          @click="openTool(t.slug)"
+          :style="`--pc:${t.color};--i:${i};animation-delay:calc(var(--i)*0.05s)`"
+          role="button"
+          tabindex="0"
+          @click="$emit('open-tool', t.slug)"
+          @keydown.enter="$emit('open-tool', t.slug)"
         >
           <div class="w-[3px] shrink-0 opacity-50 transition-opacity duration-200 hover:opacity-100" :style="`background:${t.color}`" />
           <div class="flex flex-col gap-[9px] px-4 py-[18px] flex-1">

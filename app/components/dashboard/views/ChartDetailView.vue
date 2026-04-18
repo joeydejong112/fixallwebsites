@@ -1,17 +1,30 @@
 <script setup lang="ts">
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const props = defineProps<{
-  doneScans: any[]
-  view: any
-}>()
+// `view.selectedChartUrl` is a Ref<string> (auto-unwrapped in template, but accessed as .value in script)
+interface DoneScan {
+  _id: string
+  _creationTime: number
+  url: string
+  overallScore: number
+  securityScore?: number
+  performanceScore?: number
+  seoScore?: number
+  accessibilityScore?: number
+}
 
-const view = props.view
+const props = defineProps<{
+  doneScans: DoneScan[]
+  selectedChartUrl: string
+  openScanByUrl: (url: string) => void
+  openScan: (scan: DoneScan) => void
+}>()
 
 const chartDetailScans = computed(() =>
   props.doneScans
-    .filter((s: any) => s.url === view.selectedChartUrl.value)
-    .sort((a: any, b: any) => a._creationTime - b._creationTime)
+    .filter((s) => s.url === props.selectedChartUrl)
+    .sort((a, b) => a._creationTime - b._creationTime)
 )
+
+const dateLabelInterval = computed(() => Math.ceil(chartDetailScans.value.length / 8))
 
 const chartDetailLatest = computed(() =>
   chartDetailScans.value[chartDetailScans.value.length - 1] ?? null
@@ -28,6 +41,8 @@ const chartDetailPillars = computed(() => {
   ].filter((p) => p.latest != null)
 })
 
+const reversedScans = computed(() => [...chartDetailScans.value].reverse())
+
 const { scoreColor, hostname, faviconUrl, shortDate } = useScoreFormat()
 const { cdX, cdY, cdPolyline, cdAreaPath, CD_W, CD_H, CD_PL, CD_PR, CD_GRID } = useChartGeometry()
 </script>
@@ -39,12 +54,12 @@ const { cdX, cdY, cdPolyline, cdAreaPath, CD_W, CD_H, CD_PL, CD_PR, CD_GRID } = 
     <!-- Hero header -->
     <div class="flex items-center gap-4 flex-wrap">
       <div class="size-9 rounded-lg text-base bg-white/5 border border-white/10 flex items-center justify-center font-display text-sm font-bold text-white/65">
-        <img v-if="faviconUrl(view.selectedChartUrl)" :src="faviconUrl(view.selectedChartUrl)!" loading="lazy" width="20" height="20" @error="($event.target as HTMLImageElement).style.display='none'" />
-        <span v-else>{{ hostname(view.selectedChartUrl).charAt(0).toUpperCase() }}</span>
+        <img v-if="faviconUrl(props.selectedChartUrl)" :src="faviconUrl(props.selectedChartUrl)!" alt="" loading="lazy" width="20" height="20" @error="($event.target as HTMLImageElement).style.display='none'" />
+        <span v-else>{{ hostname(props.selectedChartUrl).charAt(0).toUpperCase() }}</span>
       </div>
       <div class="flex-1 min-w-0">
-        <div class="font-display text-base font-bold text-white/88">{{ hostname(view.selectedChartUrl) }}</div>
-        <div class="font-body text-xs text-white/30 mt-0.5 truncate max-w-[300px]">{{ view.selectedChartUrl }}</div>
+        <div class="font-display text-base font-bold text-white/88">{{ hostname(props.selectedChartUrl) }}</div>
+        <div class="font-body text-xs text-white/30 mt-0.5 truncate max-w-[300px]">{{ props.selectedChartUrl }}</div>
       </div>
       <div class="flex gap-5">
         <div class="text-center">
@@ -62,7 +77,7 @@ const { cdX, cdY, cdPolyline, cdAreaPath, CD_W, CD_H, CD_PL, CD_PR, CD_GRID } = 
           <div class="font-body text-[10px] text-white/30 mt-0.5 whitespace-nowrap">Since first scan</div>
         </div>
       </div>
-      <button class="bg-primary/12 border border-primary/30 rounded-lg px-4 py-2 font-display text-sm font-semibold text-primary cursor-pointer hover:bg-primary/18 transition-all duration-150 whitespace-nowrap" @click="view.openScanByUrl(view.selectedChartUrl)">View latest result →</button>
+      <button class="bg-primary/12 border border-primary/30 rounded-lg px-4 py-2 font-display text-sm font-semibold text-primary cursor-pointer hover:bg-primary/18 transition-all duration-150 whitespace-nowrap" @click="props.openScanByUrl(props.selectedChartUrl)">View latest result →</button>
     </div>
 
     <!-- Large overall chart -->
@@ -115,7 +130,7 @@ const { cdX, cdY, cdPolyline, cdAreaPath, CD_W, CD_H, CD_PL, CD_PR, CD_GRID } = 
             />
             <!-- Date label below axis -->
             <text
-              v-if="chartDetailScans.length <= 12 || i === 0 || i === chartDetailScans.length - 1 || i % Math.ceil(chartDetailScans.length / 8) === 0"
+              v-if="chartDetailScans.length <= 12 || i === 0 || i === chartDetailScans.length - 1 || i % dateLabelInterval === 0"
               :x="cdX(i, chartDetailScans.length)"
               :y="CD_H - 4"
               text-anchor="middle"
@@ -175,26 +190,27 @@ const { cdX, cdY, cdPolyline, cdAreaPath, CD_W, CD_H, CD_PL, CD_PR, CD_GRID } = 
       </div>
       <div class="overflow-x-auto">
         <table class="w-full border-collapse font-body text-xs">
+          <caption class="sr-only">Scan history log, most recent first</caption>
           <thead>
             <tr>
-              <th class="text-left p-2.5 font-display text-[10px] font-bold uppercase tracking-[0.08em] text-white/28 border-b border-white/6 whitespace-nowrap">Date</th>
-              <th class="text-left p-2.5 font-display text-[10px] font-bold uppercase tracking-[0.08em] text-white/28 border-b border-white/6 whitespace-nowrap">Overall</th>
-              <th class="text-left p-2.5 font-display text-[10px] font-bold uppercase tracking-[0.08em] text-white/28 border-b border-white/6 whitespace-nowrap">Security</th>
-              <th class="text-left p-2.5 font-display text-[10px] font-bold uppercase tracking-[0.08em] text-white/28 border-b border-white/6 whitespace-nowrap">Performance</th>
-              <th class="text-left p-2.5 font-display text-[10px] font-bold uppercase tracking-[0.08em] text-white/28 border-b border-white/6 whitespace-nowrap">SEO</th>
-              <th class="text-left p-2.5 font-display text-[10px] font-bold uppercase tracking-[0.08em] text-white/28 border-b border-white/6 whitespace-nowrap">A11y</th>
-              <th class="text-left p-2.5 font-display text-[10px] font-bold uppercase tracking-[0.08em] text-white/28 border-b border-white/6 whitespace-nowrap"></th>
+              <th scope="col" class="text-left p-2.5 font-display text-[10px] font-bold uppercase tracking-[0.08em] text-white/28 border-b border-white/6 whitespace-nowrap">Date</th>
+              <th scope="col" class="text-left p-2.5 font-display text-[10px] font-bold uppercase tracking-[0.08em] text-white/28 border-b border-white/6 whitespace-nowrap">Overall</th>
+              <th scope="col" class="text-left p-2.5 font-display text-[10px] font-bold uppercase tracking-[0.08em] text-white/28 border-b border-white/6 whitespace-nowrap">Security</th>
+              <th scope="col" class="text-left p-2.5 font-display text-[10px] font-bold uppercase tracking-[0.08em] text-white/28 border-b border-white/6 whitespace-nowrap">Performance</th>
+              <th scope="col" class="text-left p-2.5 font-display text-[10px] font-bold uppercase tracking-[0.08em] text-white/28 border-b border-white/6 whitespace-nowrap">SEO</th>
+              <th scope="col" class="text-left p-2.5 font-display text-[10px] font-bold uppercase tracking-[0.08em] text-white/28 border-b border-white/6 whitespace-nowrap">A11y</th>
+              <th scope="col" class="text-left p-2.5 font-display text-[10px] font-bold uppercase tracking-[0.08em] text-white/28 border-b border-white/6 whitespace-nowrap"></th>
             </tr>
           </thead>
           <tbody>
-            <tr v-for="scan in [...chartDetailScans].reverse()" :key="scan._id" class="border-b border-white/4 hover:bg-white/5 transition-colors duration-100">
+            <tr v-for="scan in reversedScans" :key="scan._id" class="border-b border-white/4 hover:bg-white/5 transition-colors duration-100">
               <td class="p-2.5 align-middle text-white/45 whitespace-nowrap">{{ shortDate(scan._creationTime) }}</td>
               <td class="p-2.5 align-middle"><span class="inline-block px-2 py-0.5 rounded font-display text-xs font-bold border border-solid border-white/30" :style="{ color: scoreColor(scan.overallScore), borderColor: scoreColor(scan.overallScore) + '30', background: scoreColor(scan.overallScore) + '12' }">{{ scan.overallScore ?? '—' }}</span></td>
               <td class="p-2.5 align-middle"><span v-if="scan.securityScore != null" class="font-display text-xs font-semibold" :style="{ color: scoreColor(scan.securityScore) }">{{ scan.securityScore }}</span><span v-else class="text-white/20">—</span></td>
               <td class="p-2.5 align-middle"><span v-if="scan.performanceScore != null" class="font-display text-xs font-semibold" :style="{ color: scoreColor(scan.performanceScore) }">{{ scan.performanceScore }}</span><span v-else class="text-white/20">—</span></td>
               <td class="p-2.5 align-middle"><span v-if="scan.seoScore != null" class="font-display text-xs font-semibold" :style="{ color: scoreColor(scan.seoScore) }">{{ scan.seoScore }}</span><span v-else class="text-white/20">—</span></td>
               <td class="p-2.5 align-middle"><span v-if="scan.accessibilityScore != null" class="font-display text-xs font-semibold" :style="{ color: scoreColor(scan.accessibilityScore) }">{{ scan.accessibilityScore }}</span><span v-else class="text-white/20">—</span></td>
-              <td class="p-2.5 align-middle"><button class="bg-transparent border border-white/10 rounded-md px-2.5 py-1 font-body text-xs text-white/45 cursor-pointer hover:text-white/80 hover:border-white/25 transition-all duration-150 whitespace-nowrap" @click="view.openScan(scan)">View →</button></td>
+              <td class="p-2.5 align-middle"><button class="bg-transparent border border-white/10 rounded-md px-2.5 py-1 font-body text-xs text-white/45 cursor-pointer hover:text-white/80 hover:border-white/25 transition-all duration-150 whitespace-nowrap" @click="props.openScan(scan)">View →</button></td>
             </tr>
           </tbody>
         </table>

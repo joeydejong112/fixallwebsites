@@ -1,0 +1,261 @@
+/* ScanPulse — Design Tokens */
+:root {
+  /* Base surfaces */
+  --canvas: #07070a;
+  --surface: #0f0f14;
+  --elevated: #16161e;
+  --elevated-2: #1c1c26;
+  --border: rgba(255, 255, 255, 0.07);
+  --border-strong: rgba(255, 255, 255, 0.12);
+
+  /* Brand */
+  --brand: #ec3586;
+  --brand-soft: rgba(236, 53, 134, 0.12);
+  --brand-glow: rgba(236, 53, 134, 0.35);
+
+  /* Text */
+  --text: #f5f5f7;
+  --text-muted: rgba(255, 255, 255, 0.45);
+  --text-faint: rgba(255, 255, 255, 0.28);
+
+  /* Pillars */
+  --p-security: #00d4aa;
+  --p-performance: #ffaa00;
+  --p-seo: #6c5ce7;
+  --p-accessibility: #a29bfe;
+  --p-ai: #ff7675;
+  --p-dns: #74b9ff;
+  --p-trust: #fd79a8;
+
+  /* Status */
+  --s-pass: #00d4aa;
+  --s-warn: #ffaa00;
+  --s-crit: #ff4757;
+
+  /* Type */
+  --font-display: "Space Grotesk", "Inter", sans-serif;
+  --font-body: "DM Sans", "Inter", sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--canvas);
+  color: var(--text);
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+  font-feature-settings: "ss01", "cv01";
+}
+
+/* Architectural grid — 64px lines */
+.grid-bg {
+  background-image:
+    linear-gradient(to right, rgba(255,255,255,0.018) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255,255,255,0.018) 1px, transparent 1px);
+  background-size: 64px 64px;
+}
+
+/* Eyebrow */
+.eyebrow {
+  font-family: var(--font-display);
+  font-size: 11px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  font-weight: 600;
+  color: var(--text-muted);
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+}
+.eyebrow::before {
+  content: "";
+  width: 28px;
+  height: 2px;
+  background: var(--brand);
+  display: inline-block;
+}
+
+.eyebrow-pillar {
+  font-family: var(--font-display);
+  font-size: 11px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* Display type */
+.display {
+  font-family: var(--font-display);
+  font-weight: 700;
+  letter-spacing: -0.04em;
+  line-height: 0.98;
+}
+
+.num {
+  font-family: var(--font-display);
+  font-weight: 700;
+  letter-spacing: -0.05em;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Buttons */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 18px;
+  border-radius: 9px;
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 14px;
+  letter-spacing: -0.01em;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: transform 0.15s ease, background 0.2s ease, border-color 0.2s ease;
+  text-decoration: none;
+}
+.btn:active { transform: scale(0.98); }
+
+.btn-primary {
+  background: var(--brand);
+  color: #fff;
+  box-shadow: 0 0 24px rgba(236, 53, 134, 0.28), inset 0 1px 0 rgba(255,255,255,0.2);
+}
+.btn-primary:hover { background: #f14b95; }
+
+.btn-ghost {
+  background: transparent;
+  color: var(--text);
+  border-color: var(--border-strong);
+}
+.btn-ghost:hover { border-color: rgba(255,255,255,0.25); background: rgba(255,255,255,0.03); }
+
+.btn-pink-ghost {
+  background: var(--brand-soft);
+  color: var(--brand);
+  border-color: rgba(236, 53, 134, 0.3);
+}
+.btn-pink-ghost:hover { background: rgba(236, 53, 134, 0.18); }
+
+/* Card */
+.card {
+  background: var(--elevated);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  position: relative;
+  overflow: hidden;
+}
+
+.card-accent-top {
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+}
+
+/* Chips */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  border-radius: 999px;
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  border: 1px solid var(--border);
+  background: rgba(255,255,255,0.02);
+}
+.chip .dot {
+  width: 6px; height: 6px; border-radius: 50%;
+}
+
+/* Pulsing dot */
+.pulse-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  animation: pulse 1.5s ease-in-out infinite;
+  position: relative;
+}
+.pulse-dot::after {
+  content: "";
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  border: 2px solid currentColor;
+  opacity: 0;
+  animation: pulsering 1.5s ease-in-out infinite;
+}
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+@keyframes pulsering {
+  0% { transform: scale(0.8); opacity: 0.6; }
+  100% { transform: scale(1.8); opacity: 0; }
+}
+
+/* Ghost numeral */
+.ghost-numeral {
+  position: absolute;
+  font-family: var(--font-display);
+  font-weight: 700;
+  letter-spacing: -0.06em;
+  color: rgba(255, 255, 255, 0.04);
+  pointer-events: none;
+  user-select: none;
+  line-height: 0.8;
+}
+
+/* Marquee */
+@keyframes marquee-up {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(-50%); }
+}
+
+/* Score ring animation */
+@keyframes ring-fill {
+  from { stroke-dashoffset: var(--ring-circ); }
+  to { stroke-dashoffset: var(--ring-target); }
+}
+
+/* Chevron bounce */
+@keyframes chev-bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(6px); }
+}
+
+/* Interactive hover */
+.lift:hover { transform: translateY(-2px) scale(1.005); }
+.lift { transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease; }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: var(--canvas); }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 999px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.15); }
+
+/* Atmosphere glow helpers */
+.atm-brand {
+  background: radial-gradient(ellipse at 70% 30%, rgba(236, 53, 134, 0.14), transparent 55%);
+}
+
+/* Divider dash */
+.dash-div {
+  border-top: 1px dashed rgba(255,255,255,0.1);
+}
+
+/* Utility */
+.sp-ring { color: var(--p-security); }
+.pe-ring { color: var(--p-performance); }
+.se-ring { color: var(--p-seo); }
+.ac-ring { color: var(--p-accessibility); }
+.ai-ring { color: var(--p-ai); }
+.dn-ring { color: var(--p-dns); }
+.tr-ring { color: var(--p-trust); }

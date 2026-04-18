@@ -1,7 +1,6 @@
-<script setup>
-defineProps({
-  bulkScans: { type: Array, default: () => [] }
-})
+<script setup lang="ts">
+import type { BulkScan } from '~/types/dashboard'
+defineProps<{ bulkScans: BulkScan[] }>()
 </script>
 
 <template>
@@ -22,9 +21,9 @@ defineProps({
           <div class="text-[11px] text-white/40 mt-0.5">{{ b.totalUrls }} URLs · {{ b.completedUrls }} complete</div>
         </div>
         <div v-if="b.status === 'running' || b.status === 'pending'" class="flex-1 max-w-[120px] h-1 bg-[#1e1e28] rounded-sm overflow-hidden">
-          <div class="h-full bg-primary rounded-sm transition-all duration-300" :style="{ width: Math.round((b.completedUrls / b.totalUrls) * 100) + '%' }"></div>
+          <div class="h-full bg-primary rounded-sm transition-all duration-300" :style="{ width: (b.totalUrls ? Math.round((b.completedUrls / b.totalUrls) * 100) : 0) + '%' }"></div>
         </div>
-        <span class="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded font-display flex-shrink-0" :class="{
+        <span :aria-label="`Status: ${b.status}`" class="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded font-display flex-shrink-0" :class="{
           'bg-[#00d4aa]/10 text-[#00d4aa]': b.status === 'done',
           'bg-primary/10 text-primary': b.status === 'running',
           'bg-white/5 text-white/30': b.status === 'pending',

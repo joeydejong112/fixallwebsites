@@ -297,28 +297,13 @@ Scores: `(passing / total) × 100`. Overall = average of three pillars.
 
 ## Last Session
 
-**Date**: 2026-04-07
+**Date**: 2026-04-17
 **What was done**:
-- Completed Phase 7 (Score History & Trend Charts) — all 6 tasks:
-  - T1: `scoreHistory` table added to `convex/schema.ts` with `by_user_url` + `by_user_url_ts` indexes
-  - T2: `convex/scoreHistory.ts` — `recordSnapshot` (internalMutation), `getHistory`, `getHistoryForUser`, `getRecentHistory`
-  - T3: Wired `recordSnapshot` into `convex/scanAction.ts` — calls after every successful scan; added `getScanInternal` internalQuery to `scans.ts` to fetch `userId`
-  - T4: `app/components/TrendChart.vue` — pure SVG sparkline: area fill, polyline, regression dots (red on ≥10pt drops), hover tooltip
-  - T5: `app/pages/history/index.vue` — full history page (query param `?url=`): 6-pillar summary cards, full overall trend chart, per-pillar sparkline grid, scan log table linking back to scan results
-  - T6: Dashboard sparklines — loads last 15 scores per unique URL via `getRecentHistory`, renders `TrendChart` + "history" link in each scan row; Convex deployed successfully
+- Fixed dashboard layout bug: content area was rendering beside the topbar (side-by-side) instead of below it.
+  - Root cause: `<div class="flex-1 flex overflow-hidden">` in `app/pages/dashboard/index.vue` used default `flex-row` direction, placing `DashboardTopbar` and the content `div` as horizontal siblings.
+  - Fix: added `flex-col` → `class="flex-1 flex flex-col overflow-hidden"` so topbar stacks above the scrollable content area.
 
-- Completed Phase 8 (Competitor Scan) — all 4 tasks:
-  - T1: `app/pages/compare/index.vue` — two URL inputs, swap button, ProGate, recent comparisons from localStorage
-  - T2: `convex/compare.ts` — `compareScans` action: creates two scans, fires both `runScan` concurrently via scheduler
-  - T3: `app/pages/compare/[scanIdA]/[scanIdB].vue` — polling results page: dual score rings with delta badge, pillar comparison table sorted by gap, "Fix to catch up" issue diff, "You're ahead" strengths section, share/PDF export
-  - T4: Dashboard Competitor Scans widget (last 3 from localStorage), NavBar "Compare" link (pink); Convex deployed
-
-- Completed Phase 9 (Public API) — all 6 tasks:
-  - T1-T4: `convex/http.ts` — added `/api/v1/scan` POST (Pro check, 201 + pollUrl), `/api/v1/scan/{scanId}` GET (ownership check, normalized response), `/api/v1/scans` GET (?status, ?limit, max 100); `resolveProApiKey` helper verifies Pro plan via `getUserPlanInternal`; `normalizeScan` returns scores object + ISO scannedAt
-  - T5: `app/pages/api-docs.vue` — full API reference with endpoint cards, curl/JS/Python code tabs, live "Try it" section (fires real POST), error codes table
-  - T6: `docs/API.md` — complete REST reference + GitHub Actions CI/CD health gate workflow example; Settings Developer tab now links to /api-docs; Convex deployed
-
-**Where we left off**: Phase 9 complete. Next: Phase 10 (Marketing & SEO Polish).
+**Where we left off**: Layout fix done. Phase 9 (Public API) was the last completed feature phase. Next: Phase 10 (Marketing & SEO Polish).
 
 **Branch**: `main` (all work committed directly, no open branches)
 

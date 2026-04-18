@@ -15,7 +15,7 @@ const currentToolComponent = computed(() => {
   <div class="min-h-full">
     <template v-if="slug && currentToolComponent">
       <Suspense>
-        <component :is="currentToolComponent" />
+        <component :is="currentToolComponent" :slug="slug" />
         <template #fallback>
           <div class="flex items-center gap-3 py-[60px] justify-center text-[#6b7280] text-[13px]">
             <div class="w-2 h-2 rounded-full bg-primary animate-pulse" />
